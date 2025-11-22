@@ -114,8 +114,6 @@ The tool filters **1,132 profanity words** including:
 - **Obscene Terms**: Various vulgar and offensive language
 - **Adultery Terms**: cheat, cheating, adultery, affair, infidelity, etc.
 
-**Note:** "Damn" and variations are **NOT** filtered (not considered obscene for family viewing).
-
 **Word Matching:**
 - Uses exact whole-word matching only (prevents false positives)
 - Case-insensitive detection

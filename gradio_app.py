@@ -164,7 +164,9 @@ def clean_video(video_file, subtitle_file, whisper_model, progress=gr.Progress()
 def create_interface():
     """Create and return Gradio interface"""
     
-    with gr.Blocks(title="Movie Profanity Filter", theme=gr.themes.Soft()) as demo:
+    # Use compatible Gradio version - theme parameter not available in older versions
+    # Remove theme parameter for compatibility with Hugging Face Spaces
+    with gr.Blocks(title="Movie Profanity Filter") as demo:
         gr.Markdown("""
         # Movie Profanity Filter
         

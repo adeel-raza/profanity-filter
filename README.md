@@ -182,12 +182,16 @@ python3 clean.py video.mp4 cleaned.mp4 --remove-timestamps "10-15,30-35,60-65"
 
 ## How It Works
 
+The tool analyzes the **audio track** of your video to detect profanity:
+
 1. **Audio Extraction**: Extracts audio track from video using FFmpeg
 2. **Transcription**: Uses OpenAI Whisper to transcribe audio with word-level timestamps
 3. **Profanity Detection**: Matches transcribed words against 1,132-word profanity list
 4. **Segment Merging**: Merges nearby profanity segments (within 1 second)
-5. **Video Cutting**: Uses FFmpeg to cut out profanity segments
-6. **Subtitle Processing**: Removes profanity words from subtitles and adjusts timestamps
+5. **Video Cutting**: Uses FFmpeg to cut out profanity segments from the video file (removes both audio and video)
+6. **Subtitle Processing**: Removes profanity words from subtitles and adjusts timestamps to match the cleaned video
+
+**Important:** The tool works by analyzing the audio track - any video with profanity in the audio can be filtered, regardless of whether subtitles are provided. Subtitles are optional but will be cleaned if provided.
 
 ## Example Output
 

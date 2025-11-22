@@ -61,9 +61,12 @@ python3 clean.py input.mp4 output.mp4 --subs input.srt
 # Auto-detect subtitle file (if same name as video)
 python3 clean.py movie.mp4 cleaned_movie.mp4
 
-# Process without subtitles (audio only)
+# Process video by analyzing audio only (subtitles optional)
+# The tool analyzes the audio track to detect profanity and removes it from the video
 python3 clean.py video.mp4 cleaned_video.mp4
 ```
+
+**Note:** Subtitles are optional. The tool analyzes the audio track of the video to detect profanity and removes those segments from the video file. If subtitles are provided, they will also be cleaned and synchronized with the edited video.
 
 ## Detailed Usage
 

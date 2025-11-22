@@ -7,8 +7,9 @@ torch>=2.0.0
 torchaudio>=2.0.0
 numpy>=1.24.0
 
-# Web interface
-gradio>=4.44.0
+# Web interface - use compatible versions
+gradio>=4.19.0,<5.0.0
+huggingface_hub>=0.19.0,<0.21.0
 
 # Note: FFmpeg must be installed on the system
 # Hugging Face Spaces has FFmpeg pre-installed

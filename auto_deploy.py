@@ -34,7 +34,7 @@ def main():
         return 1
     
     # Space configuration
-    space_name = "movie-profanity-filter"
+    space_name = "video-profanity-filter"
     repo_id = f"{username}/{space_name}"
     
     print(f"\nSpace name: {space_name}")

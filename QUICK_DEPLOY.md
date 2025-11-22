@@ -22,7 +22,7 @@ This will:
 
 ## Step 3: Wait for Build
 
-- Go to: https://huggingface.co/spaces/YOUR_USERNAME/movie-profanity-filter
+- Go to: https://huggingface.co/spaces/YOUR_USERNAME/video-profanity-filter
 - Wait 5-10 minutes for first build
 - Your app will be live!
 
@@ -33,7 +33,7 @@ This will:
 If auto-deploy doesn't work:
 
 1. **Create Space**: https://huggingface.co/spaces → "Create new Space"
-   - Name: `movie-profanity-filter`
+   - Name: `video-profanity-filter`
    - SDK: `Gradio`
    - Hardware: `CPU basic`
 

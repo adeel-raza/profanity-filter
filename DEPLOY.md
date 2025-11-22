@@ -5,7 +5,7 @@
 1. **Go to**: https://huggingface.co/spaces
 2. **Click**: "Create new Space"
 3. **Fill in**:
-   - **Space name**: `movie-profanity-filter`
+   - **Space name**: `video-profanity-filter`
    - **SDK**: Select **Gradio**
    - **Hardware**: Select **CPU basic** (free tier)
    - **Visibility**: Public
@@ -26,7 +26,7 @@
 6. **Wait**: Hugging Face will automatically build and deploy (5-10 minutes)
 
 7. **Done**: Your app will be live at:
-   `https://huggingface.co/spaces/YOUR_USERNAME/movie-profanity-filter`
+   `https://huggingface.co/spaces/YOUR_USERNAME/video-profanity-filter`
 
 ## Option 2: Deploy via Git (Recommended)
 
@@ -55,11 +55,11 @@ pip install huggingface_hub
 huggingface-cli login
 
 # Create space
-huggingface-cli repo create movie-profanity-filter --type space --space-sdk gradio
+huggingface-cli repo create video-profanity-filter --type space --space-sdk gradio
 
 # Clone the space
-git clone https://huggingface.co/spaces/YOUR_USERNAME/movie-profanity-filter
-cd movie-profanity-filter
+git clone https://huggingface.co/spaces/YOUR_USERNAME/video-profanity-filter
+cd video-profanity-filter
 
 # Copy files
 cp ../movie_cleaner/app.py .

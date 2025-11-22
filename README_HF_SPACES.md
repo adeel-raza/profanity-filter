@@ -11,7 +11,7 @@ This guide will help you deploy the Movie Profanity Filter to Hugging Face Space
 2. **Create a new Space**
    - Go to https://huggingface.co/spaces
    - Click "Create new Space"
-   - Name it (e.g., `movie-profanity-filter`)
+   - Name it (e.g., `video-profanity-filter`)
    - Select **Gradio** as the SDK
    - Select **Python** as the hardware
    - Click "Create Space"
@@ -39,7 +39,7 @@ This guide will help you deploy the Movie Profanity Filter to Hugging Face Space
 5. **Deploy**
    - Hugging Face will automatically build and deploy
    - Wait for the build to complete (5-10 minutes first time)
-   - Your app will be live at: `https://huggingface.co/spaces/YOUR_USERNAME/YOUR_SPACE_NAME`
+   - Your app will be live at: `https://huggingface.co/spaces/YOUR_USERNAME/video-profanity-filter`
 
 ## File Structure in Hugging Face Space
 

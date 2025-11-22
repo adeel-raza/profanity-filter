@@ -7,10 +7,10 @@ torch>=2.0.0
 torchaudio>=2.0.0
 numpy>=1.24.0
 
-# Web interface - use compatible versions
-# Gradio 4.19.0 works with huggingface_hub 0.19.x
-gradio==4.19.0
-huggingface_hub==0.19.4
+# Web interface - use latest Gradio that works with newer huggingface_hub
+# Newer Gradio versions don't require HfFolder
+gradio>=4.44.0
+# Don't pin huggingface_hub - let Gradio handle compatibility
 
 # Note: FFmpeg must be installed on the system
 # Hugging Face Spaces has FFmpeg pre-installed

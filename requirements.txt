@@ -1,9 +1,17 @@
+# Requirements for Hugging Face Spaces deployment
+# This includes all dependencies needed for the web interface
+
 # Core dependencies for profanity filtering
 openai-whisper>=20231117
 torch>=2.0.0
 torchaudio>=2.0.0
 numpy>=1.24.0
 
-# Note: PyTorch CPU-only installation
-# For CPU-only: pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu
+# Web interface - use compatible versions
+# Gradio 4.19.0 works with huggingface_hub 0.19.x
+gradio==4.19.0
+huggingface_hub==0.19.4
+
+# Note: FFmpeg must be installed on the system
+# Hugging Face Spaces has FFmpeg pre-installed
 

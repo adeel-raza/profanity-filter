@@ -1,0 +1,2 @@
+AI-powered video profanity filter - Analyzes audio track to detect and remove curse words, sexual content, and obscene language from video files and subtitles. Uses OpenAI Whisper for speech-to-text transcription, automatically cuts profanity segments from video, and cleans subtitles. Any video with profanity in the audio can be filtered. Perfect for creating family-friendly video versions. 100% local processing, privacy-first, open source.
+

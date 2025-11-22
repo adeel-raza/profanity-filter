@@ -2,6 +2,8 @@
 
 Automated AI-powered tool to remove profanity, curse words, and obscene language from videos and subtitles - making movies family-friendly.
 
+**How it works:** The tool analyzes the audio track of any video file using AI speech-to-text transcription, detects profanity words, and automatically removes those segments from both the video file and subtitle files. Any video with profanity in the audio can be filtered and cleaned.
+
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Whisper](https://img.shields.io/badge/Powered%20by-OpenAI%20Whisper-orange.svg)](https://github.com/openai/whisper)
@@ -21,15 +23,17 @@ Automated AI-powered tool to remove profanity, curse words, and obscene language
 
 ## What It Does
 
-This tool automatically:
+This tool automatically analyzes the **audio track** of any video file to detect and remove profanity:
 
-1. **Transcribes audio** from your video using Whisper AI
-2. **Detects profanity** in the transcribed text (1,100+ words)
-3. **Cuts out profanity segments** from the video file
-4. **Cleans subtitles** by removing profanity words
-5. **Synchronizes subtitles** with the edited video
+1. **Transcribes audio** from your video using Whisper AI (speech-to-text)
+2. **Detects profanity** in the transcribed text (1,132+ profanity words)
+3. **Cuts out profanity segments** from the video file (removes audio and video)
+4. **Cleans subtitles** by removing profanity words from text
+5. **Synchronizes subtitles** with the edited video (adjusts timestamps)
 
-**Result:** A clean, family-friendly version of your movie with profanity removed from both audio and subtitles.
+**Result:** A clean, family-friendly version of your video with profanity removed from both the video file and subtitle files.
+
+**Key Feature:** Any video with profanity in the audio can be filtered - the tool analyzes the audio track to identify profanity, then removes those segments from the video file and cleans the subtitles accordingly.
 
 ## Quick Start
 

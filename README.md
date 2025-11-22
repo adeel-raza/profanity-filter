@@ -117,9 +117,10 @@ The tool filters **1,132 profanity words** including:
 **Note:** "Damn" and variations are **NOT** filtered (not considered obscene for family viewing).
 
 **Word Matching:**
-- Uses whole-word matching (so "class" won't match "ass")
+- Uses exact whole-word matching only (prevents false positives)
 - Case-insensitive detection
 - Handles punctuation correctly
+- Fixed: No longer matches partial words (e.g., "house" won't match "whore")
 
 ## Performance
 

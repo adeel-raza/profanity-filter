@@ -15,7 +15,6 @@ class AudioProfanityDetector:
     
     # Use shared profanity word list
     PROFANITY_WORDS = PROFANITY_WORDS
-    
     def __init__(self, model_size: str = 'tiny'):
         """
         Initialize audio profanity detector.
@@ -118,13 +117,13 @@ class AudioProfanityDetector:
                 for word_info in segment.get('words', []):
                     words_checked += 1
                     word = word_info.get('word', '').strip().lower()
-                    # Remove punctuation
+                    # Remove punctuation from end
                     word = word.rstrip('.,!?;:')
                     
-                    # Check if word is profanity
-                    if word in self.PROFANITY_WORDS or any(
-                        profanity in word for profanity in self.PROFANITY_WORDS
-                    ):
+                    # Check if word is profanity using EXACT match only (whole word)
+                    # This prevents false positives like "house" matching "whore"
+                    # or "hour" matching "whore"
+                    if word in self.PROFANITY_WORDS:
                         start = word_info.get('start', 0)
                         end = word_info.get('end', 0)
                         # Add small padding around word

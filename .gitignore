@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Movies and video files (exclude from repo)
+movies/
+sample/*.mp4
+sample/*.mkv
+sample/*.mov
+sample/*.avi
+sample/cleaned/*.mp4
+sample/cleaned/*.mkv
+sample/cleaned/*.mov
+sample/cleaned/*.avi
+
+# Keep sample subtitles for examples
+!sample/*.srt
+!sample/cleaned/*.srt
+
+# Logs and temporary files
+*.log
+processing_log.txt
+*.tmp
+*.temp
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Model cache (Whisper downloads models)
+.whisper/

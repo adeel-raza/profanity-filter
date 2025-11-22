@@ -1,3 +1,14 @@
+---
+title: Video Profanity Filter
+emoji: 🎬
+colorFrom: blue
+colorTo: purple
+sdk: gradio
+sdk_version: "4.0.0"
+app_file: app.py
+pinned: false
+---
+
 # Movie Profanity Filter
 
 Automated AI-powered tool to remove profanity, curse words, and obscene language from videos and subtitles - making movies family-friendly.

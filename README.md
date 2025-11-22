@@ -1,25 +1,25 @@
-# 🎬 Movie Profanity Filter
+# Movie Profanity Filter
 
-**Automated AI-powered tool to remove profanity, curse words, and obscene language from videos and subtitles - making movies family-friendly.**
+Automated AI-powered tool to remove profanity, curse words, and obscene language from videos and subtitles - making movies family-friendly.
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Whisper](https://img.shields.io/badge/Powered%20by-OpenAI%20Whisper-orange.svg)](https://github.com/openai/whisper)
 
-## 🌟 Features
+## Features
 
-- ✅ **AI-Powered Audio Transcription** - Uses OpenAI Whisper for accurate speech-to-text
-- ✅ **Comprehensive Profanity Detection** - 1,132 curse words, sexual terms, and obscene language
-- ✅ **Automatic Video Editing** - Cuts out profanity segments from video files using FFmpeg
-- ✅ **Subtitle Cleaning** - Removes profanity words from SRT/VTT subtitle files
-- ✅ **Timestamp Synchronization** - Automatically adjusts subtitles after video cuts
-- ✅ **Batch Processing** - Process multiple videos at once
-- ✅ **CPU-Only** - Works without GPU, optimized for CPU processing
-- ✅ **Fast Processing** - No video frame analysis, only audio transcription (7-15 min for 2-hour movie)
-- ✅ **Privacy-First** - 100% local processing, no data uploads
-- ✅ **Open Source** - Full transparency, MIT licensed
+- **AI-Powered Audio Transcription** - Uses OpenAI Whisper for accurate speech-to-text
+- **Comprehensive Profanity Detection** - 1,132 curse words, sexual terms, and obscene language
+- **Automatic Video Editing** - Cuts out profanity segments from video files using FFmpeg
+- **Subtitle Cleaning** - Removes profanity words from SRT/VTT subtitle files
+- **Timestamp Synchronization** - Automatically adjusts subtitles after video cuts
+- **Batch Processing** - Process multiple videos at once
+- **CPU-Only** - Works without GPU, optimized for CPU processing
+- **Fast Processing** - No video frame analysis, only audio transcription (7-15 min for 2-hour movie)
+- **Privacy-First** - 100% local processing, no data uploads
+- **Open Source** - Full transparency, MIT licensed
 
-## 📋 What It Does
+## What It Does
 
 This tool automatically:
 
@@ -31,7 +31,7 @@ This tool automatically:
 
 **Result:** A clean, family-friendly version of your movie with profanity removed from both audio and subtitles.
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Installation
 
@@ -61,7 +61,7 @@ python clean.py movie.mp4 cleaned_movie.mp4
 python clean.py video.mp4 cleaned_video.mp4
 ```
 
-## 📖 Detailed Usage
+## Detailed Usage
 
 ### Command Line Options
 
@@ -100,7 +100,7 @@ python clean.py movie.mp4 cleaned.mp4 --subs movie.srt --whisper-model base
 python batch_process.py input_folder/ output_folder/
 ```
 
-## 🎯 What Gets Filtered
+## What Gets Filtered
 
 The tool filters **1,132 profanity words** including:
 
@@ -121,7 +121,7 @@ The tool filters **1,132 profanity words** including:
 - Case-insensitive detection
 - Handles punctuation correctly
 
-## ⚡ Performance
+## Performance
 
 ### Processing Speed
 
@@ -141,7 +141,7 @@ For a **2-hour movie**:
 - **Storage**: ~2 GB for models and dependencies
 - **CPU**: Any modern CPU (GPU optional, not required)
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 profanity-filter/
@@ -157,7 +157,7 @@ profanity-filter/
 └── README.md                     # This file
 ```
 
-## 🔧 Advanced Usage
+## Advanced Usage
 
 ### Generate Subtitles (If You Don't Have Them)
 
@@ -177,7 +177,7 @@ python batch_process.py /path/to/videos/ /path/to/output/ --whisper-model tiny
 python clean.py video.mp4 cleaned.mp4 --remove-timestamps "10-15,30-35,60-65"
 ```
 
-## 🛠️ How It Works
+## How It Works
 
 1. **Audio Extraction**: Extracts audio track from video using FFmpeg
 2. **Transcription**: Uses OpenAI Whisper to transcribe audio with word-level timestamps
@@ -186,7 +186,7 @@ python clean.py video.mp4 cleaned.mp4 --remove-timestamps "10-15,30-35,60-65"
 5. **Video Cutting**: Uses FFmpeg to cut out profanity segments
 6. **Subtitle Processing**: Removes profanity words from subtitles and adjusts timestamps
 
-## 📊 Example Output
+## Example Output
 
 ### Real Example: `sample/fyou.mp4`
 
@@ -276,7 +276,7 @@ This is  ridiculous!
 
 *(Profanity words completely removed, timestamps adjusted)*
 
-## 🎓 Use Cases
+## Use Cases
 
 - **Family Movie Nights** - Make any movie suitable for children
 - **Content Creators** - Clean videos for broader audience
@@ -284,14 +284,14 @@ This is  ridiculous!
 - **Public Screenings** - Ensure content is appropriate
 - **Personal Libraries** - Maintain family-friendly video collections
 
-## 🔒 Privacy & Security
+## Privacy & Security
 
 - ✅ **100% Local Processing** - All processing happens on your machine
 - ✅ **No Internet Required** - Works completely offline after installation
 - ✅ **No Data Upload** - Your videos never leave your computer
 - ✅ **Open Source** - Full transparency, inspect the code yourself
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
@@ -303,25 +303,25 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 - Optimize processing speed
 - Add more subtitle formats
 
-## 📝 License
+## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - **OpenAI Whisper** - For accurate speech-to-text transcription
 - **FFmpeg** - For video/audio processing
 - **Python Community** - For excellent libraries
 
-## 📞 Support
+## Support
 
 - **Issues**: [GitHub Issues](https://github.com/adeel-raza/profanity-filter/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/adeel-raza/profanity-filter/discussions)
 
-## ⭐ Star History
+## Star This Repo
 
-If you find this tool useful, please consider giving it a ⭐ on GitHub!
+If you find this tool useful, please consider giving it a star on GitHub!
 
 ---
 
-**Made with ❤️ for creating family-friendly content**
+Made for creating family-friendly content

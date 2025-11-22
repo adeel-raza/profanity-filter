@@ -52,13 +52,13 @@ pip install -r requirements.txt
 
 ```bash
 # Clean a single video with subtitles
-python clean.py input.mp4 output.mp4 --subs input.srt
+python3 clean.py input.mp4 output.mp4 --subs input.srt
 
 # Auto-detect subtitle file (if same name as video)
-python clean.py movie.mp4 cleaned_movie.mp4
+python3 clean.py movie.mp4 cleaned_movie.mp4
 
 # Process without subtitles (audio only)
-python clean.py video.mp4 cleaned_video.mp4
+python3 clean.py video.mp4 cleaned_video.mp4
 ```
 
 ## Detailed Usage
@@ -66,7 +66,7 @@ python clean.py video.mp4 cleaned_video.mp4
 ### Command Line Options
 
 ```bash
-python clean.py [input_video] [output_video] [options]
+python3 clean.py [input_video] [output_video] [options]
 
 Options:
   --subs SUBTITLE_FILE    Input subtitle file (SRT or VTT)
@@ -81,7 +81,7 @@ Options:
 
 #### Example 1: Basic Video Cleaning
 ```bash
-python clean.py sample/fyou.mp4 sample/cleaned/fyou_cleaned.mp4 --subs sample/fyou.srt
+python3 clean.py sample/fyou.mp4 sample/cleaned/fyou_cleaned.mp4 --subs sample/fyou.srt
 ```
 
 **Output:**
@@ -92,12 +92,12 @@ python clean.py sample/fyou.mp4 sample/cleaned/fyou_cleaned.mp4 --subs sample/fy
 
 #### Example 2: Using Larger Whisper Model (Better Accuracy)
 ```bash
-python clean.py movie.mp4 cleaned.mp4 --subs movie.srt --whisper-model base
+python3 clean.py movie.mp4 cleaned.mp4 --subs movie.srt --whisper-model base
 ```
 
 #### Example 3: Batch Processing Multiple Videos
 ```bash
-python batch_process.py input_folder/ output_folder/
+python3 batch_process.py input_folder/ output_folder/
 ```
 
 ## What Gets Filtered
@@ -161,19 +161,19 @@ profanity-filter/
 ### Generate Subtitles (If You Don't Have Them)
 
 ```bash
-python generate_subtitles.py video.mp4 output.srt --model tiny
+python3 generate_subtitles.py video.mp4 output.srt --model tiny
 ```
 
 ### Process Multiple Videos
 
 ```bash
-python batch_process.py /path/to/videos/ /path/to/output/ --whisper-model tiny
+python3 batch_process.py /path/to/videos/ /path/to/output/ --whisper-model tiny
 ```
 
 ### Manual Timestamp Removal
 
 ```bash
-python clean.py video.mp4 cleaned.mp4 --remove-timestamps "10-15,30-35,60-65"
+python3 clean.py video.mp4 cleaned.mp4 --remove-timestamps "10-15,30-35,60-65"
 ```
 
 ## How It Works

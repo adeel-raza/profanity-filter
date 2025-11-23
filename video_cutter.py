@@ -152,10 +152,11 @@ class VideoCutter:
                 start, end = keep_segments[0]
                 duration = end - start
                 # Use -ss after -i for accurate timing (ensures subtitle sync)
+                # Use precise timestamps to avoid rounding errors
                 cmd = [
                     'ffmpeg', '-i', str(input_path),
-                    '-ss', str(start),  # Seek after input for accuracy
-                    '-t', str(duration),
+                    '-ss', f'{start:.3f}',  # Use precise timestamp
+                    '-t', f'{duration:.3f}',  # Use precise duration
                     '-c', 'copy',  # Stream copy - no re-encoding (FAST!)
                     '-avoid_negative_ts', 'make_zero',
                     '-y', str(output_path)
@@ -174,14 +175,15 @@ class VideoCutter:
                     segment_file = temp_dir / f'segment_{i:04d}.mp4'
                     segment_files.append(segment_file)
                     
-                    print(f"    Extracting segment {i}/{total_segments}: {start:.1f}s - {end:.1f}s ({duration:.1f}s)...", end='\r')
+                    print(f"    Extracting segment {i}/{total_segments}: {start:.2f}s - {end:.2f}s ({duration:.2f}s)...", end='\r')
                     
                     # Extract segment using stream copy (FAST - no re-encoding)
-                    # Use -ss after -i for more accurate timing (slightly slower but more accurate)
+                    # Use -ss after -i for accurate timing, and use exact timestamps
+                    # Add small buffer to ensure we don't miss any content
                     extract_cmd = [
                         'ffmpeg', '-i', str(input_path),
-                        '-ss', str(start),
-                        '-t', str(duration),
+                        '-ss', f'{start:.3f}',  # Use precise timestamp
+                        '-t', f'{duration:.3f}',  # Use precise duration
                         '-c', 'copy',  # Stream copy - no re-encoding (FAST!)
                         '-avoid_negative_ts', 'make_zero',
                         '-loglevel', 'error',

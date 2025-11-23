@@ -468,11 +468,14 @@ class SubtitleProcessor:
                     
                     # Map the timestamp
                     mapped_time = cleaned_start + position_in_segment
-                    return mapped_time
+                    
+                    # Add delay to sync subtitles with audio
+                    # Subtitles appearing before audio means we need to delay them
+                    return mapped_time + 0.2  # 200ms delay
             
             # If timestamp is at or after last keep segment, calculate total removed
             total_removed = sum(end - start for start, end in sorted_removed)
-            return original_time - total_removed
+            return original_time - total_removed + 0.2  # Add delay
         
         adjusted = []
         for entry in entries:

@@ -177,10 +177,10 @@ class VideoCutter:
                     print(f"    Extracting segment {i}/{total_segments}: {start:.1f}s - {end:.1f}s ({duration:.1f}s)...", end='\r')
                     
                     # Extract segment using stream copy (FAST - no re-encoding)
-                    # Use -ss before -i for faster seeking
+                    # Use -ss after -i for more accurate timing (slightly slower but more accurate)
                     extract_cmd = [
-                        'ffmpeg', '-ss', str(start),
-                        '-i', str(input_path),
+                        'ffmpeg', '-i', str(input_path),
+                        '-ss', str(start),
                         '-t', str(duration),
                         '-c', 'copy',  # Stream copy - no re-encoding (FAST!)
                         '-avoid_negative_ts', 'make_zero',
@@ -206,6 +206,7 @@ class VideoCutter:
                     '-safe', '0',
                     '-i', str(concat_file),
                     '-c', 'copy',  # Copy streams for speed
+                    '-fflags', '+genpts',  # Generate presentation timestamps for accurate duration
                     '-loglevel', 'error',
                     '-y', str(output_path)
                 ]

@@ -7,9 +7,9 @@ torch>=2.0.0
 torchaudio>=2.0.0
 numpy>=1.24.0
 
-# Web interface - use Gradio 4.9.0+ which removed HfFolder dependency
-# This version works with newer huggingface_hub
-gradio>=4.9.0
+# Web interface - use Gradio 4.44.0+ which removed HfFolder dependency
+# Must use version that doesn't require HfFolder from huggingface_hub
+gradio>=4.44.0
 
 # Note: FFmpeg must be installed on the system
 # Hugging Face Spaces has FFmpeg pre-installed

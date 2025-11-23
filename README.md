@@ -130,10 +130,20 @@ python3 clean.py sample/fyou.mp4
 
 #### Example 2: Using Larger Whisper Model (Better Accuracy)
 ```bash
-python3 clean.py movie.mp4 cleaned.mp4 --subs movie.srt --whisper-model base
+python3 clean.py movie.mp4 --whisper-model base
+# Auto-detects: movie.srt (if exists)
+# Output: movie_cleaned.mp4
+# Note: --whisper-model only used if no subtitles found
 ```
 
-#### Example 3: Batch Processing Multiple Videos
+#### Example 3: Explicit Subtitle File (Different Name)
+```bash
+python3 clean.py movie.mp4 --subs custom_subtitles.srt
+# Use when subtitle file has different name than video
+# Output: movie_cleaned.mp4
+```
+
+#### Example 4: Batch Processing Multiple Videos
 ```bash
 python3 batch_process.py input_folder/ output_folder/
 ```

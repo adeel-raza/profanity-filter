@@ -27,8 +27,8 @@ Automated AI-powered tool to remove profanity, curse words, and obscene language
 - **Subtitle Cleaning** - Removes profanity words from SRT/VTT subtitle files
 - **Timestamp Synchronization** - Automatically adjusts subtitles after video cuts
 - **Batch Processing** - Process multiple videos at once
-- **CPU-Only** - Works without GPU, optimized for CPU processing
-- **Fast Processing** - No video frame analysis, only audio transcription (7-15 min for 2-hour movie)
+- **CPU & GPU Support** - Works on CPU (slower) or GPU (much faster), auto-detects available hardware
+- **Efficient Processing** - No video frame analysis, only audio transcription
 - **Privacy-First** - 100% local processing, no data uploads
 - **Open Source** - Full transparency, MIT licensed
 
@@ -78,6 +78,11 @@ python3 clean.py video.mp4 cleaned_video.mp4
 ```
 
 **Note:** Subtitles are optional. The tool analyzes the audio track of the video to detect profanity and removes those segments from the video file. If subtitles are provided, they will also be cleaned and synchronized with the edited video.
+
+**💡 Speed Tip:** If you already have subtitles, use `--no-audio` to skip transcription and process in minutes instead of hours:
+```bash
+python3 clean.py movie.mp4 cleaned.mp4 --subs movie.srt --no-audio
+```
 
 ## Detailed Usage
 
@@ -142,21 +147,40 @@ The tool filters **1,132 profanity words** including:
 
 ### Processing Speed
 
-For a **2-hour movie**:
-- **Audio Extraction**: ~30 seconds
-- **Whisper Transcription** (tiny model): ~5-10 minutes
-- **Video Cutting**: ~2-5 minutes (if profanity found)
-- **Total Time**: ~7-15 minutes
+For a **2-hour movie** (129 minutes):
 
-**Much faster than video-based NSFW detection** (which would take 30-60 minutes for the same movie).
+**On CPU (default):**
+- **Audio Extraction**: ~30 seconds
+- **Whisper Transcription** (tiny model): **4-10 hours** (2-5x real-time)
+- **Video Cutting**: ~5-15 minutes (if profanity found)
+- **Total Time**: **4-10 hours** (mostly transcription time)
+
+**On GPU (if available):**
+- **Audio Extraction**: ~30 seconds
+- **Whisper Transcription** (tiny model): **1-4 hours** (0.5-2x real-time)
+- **Video Cutting**: ~5-15 minutes (if profanity found)
+- **Total Time**: **1-4 hours** (much faster with GPU)
+
+**💡 Speed Tips:**
+- **Fastest Option**: If you already have subtitles, use `--no-audio` flag to skip transcription (completes in minutes)
+- **GPU Acceleration**: Install CUDA PyTorch for 5-10x faster transcription
+- **Smaller Model**: Use `--whisper-model tiny` (fastest, still accurate)
+
+**Note:** Whisper transcription is the bottleneck. Video cutting is fast (5-15 min regardless of video length).
 
 ### System Requirements
 
 - **OS**: Linux, macOS, or Windows
 - **Python**: 3.8 or higher
-- **RAM**: 2-4 GB minimum
+- **RAM**: 2-4 GB minimum (4+ GB recommended for long videos)
 - **Storage**: ~2 GB for models and dependencies
-- **CPU**: Any modern CPU (GPU optional, not required)
+- **CPU**: Any modern CPU (works on CPU, but slow for long videos)
+- **GPU**: Optional but highly recommended for faster processing (NVIDIA GPU with CUDA support)
+
+**Processing Time Expectations:**
+- **Short videos (< 30 min)**: 1-2 hours on CPU, 15-30 min on GPU
+- **Feature films (2 hours)**: 4-10 hours on CPU, 1-4 hours on GPU
+- **With subtitles + `--no-audio`**: Minutes (regardless of video length)
 
 ## Project Structure
 

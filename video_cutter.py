@@ -151,10 +151,10 @@ class VideoCutter:
                 # Single segment - use stream copy for speed (no re-encoding)
                 start, end = keep_segments[0]
                 duration = end - start
-                # Use -ss before -i for faster seeking
+                # Use -ss after -i for accurate timing (ensures subtitle sync)
                 cmd = [
-                    'ffmpeg', '-ss', str(start),
-                    '-i', str(input_path),
+                    'ffmpeg', '-i', str(input_path),
+                    '-ss', str(start),  # Seek after input for accuracy
                     '-t', str(duration),
                     '-c', 'copy',  # Stream copy - no re-encoding (FAST!)
                     '-avoid_negative_ts', 'make_zero',

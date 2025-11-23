@@ -39,29 +39,34 @@ class SubtitleProcessor:
             # This removes profanity words but keeps the rest of the sentence
             entries = self._filter_profanity(entries)
             
-            # First, identify entries that should be removed (completely within removed segments)
+            # First, identify entries that should be removed or clipped
             # Use ORIGINAL timestamps for this check (before adjustment)
-            entries_to_keep = []
+            entries_to_process = []
             for entry in entries:
                 entry_start = entry['start']  # Original timestamp
                 entry_end = entry['end']      # Original timestamp
                 
-                # Check if entry is completely within a removed segment (using original timestamps)
+                # Check if entry is completely within a removed segment
                 completely_removed = False
                 for remove_start, remove_end in removed_segments:
-                    # Entry is completely within removed segment if:
-                    # entry_start >= remove_start AND entry_end <= remove_end
                     if entry_start >= remove_start and entry_end <= remove_end:
                         completely_removed = True
                         break
                 
-                # Keep entry if it's not completely within a removed segment
-                if not completely_removed:
-                    entries_to_keep.append(entry)
+                # Skip entries completely within removed segments
+                if completely_removed:
+                    continue
+                
+                # For entries that overlap with removed segments, clip them
+                # Keep only the parts that are NOT in removed segments
+                clipped_entries = self._clip_entry_to_keep_segments(
+                    entry, removed_segments
+                )
+                entries_to_process.extend(clipped_entries)
             
             # Now adjust timestamps for entries we're keeping
             # This ensures subtitles stay aligned with the cleaned video
-            adjusted_entries = self._adjust_timestamps(entries_to_keep, removed_segments)
+            adjusted_entries = self._adjust_timestamps(entries_to_process, removed_segments)
             
             # Filter out entries that have no text after profanity removal
             final_entries = []

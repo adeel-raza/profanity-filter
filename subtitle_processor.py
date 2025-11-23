@@ -195,11 +195,29 @@ class SubtitleProcessor:
                 text = entry['text'].lower()
                 # Check if entry contains any profanity
                 found_profanity = []
+                
+                # First check for multi-word phrases (e.g., "fuck you", "ass hole")
+                multi_word_phrases = [
+                    ('fuck you', 'fuckyou'),
+                    ('fuck off', 'fuckoff'),
+                    ('ass hole', 'asshole'),
+                    ('mother fucker', 'motherfucker'),
+                    ('mother fuck', 'motherfuck'),
+                ]
+                
+                for phrase, word_key in multi_word_phrases:
+                    if word_key in self.PROFANITY_WORDS:
+                        pattern = r'\b' + re.escape(phrase) + r'\b'
+                        if re.search(pattern, text, re.IGNORECASE):
+                            found_profanity.append(word_key)
+                
+                # Then check individual words
                 for word in self.PROFANITY_WORDS:
                     # Use word boundary to match whole words only
                     pattern = r'\b' + re.escape(word) + r'\b'
                     if re.search(pattern, text, re.IGNORECASE):
-                        found_profanity.append(word)
+                        if word not in found_profanity:  # Avoid duplicates
+                            found_profanity.append(word)
                 
                 if found_profanity:
                     # Add small padding around subtitle segment

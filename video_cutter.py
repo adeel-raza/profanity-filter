@@ -132,10 +132,15 @@ class VideoCutter:
         if use_qsv_override is not None:
             use_qsv = use_qsv_override
         else:
+            # Properly check for QSV encoder support
             try:
-                subprocess.run(['ffmpeg', '-hide_banner', '-encoders', '|', 'grep', 'qsv'], capture_output=True, check=True)
-                use_qsv = True
-                print("  ✓ Intel Quick Sync Video (QSV) detected - attempting hardware acceleration")
+                result = subprocess.run(['ffmpeg', '-hide_banner', '-encoders'], 
+                                      capture_output=True, text=True, check=True)
+                use_qsv = 'h264_qsv' in result.stdout
+                if use_qsv:
+                    print("  ✓ Intel Quick Sync Video (QSV) detected - attempting hardware acceleration")
+                else:
+                    print("  Intel QSV not detected - using CPU encoding")
             except:
                 use_qsv = False
                 print("  Intel QSV not detected - using CPU encoding")
@@ -143,33 +148,27 @@ class VideoCutter:
         try:
             # Use filter_complex with concat for more reliable segment cutting
             if len(keep_segments) == 1:
-                # Single segment - simple cut
+                # Single segment - use stream copy for speed (no re-encoding)
                 start, end = keep_segments[0]
                 duration = end - start
+                # Use -ss before -i for faster seeking
                 cmd = [
-                    'ffmpeg', '-i', str(input_path),
-                    '-ss', str(start),
+                    'ffmpeg', '-ss', str(start),
+                    '-i', str(input_path),
                     '-t', str(duration),
-                    '-c:v', 'h264_qsv' if use_qsv else 'libx264',
-                    '-preset', 'fast' if use_qsv else 'medium',
-                    '-c:a', 'copy',  # Copy audio for speed
+                    '-c', 'copy',  # Stream copy - no re-encoding (FAST!)
                     '-avoid_negative_ts', 'make_zero',
                     '-y', str(output_path)
                 ]
-                if not use_qsv:
-                    cmd.extend(['-crf', '23'])
-                else:
-                    # Force nv12 for QSV compatibility
-                    cmd.extend(['-vf', 'format=nv12', '-global_quality', '25'])
 
             else:
-                # Multiple segments - extract each, then concat
+                # Multiple segments - use stream copy for speed (no re-encoding)
                 import tempfile
                 temp_dir = Path(tempfile.mkdtemp())
                 segment_files = []
                 total_segments = len(keep_segments)
                 
-                print(f"  Extracting {total_segments} segments to keep...")
+                print(f"  Extracting {total_segments} segments (using stream copy - FAST)...")
                 for i, (start, end) in enumerate(keep_segments, 1):
                     duration = end - start
                     segment_file = temp_dir / f'segment_{i:04d}.mp4'
@@ -177,30 +176,22 @@ class VideoCutter:
                     
                     print(f"    Extracting segment {i}/{total_segments}: {start:.1f}s - {end:.1f}s ({duration:.1f}s)...", end='\r')
                     
-                    # Extract segment
+                    # Extract segment using stream copy (FAST - no re-encoding)
+                    # Use -ss before -i for faster seeking
                     extract_cmd = [
-                        'ffmpeg', '-i', str(input_path),
-                        '-ss', str(start),
+                        'ffmpeg', '-ss', str(start),
+                        '-i', str(input_path),
                         '-t', str(duration),
-                        '-c:v', 'h264_qsv' if use_qsv else 'libx264',
-                        '-preset', 'fast',
-                        '-c:a', 'aac',
-                        '-b:a', '128k',
+                        '-c', 'copy',  # Stream copy - no re-encoding (FAST!)
                         '-avoid_negative_ts', 'make_zero',
                         '-loglevel', 'error',
                         '-y', str(segment_file)
                     ]
-                    if not use_qsv:
-                        extract_cmd.extend(['-crf', '23'])
-                    else:
-                        # QSV needs explicit pixel format conversion sometimes
-                        # Force nv12 pixel format which is standard for HW encoding
-                        extract_cmd.extend(['-vf', 'format=nv12', '-global_quality', '25'])
 
                     subprocess.run(extract_cmd, capture_output=True, check=True)
                 
                 print()  # New line after progress
-                print(f"  ✓ All segments extracted")
+                print(f"  ✓ All segments extracted (stream copy - no re-encoding)")
                 
                 # Create concat file
                 concat_file = temp_dir / 'concat.txt'

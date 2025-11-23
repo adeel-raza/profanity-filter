@@ -317,7 +317,7 @@ class SubtitleProcessor:
         
         For each subtitle, subtract the cumulative duration of all removed segments
         that occurred completely before this subtitle's start time.
-        Keeps all entries - profanity words have already been removed from text.
+        Handles entries that overlap with removed segments by adjusting them correctly.
         """
         if not removed_segments:
             return entries
@@ -337,18 +337,42 @@ class SubtitleProcessor:
                 if remove_end <= entry_start:
                     # Entire removal happened before this entry
                     time_removed_before += (remove_end - remove_start)
-                # Don't break - need to check all segments that end before entry_start
+                elif remove_start < entry_start:
+                    # Removed segment starts before entry but ends after entry start
+                    # Count only the portion before entry_start
+                    time_removed_before += (entry_start - remove_start)
             
             # Adjust timestamps by subtracting cumulative removed time
             new_start = max(0.0, entry_start - time_removed_before)
             new_end = max(0.0, entry_end - time_removed_before)
             
+            # If entry overlaps with a removed segment, we need to handle it differently
+            # Check if entry overlaps with any removed segment
+            for remove_start, remove_end in sorted_removed:
+                if entry_start < remove_end and entry_end > remove_start:
+                    # Entry overlaps with removed segment
+                    # If entry starts before removed segment, keep the part before
+                    # If entry starts within removed segment, it should be removed (handled in filtering)
+                    # If entry starts after removed segment, it's already adjusted above
+                    if entry_start < remove_start:
+                        # Entry starts before removed segment
+                        # Adjust end time to account for removed portion
+                        if entry_end > remove_end:
+                            # Entry spans across removed segment
+                            # Start stays as adjusted, end needs to account for removed portion
+                            removed_duration = remove_end - remove_start
+                            new_end = new_end - removed_duration
+                        elif entry_end > remove_start:
+                            # Entry ends within removed segment
+                            # Clip end to start of removed segment (after adjustment)
+                            new_end = new_start + (remove_start - entry_start)
+                    break
+            
             # Ensure end is after start
             if new_end <= new_start:
                 new_end = new_start + 0.1
             
-            # Keep all entries (don't filter out overlapping ones)
-            # Profanity words have already been removed from the text
+            # Keep all entries (filtering happens separately)
             adjusted.append({
                 'index': entry['index'],
                 'start': new_start,

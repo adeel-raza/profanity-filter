@@ -66,23 +66,24 @@ pip install -r requirements.txt
 ### Basic Usage
 
 ```bash
-# Clean a single video with subtitles
+# Clean a video with subtitles (FAST - completes in minutes!)
 python3 clean.py input.mp4 output.mp4 --subs input.srt
 
-# Auto-detect subtitle file (if same name as video)
+# Auto-detect subtitle file (if same name as video) - FAST mode
 python3 clean.py movie.mp4 cleaned_movie.mp4
 
-# Process video by analyzing audio only (subtitles optional)
-# The tool analyzes the audio track to detect profanity and removes it from the video
+# Process video without subtitles (SLOW - transcribes audio, takes 4-10 hours)
 python3 clean.py video.mp4 cleaned_video.mp4
 ```
 
-**Note:** Subtitles are optional. The tool analyzes the audio track of the video to detect profanity and removes those segments from the video file. If subtitles are provided, they will also be cleaned and synchronized with the edited video.
+**Default Behavior (FAST):**
+- **With subtitles**: Uses subtitle timestamps (completes in **minutes**)
+- **Without subtitles**: Transcribes audio (takes **4-10 hours** for 2-hour movie)
 
-**💡 Speed Tip:** If you already have subtitles, use `--no-audio` to skip transcription and process in minutes instead of hours:
-```bash
-python3 clean.py movie.mp4 cleaned.mp4 --subs movie.srt --no-audio
-```
+**💡 Speed Tips:**
+- **Always provide subtitles** if available - processing completes in minutes instead of hours
+- Use `--audio` flag only if you want to check audio in addition to subtitles (very slow)
+- For fastest processing: `python3 clean.py movie.mp4 cleaned.mp4 --subs movie.srt`
 
 ## Detailed Usage
 
@@ -93,11 +94,15 @@ python3 clean.py [input_video] [output_video] [options]
 
 Options:
   --subs SUBTITLE_FILE    Input subtitle file (SRT or VTT)
+                          Default: Auto-detects if same name as video
+                          RECOMMENDED: Always provide subtitles for fast processing (minutes vs hours)
   --whisper-model MODEL   Whisper model size (tiny, base, small, medium, large)
                           Default: tiny (fastest, good accuracy)
+                          Only used if no subtitles provided or --audio flag used
                           Note: Transcription takes 2-5x real-time on CPU (4-10 hours for 2-hour movie)
-  --no-audio              Skip audio profanity detection (FAST - use if you have subtitles)
-                          Processes subtitles only, completes in minutes instead of hours
+  --audio                 Also transcribe audio for profanity detection (SLOW)
+                          Default: Uses subtitles if available (FAST)
+                          Only use if you want to check audio in addition to subtitles
   --remove-timestamps     Manually specify timestamps to remove
                           Format: "start-end,start-end" (e.g., "10-15,30-35")
 ```

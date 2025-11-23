@@ -373,14 +373,9 @@ class SubtitleProcessor:
         """
         Adjust subtitle timestamps to match the cleaned video.
         
-        The video cutter keeps segments: (0, r1_start), (r1_end, r2_start), ...
-        We need to map original timestamps to cleaned video timestamps.
-        
-        Algorithm:
-        For each entry at original time (orig_start, orig_end):
-        1. Find which keep segment it belongs to in the original video
-        2. Calculate its position within that keep segment
-        3. Map to the corresponding position in the cleaned video's keep segment
+        Algorithm matches video cutter's keep-segment logic:
+        - Video keeps: (0, r1_start), (r1_end, r2_start), ..., (rN_end, video_end)
+        - For each entry, find which keep segment it's in and map accordingly
         """
         if not removed_segments:
             return entries
@@ -388,80 +383,31 @@ class SubtitleProcessor:
         # Sort removed segments
         sorted_removed = sorted(removed_segments, key=lambda x: x[0])
         
-        # Build keep segments (same logic as video cutter)
-        keep_segments_original = []
-        current_time = 0.0
-        for remove_start, remove_end in sorted_removed:
-            if current_time < remove_start:
-                keep_segments_original.append((current_time, remove_start))
-            current_time = max(current_time, remove_end)
-        # Add final segment (we'll use a large number for end, actual video duration doesn't matter here)
-        keep_segments_original.append((current_time, float('inf')))
-        
-        # Build keep segments for cleaned video (with adjusted timestamps)
-        keep_segments_cleaned = []
-        cumulative_removed = 0.0
-        current_time = 0.0
-        for remove_start, remove_end in sorted_removed:
-            if current_time < remove_start:
-                # Keep segment in original: (current_time, remove_start)
-                # In cleaned video, this becomes: (current_time - cumulative_removed, remove_start - cumulative_removed)
-                keep_start_cleaned = current_time - cumulative_removed
-                keep_end_cleaned = remove_start - cumulative_removed
-                keep_segments_cleaned.append((keep_start_cleaned, keep_end_cleaned))
-            cumulative_removed += (remove_end - remove_start)
-            current_time = max(current_time, remove_end)
-        # Add final segment
-        keep_start_cleaned = current_time - cumulative_removed
-        keep_segments_cleaned.append((keep_start_cleaned, float('inf')))
-        
         adjusted = []
         for entry in entries:
             orig_start = entry['start']
             orig_end = entry['end']
             
-            # Find which keep segment the entry belongs to
-            new_start = None
-            new_end = None
+            # Calculate cumulative time removed before each timestamp
+            # This is the total duration of all removed segments that end before the timestamp
+            def get_time_removed_before(timestamp: float) -> float:
+                time_removed = 0.0
+                for remove_start, remove_end in sorted_removed:
+                    if remove_end <= timestamp:
+                        # Entire removal before timestamp
+                        time_removed += (remove_end - remove_start)
+                    elif remove_start < timestamp:
+                        # Removal overlaps timestamp - count only part before timestamp
+                        time_removed += (timestamp - remove_start)
+                return time_removed
             
-            for i, (keep_start_orig, keep_end_orig) in enumerate(keep_segments_original):
-                if keep_start_orig <= orig_start < keep_end_orig:
-                    # Entry starts in this keep segment
-                    keep_start_cleaned, keep_end_cleaned = keep_segments_cleaned[i]
-                    # Calculate position within keep segment
-                    position_in_segment = (orig_start - keep_start_orig) / (keep_end_orig - keep_start_orig) if (keep_end_orig - keep_start_orig) > 0 else 0
-                    # Map to cleaned video
-                    new_start = keep_start_cleaned + position_in_segment * (keep_end_cleaned - keep_start_cleaned)
-                    break
+            # Adjust start time
+            time_removed_before_start = get_time_removed_before(orig_start)
+            new_start = max(0.0, orig_start - time_removed_before_start)
             
-            # Find end time similarly
-            for i, (keep_start_orig, keep_end_orig) in enumerate(keep_segments_original):
-                if keep_start_orig <= orig_end < keep_end_orig:
-                    keep_start_cleaned, keep_end_cleaned = keep_segments_cleaned[i]
-                    position_in_segment = (orig_end - keep_start_orig) / (keep_end_orig - keep_start_orig) if (keep_end_orig - keep_start_orig) > 0 else 0
-                    new_end = keep_start_cleaned + position_in_segment * (keep_end_cleaned - keep_start_cleaned)
-                    break
-            
-            # If entry spans multiple keep segments, handle it
-            if new_start is None or new_end is None:
-                # Fallback: use simple subtraction method
-                time_removed_before = sum(
-                    (end - start) for start, end in sorted_removed if end <= orig_start
-                )
-                time_removed_before += sum(
-                    (orig_start - start) for start, end in sorted_removed 
-                    if start < orig_start < end
-                )
-                new_start = max(0.0, orig_start - time_removed_before)
-                
-                time_removed_before_end = sum(
-                    (end - start) for start, end in sorted_removed if end <= orig_end
-                )
-                time_removed_before_end += sum(
-                    (orig_end - start) for start, end in sorted_removed 
-                    if start < orig_end < end
-                )
-                new_end = max(0.0, orig_end - time_removed_before_end)
+            # Adjust end time
+            time_removed_before_end = get_time_removed_before(orig_end)
+            new_end = max(0.0, orig_end - time_removed_before_end)
             
             # Ensure end is after start
             if new_end <= new_start:

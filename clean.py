@@ -113,12 +113,17 @@ def main():
     # Step 2: Merge all segments
     print("Step 2: Merging segments...")
     print(f"  Audio segments: {len(audio_segments)}")
+    print(f"  Subtitle segments: {len(subtitle_segments)}")
     merger = TimestampMerger()
     all_segments = []
     if audio_segments:
         # Convert audio segments from (start, end, word) to (start, end)
         audio_segments_tuples = [(start, end) for start, end, word in audio_segments]
         all_segments = merger.merge(all_segments, audio_segments_tuples)
+    if subtitle_segments:
+        # Convert subtitle segments from (start, end, words) to (start, end)
+        subtitle_segments_tuples = [(start, end) for start, end, words in subtitle_segments]
+        all_segments = merger.merge(all_segments, subtitle_segments_tuples)
     # Add manual segments
     if manual_segments:
         print(f"  Manual segments: {len(manual_segments)}")

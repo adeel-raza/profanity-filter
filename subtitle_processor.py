@@ -124,6 +124,58 @@ class SubtitleProcessor:
         text = '\n'.join(line for line in lines if line)
         return text.strip()
     
+    def detect_profanity_segments(self, subtitle_path: Path) -> List[Tuple[float, float, str]]:
+        """
+        Detect profanity in subtitle file and return segments with timestamps.
+        
+        Args:
+            subtitle_path: Path to subtitle file (SRT or VTT)
+            
+        Returns:
+            List of (start_time, end_time, words) tuples for profanity segments
+        """
+        try:
+            with open(subtitle_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Parse based on file extension
+            if subtitle_path.suffix.lower() == '.srt':
+                entries = self._parse_srt(content)
+            elif subtitle_path.suffix.lower() == '.vtt':
+                entries = self._parse_vtt(content)
+            else:
+                # Try SRT format as default
+                entries = self._parse_srt(content)
+            
+            profanity_segments = []
+            
+            for entry in entries:
+                text = entry['text'].lower()
+                # Check if entry contains any profanity
+                found_profanity = []
+                for word in self.PROFANITY_WORDS:
+                    # Use word boundary to match whole words only
+                    pattern = r'\b' + re.escape(word) + r'\b'
+                    if re.search(pattern, text, re.IGNORECASE):
+                        found_profanity.append(word)
+                
+                if found_profanity:
+                    # Add small padding around subtitle segment
+                    padding = 0.2
+                    profanity_segments.append((
+                        max(0, entry['start'] - padding),
+                        entry['end'] + padding,
+                        ', '.join(sorted(set(found_profanity)))
+                    ))
+            
+            return profanity_segments
+            
+        except Exception as e:
+            print(f"  Error detecting profanity in subtitles: {e}")
+            import traceback
+            traceback.print_exc()
+            return []
+    
     def _filter_profanity(self, entries: List[dict]) -> List[dict]:
         """
         Filter profanity words from subtitle text entries.

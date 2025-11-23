@@ -57,6 +57,25 @@ class SubtitleProcessor:
                 if completely_removed:
                     continue
                 
+                # Check if entry starts inside a removal (should only keep part after removal)
+                starts_in_removal = False
+                for remove_start, remove_end in removed_segments:
+                    if remove_start <= entry_start < remove_end:
+                        starts_in_removal = True
+                        # If entry starts in removal, only keep part after removal
+                        if entry_end > remove_end:
+                            entries_to_process.append({
+                                'index': entry['index'],
+                                'start': remove_end,
+                                'end': entry_end,
+                                'text': entry['text']
+                            })
+                        # If entry ends within removal, it's completely removed
+                        break
+                
+                if starts_in_removal:
+                    continue
+                
                 # For entries that overlap with removed segments, clip them
                 # Keep only the parts that are NOT in removed segments
                 clipped_entries = self._clip_entry_to_keep_segments(

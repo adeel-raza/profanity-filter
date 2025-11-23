@@ -263,12 +263,27 @@ class SubtitleProcessor:
         if not text:
             return text
         
+        # First handle multi-word phrases (e.g., "fuck you", "ass hole")
+        multi_word_phrases = [
+            ('fuck you', 'fuckyou'),
+            ('fuck off', 'fuckoff'),
+            ('ass hole', 'asshole'),
+            ('mother fucker', 'motherfucker'),
+            ('mother fuck', 'motherfuck'),
+        ]
+        
+        filtered_text = text
+        for phrase, word_key in multi_word_phrases:
+            if word_key in self.PROFANITY_WORDS:
+                # Match phrase with word boundaries, case-insensitive
+                pattern = r'\b' + re.escape(phrase) + r'\b'
+                filtered_text = re.sub(pattern, '', filtered_text, flags=re.IGNORECASE)
+        
         # Sort profanity by length (longest first) to match longer words first
         # e.g., "fucking" before "fuck", "motherfucker" before "fuck"
         sorted_profanity = sorted(self.PROFANITY_WORDS, key=len, reverse=True)
         
         # Process each profanity word
-        filtered_text = text
         for profanity in sorted_profanity:
             # Create regex pattern that matches the profanity word as a whole word
             # \b ensures word boundaries, so "class" won't match "ass"

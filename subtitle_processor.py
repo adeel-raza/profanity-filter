@@ -333,11 +333,10 @@ class SubtitleProcessor:
         Clip an entry to only keep parts that are NOT in removed segments.
         Returns a list of entry dicts (may be empty, or 1-2 entries if split).
         
-        Example: Entry 4.04-6.64 with removal 4.26-5.30:
-        - Part 4.04-4.26 is kept (before removal)
-        - Part 4.26-5.30 is removed (in removal)
-        - Part 5.30-6.64 is kept (after removal)
-        - Returns entries for 4.04-4.26 and 5.30-6.64
+        Example: Entry 12-18 with removal 10-15:
+        - Part 12-15 is removed (overlaps removal)
+        - Part 15-18 is kept (after removal)
+        - Returns entry for 15-18 only
         """
         entry_start = entry['start']
         entry_end = entry['end']
@@ -469,11 +468,14 @@ class SubtitleProcessor:
                     
                     # Map the timestamp
                     mapped_time = cleaned_start + position_in_segment
+                    
+                    # Return mapped time without delay first
+                    # Delay will be added only if needed based on testing
                     return mapped_time
             
             # If timestamp is at or after last keep segment, calculate total removed
             total_removed = sum(end - start for start, end in sorted_removed)
-            return original_time - total_removed
+            return original_time - total_removed + 0.3  # Add delay
         
         adjusted = []
         for entry in entries:

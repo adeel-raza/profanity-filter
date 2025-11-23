@@ -275,6 +275,56 @@ class SubtitleProcessor:
         
         return filtered_text
     
+    def _clip_entry_to_keep_segments(self, entry: dict, 
+                                     removed_segments: List[Tuple[float, float]]) -> List[dict]:
+        """
+        Clip an entry to only keep parts that are NOT in removed segments.
+        Returns a list of entry dicts (may be empty, or 1-2 entries if split).
+        """
+        entry_start = entry['start']
+        entry_end = entry['end']
+        entry_text = entry['text']
+        entry_index = entry['index']
+        
+        # Sort removed segments
+        sorted_removed = sorted(removed_segments, key=lambda x: x[0])
+        
+        # Find all keep segments (gaps between removed segments within this entry)
+        keep_segments = []
+        current_time = entry_start
+        
+        for remove_start, remove_end in sorted_removed:
+            # If removal overlaps with entry
+            if entry_start < remove_end and entry_end > remove_start:
+                # Keep part before removal (if any)
+                clip_start = max(remove_start, entry_start)
+                clip_end = min(remove_end, entry_end)
+                
+                if current_time < clip_start:
+                    keep_segments.append((current_time, clip_start))
+                current_time = max(current_time, clip_end)
+        
+        # Keep part after last removal (if any)
+        if current_time < entry_end:
+            keep_segments.append((current_time, entry_end))
+        
+        # If no keep segments, entry is completely removed
+        if not keep_segments:
+            return []
+        
+        # Create entry dicts for each keep segment
+        result = []
+        for keep_start, keep_end in keep_segments:
+            if keep_end > keep_start:  # Valid segment
+                result.append({
+                    'index': entry_index,
+                    'start': keep_start,
+                    'end': keep_end,
+                    'text': entry_text
+                })
+        
+        return result
+    
     def _srt_time_to_seconds(self, time_parts: Tuple[str, str, str, str]) -> float:
         """Convert SRT time format (HH:MM:SS,mmm) to seconds"""
         hours, minutes, seconds, milliseconds = map(int, time_parts)

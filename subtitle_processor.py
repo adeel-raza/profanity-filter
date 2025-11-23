@@ -280,6 +280,11 @@ class SubtitleProcessor:
         """
         Clip an entry to only keep parts that are NOT in removed segments.
         Returns a list of entry dicts (may be empty, or 1-2 entries if split).
+        
+        Example: Entry 12-18 with removal 10-15:
+        - Part 12-15 is removed (overlaps removal)
+        - Part 15-18 is kept (after removal)
+        - Returns entry for 15-18 only
         """
         entry_start = entry['start']
         entry_end = entry['end']
@@ -289,20 +294,18 @@ class SubtitleProcessor:
         # Sort removed segments
         sorted_removed = sorted(removed_segments, key=lambda x: x[0])
         
-        # Find all keep segments (gaps between removed segments within this entry)
+        # Find all keep segments (parts of entry that don't overlap removals)
         keep_segments = []
         current_time = entry_start
         
         for remove_start, remove_end in sorted_removed:
-            # If removal overlaps with entry
+            # Check if this removal overlaps with the entry
             if entry_start < remove_end and entry_end > remove_start:
                 # Keep part before removal (if any)
-                clip_start = max(remove_start, entry_start)
-                clip_end = min(remove_end, entry_end)
-                
-                if current_time < clip_start:
-                    keep_segments.append((current_time, clip_start))
-                current_time = max(current_time, clip_end)
+                if current_time < remove_start:
+                    keep_segments.append((current_time, remove_start))
+                # Move current_time past the removal
+                current_time = max(current_time, remove_end)
         
         # Keep part after last removal (if any)
         if current_time < entry_end:

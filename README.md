@@ -115,9 +115,11 @@ Options:
 
 ### Examples
 
-#### Example 1: Basic Video Cleaning
+#### Example 1: Basic Video Cleaning (Auto-detects subtitles)
 ```bash
-python3 clean.py sample/fyou.mp4 sample/cleaned/fyou_cleaned.mp4 --subs sample/fyou.srt
+python3 clean.py sample/fyou.mp4
+# Auto-detects: sample/fyou.srt (if exists)
+# Output: sample/fyou_cleaned.mp4
 ```
 
 **Output:**

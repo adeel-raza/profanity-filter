@@ -318,9 +318,10 @@ class SubtitleProcessor:
         """
         Adjust subtitle timestamps to account for removed time.
         
-        For each subtitle, subtract the cumulative duration of all removed segments
-        that occurred completely before this subtitle's start time.
-        Handles entries that overlap with removed segments by adjusting them correctly.
+        For each subtitle entry:
+        1. Calculate cumulative time removed before entry_start
+        2. Subtract that time from both start and end
+        3. If entry overlaps with removed segment, adjust end time to account for overlap
         """
         if not removed_segments:
             return entries
@@ -333,49 +334,52 @@ class SubtitleProcessor:
             entry_start = entry['start']
             entry_end = entry['end']
             
-            # Calculate total time removed before this entry
-            # Count ALL segments that end before entry_start
-            time_removed_before = 0.0
+            # Calculate total time removed before entry_start
+            time_removed_before_start = 0.0
             for remove_start, remove_end in sorted_removed:
                 if remove_end <= entry_start:
                     # Entire removal happened before this entry
-                    time_removed_before += (remove_end - remove_start)
+                    time_removed_before_start += (remove_end - remove_start)
                 elif remove_start < entry_start:
                     # Removed segment starts before entry but ends after entry start
-                    # Count only the portion before entry_start
-                    time_removed_before += (entry_start - remove_start)
+                    # Count only the portion that's before entry_start
+                    time_removed_before_start += (entry_start - remove_start)
             
-            # Adjust timestamps by subtracting cumulative removed time
-            new_start = max(0.0, entry_start - time_removed_before)
-            new_end = max(0.0, entry_end - time_removed_before)
+            # Calculate total time removed before entry_end (for end time adjustment)
+            time_removed_before_end = 0.0
+            time_removed_in_entry = 0.0  # Time removed within the entry itself
             
-            # If entry overlaps with a removed segment, we need to handle it differently
-            # Check if entry overlaps with any removed segment
             for remove_start, remove_end in sorted_removed:
-                if entry_start < remove_end and entry_end > remove_start:
-                    # Entry overlaps with removed segment
-                    # If entry starts before removed segment, keep the part before
-                    # If entry starts within removed segment, it should be removed (handled in filtering)
-                    # If entry starts after removed segment, it's already adjusted above
-                    if entry_start < remove_start:
-                        # Entry starts before removed segment
-                        # Adjust end time to account for removed portion
-                        if entry_end > remove_end:
-                            # Entry spans across removed segment
-                            # Start stays as adjusted, end needs to account for removed portion
-                            removed_duration = remove_end - remove_start
-                            new_end = new_end - removed_duration
-                        elif entry_end > remove_start:
-                            # Entry ends within removed segment
-                            # Clip end to start of removed segment (after adjustment)
-                            new_end = new_start + (remove_start - entry_start)
-                    break
+                if remove_end <= entry_end:
+                    if remove_end <= entry_start:
+                        # Entire removal before entry
+                        time_removed_before_end += (remove_end - remove_start)
+                    elif remove_start < entry_start:
+                        # Removal starts before entry, ends within entry
+                        time_removed_before_end += (entry_start - remove_start)
+                        time_removed_in_entry += (remove_end - entry_start)
+                    else:
+                        # Removal completely within entry
+                        time_removed_in_entry += (remove_end - remove_start)
+                elif remove_start < entry_end:
+                    if remove_start < entry_start:
+                        # Removal spans across entry
+                        time_removed_before_end += (entry_start - remove_start)
+                        time_removed_in_entry += (entry_end - entry_start)
+                    else:
+                        # Removal starts within entry, ends after
+                        time_removed_in_entry += (entry_end - remove_start)
+            
+            # Adjust start time: subtract time removed before entry
+            new_start = max(0.0, entry_start - time_removed_before_start)
+            
+            # Adjust end time: subtract time removed before entry AND time removed within entry
+            new_end = max(0.0, entry_end - time_removed_before_start - time_removed_in_entry)
             
             # Ensure end is after start
             if new_end <= new_start:
                 new_end = new_start + 0.1
             
-            # Keep all entries (filtering happens separately)
             adjusted.append({
                 'index': entry['index'],
                 'start': new_start,

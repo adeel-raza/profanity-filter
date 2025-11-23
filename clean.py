@@ -30,8 +30,8 @@ def main():
                        help='Input subtitle file (SRT or VTT). If not provided, will auto-detect from video name.')
     parser.add_argument('--whisper-model', type=str, default='tiny',
                        help='Whisper model size (tiny=fastest, base, small, medium, large=slowest). For long videos, use "tiny" for speed.')
-    parser.add_argument('--no-audio', action='store_true',
-                       help='Skip audio profanity detection (use if you already have subtitles)')
+    parser.add_argument('--audio', action='store_true',
+                       help='Also transcribe audio for profanity detection (SLOW: 4-10 hours for 2-hour movie on CPU). Default: uses subtitles if available (FAST: minutes)')
     parser.add_argument('--remove-timestamps', type=str, default=None,
                        help='Manually specify timestamps to remove (format: "start-end,start-end" e.g., "6-11,23-30,50-60")')
     
@@ -70,18 +70,51 @@ def main():
         print(f"Subtitles: {subtitle_input}")
     print()
     
-    # Step 1: Detect profanity in audio OR subtitles
+    # Step 1: Detect profanity from subtitles (FAST) or audio (SLOW)
+    # Default: Use subtitles if available (fast), only transcribe audio if no subtitles or --audio flag
     audio_segments = []
     subtitle_segments = []  # Initialize here so it's always defined
     
-    if not args.no_audio:
-        print("Step 1: Detecting profanity in audio...")
+    # Priority 1: Use subtitles if available (FAST - completes in minutes)
+    if subtitle_input:
+        print("Step 1: Detecting profanity from subtitles (FAST)...")
+        print("-" * 60)
+        try:
+            subtitle_processor = SubtitleProcessor()
+            subtitle_segments = subtitle_processor.detect_profanity_segments(subtitle_input)
+            print("-" * 60)
+            print(f"Step 1 Summary: Found {len(subtitle_segments)} profanity segment(s) in subtitles")
+            if subtitle_segments:
+                for start, end, words in subtitle_segments:
+                    print(f"    - {start:.2f}s to {end:.2f}s ({end-start:.2f}s): '{words}'")
+            else:
+                print("    No profanity detected in subtitles")
+            print()
+        except Exception as e:
+            print(f"  ✗ ERROR: Subtitle profanity detection failed: {e}")
+            print(f"  Continuing without subtitle profanity detection...")
+            print()
+            subtitle_segments = []  # Ensure it's set even on error
+    
+    # Priority 2: Transcribe audio if requested with --audio flag OR if no subtitles available
+    should_transcribe_audio = args.audio or (not subtitle_input)
+    
+    if should_transcribe_audio:
+        if subtitle_input and args.audio:
+            print("Step 1b: Also transcribing audio (--audio flag specified)...")
+            print("  ⚠ This will take 4-10 hours for a 2-hour movie on CPU")
+            print("  💡 Tip: Remove --audio flag to use subtitles only (much faster)")
+        elif not subtitle_input:
+            print("Step 1: No subtitles found - transcribing audio (SLOW)...")
+            print("  ⚠ This will take 4-10 hours for a 2-hour movie on CPU")
+            print("  💡 Tip: Provide subtitles with --subs for faster processing")
+        
         print("-" * 60)
         try:
             audio_detector = AudioProfanityDetector(model_size=args.whisper_model)
             audio_segments = audio_detector.detect(input_path)
             print("-" * 60)
-            print(f"Step 1 Summary: Found {len(audio_segments)} profanity segment(s)")
+            print(f"Step 1{'b' if subtitle_input else ''} Summary: Found {len(audio_segments)} profanity segment(s) in audio")
             if audio_segments:
                 for start, end, word in audio_segments:
                     print(f"    - {start:.2f}s to {end:.2f}s ({end-start:.2f}s): '{word}'")
@@ -93,30 +126,9 @@ def main():
             print(f"  Continuing without audio profanity detection...")
             print()
             audio_segments = []
-    else:
-        print("Step 1: Skipping audio profanity detection (--no-audio)")
-        # If subtitles provided, detect profanity from subtitles instead
-        if subtitle_input:
-            print("Step 1b: Detecting profanity from subtitles...")
-            print("-" * 60)
-            try:
-                subtitle_processor = SubtitleProcessor()
-                subtitle_segments = subtitle_processor.detect_profanity_segments(subtitle_input)
-                print("-" * 60)
-                print(f"Step 1b Summary: Found {len(subtitle_segments)} profanity segment(s) in subtitles")
-                if subtitle_segments:
-                    for start, end, words in subtitle_segments:
-                        print(f"    - {start:.2f}s to {end:.2f}s ({end-start:.2f}s): '{words}'")
-                else:
-                    print("    No profanity detected in subtitles")
-                print()
-            except Exception as e:
-                print(f"  ✗ ERROR: Subtitle profanity detection failed: {e}")
-                print(f"  Continuing without subtitle profanity detection...")
-                print()
-                subtitle_segments = []  # Ensure it's set even on error
-        else:
-            print("  (No subtitles provided for profanity detection)")
+    elif subtitle_input:
+        print("Step 1: Using subtitles only (fast mode)")
+        print("  💡 To also check audio, use --audio flag (slow: 4-10 hours)")
         print()
     
     # Step 2: Add manual timestamps if specified

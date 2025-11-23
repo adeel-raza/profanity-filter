@@ -29,9 +29,9 @@ def main():
     parser.add_argument('--subs', type=str, default=None,
                        help='Input subtitle file (SRT or VTT). If not provided, will auto-detect from video name.')
     parser.add_argument('--whisper-model', type=str, default='tiny',
-                       help='Whisper model size (tiny, base, small, medium, large)')
+                       help='Whisper model size (tiny=fastest, base, small, medium, large=slowest). For long videos, use "tiny" for speed.')
     parser.add_argument('--no-audio', action='store_true',
-                       help='Skip audio profanity detection')
+                       help='Skip audio profanity detection (use if you already have subtitles)')
     parser.add_argument('--remove-timestamps', type=str, default=None,
                        help='Manually specify timestamps to remove (format: "start-end,start-end" e.g., "6-11,23-30,50-60")')
     

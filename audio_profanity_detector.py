@@ -31,15 +31,26 @@ class AudioProfanityDetector:
         try:
             import warnings
             import whisper
+            import torch
+            
+            # Check for GPU availability
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            if device == "cuda":
+                print(f"  ✓ GPU detected: {torch.cuda.get_device_name(0)}")
+                print(f"  Using GPU for faster transcription")
+            else:
+                print(f"  ⚠ Using CPU (GPU not available) - transcription will be slower")
+                print(f"  💡 Tip: For faster processing, use --whisper-model tiny or provide existing subtitles")
+            
             # Suppress FP16 warning on CPU (expected behavior)
             warnings.filterwarnings('ignore', message='FP16 is not supported on CPU')
             print(f"  Loading Whisper model: {self.model_size}...")
-            self.whisper_model = whisper.load_model(self.model_size)
-            print(f"  Whisper model loaded")
+            self.whisper_model = whisper.load_model(self.model_size, device=device)
+            print(f"  ✓ Whisper model loaded on {device.upper()}")
         except ImportError:
             raise ImportError(
                 "Whisper not installed. Install with: pip install openai-whisper\n"
-                "Note: Requires PyTorch (CPU version)"
+                "Note: Requires PyTorch"
             )
     
     def detect(self, video_path: Path) -> List[Tuple[float, float, str]]:
@@ -87,9 +98,24 @@ class AudioProfanityDetector:
             print(f"  ✓ Audio extracted")
             
             # Transcribe with Whisper
-            print(f"  Transcribing audio with Whisper ({self.model_size} model)...")
+            import torch
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            
+            print(f"  Transcribing audio with Whisper ({self.model_size} model on {device.upper()})...")
             if duration:
-                print(f"  ⏳ This may take {duration/60*2:.1f}-{duration/60*5:.1f} minutes for {duration/60:.1f} min video...")
+                # Estimate time based on device
+                if device == "cuda":
+                    # GPU: roughly real-time to 2x real-time
+                    est_min = duration / 60 * 0.5
+                    est_max = duration / 60 * 2
+                else:
+                    # CPU: 2-5x real-time
+                    est_min = duration / 60 * 2
+                    est_max = duration / 60 * 5
+                print(f"  ⏳ Estimated time: {est_min:.1f}-{est_max:.1f} minutes for {duration/60:.1f} min video")
+                if device == "cpu" and duration > 3600:  # > 1 hour
+                    print(f"  ⚠ Long video on CPU - this may take {est_max:.0f} minutes or more")
+                    print(f"  💡 Consider using --whisper-model tiny for faster processing")
             else:
                 print(f"  ⏳ This may take several minutes, please wait...")
             
@@ -97,11 +123,12 @@ class AudioProfanityDetector:
             # Suppress FP16 warning during transcription (expected on CPU)
             with warnings.catch_warnings():
                 warnings.filterwarnings('ignore', message='FP16 is not supported on CPU')
+                # Use verbose=True to show progress for long videos
                 result = self.whisper_model.transcribe(
                     str(audio_path),
                     word_timestamps=True,
                     language='en',
-                    verbose=False  # Suppress Whisper's internal progress
+                    verbose=True if duration and duration > 600 else False  # Show progress for videos > 10 min
                 )
             
             print(f"  ✓ Transcription complete")

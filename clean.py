@@ -70,8 +70,10 @@ def main():
         print(f"Subtitles: {subtitle_input}")
     print()
     
-    # Step 1: Detect profanity in audio
+    # Step 1: Detect profanity in audio OR subtitles
     audio_segments = []
+    subtitle_segments = []  # Initialize here so it's always defined
+    
     if not args.no_audio:
         print("Step 1: Detecting profanity in audio...")
         print("-" * 60)
@@ -93,6 +95,28 @@ def main():
             audio_segments = []
     else:
         print("Step 1: Skipping audio profanity detection (--no-audio)")
+        # If subtitles provided, detect profanity from subtitles instead
+        if subtitle_input:
+            print("Step 1b: Detecting profanity from subtitles...")
+            print("-" * 60)
+            try:
+                subtitle_processor = SubtitleProcessor()
+                subtitle_segments = subtitle_processor.detect_profanity_segments(subtitle_input)
+                print("-" * 60)
+                print(f"Step 1b Summary: Found {len(subtitle_segments)} profanity segment(s) in subtitles")
+                if subtitle_segments:
+                    for start, end, words in subtitle_segments:
+                        print(f"    - {start:.2f}s to {end:.2f}s ({end-start:.2f}s): '{words}'")
+                else:
+                    print("    No profanity detected in subtitles")
+                print()
+            except Exception as e:
+                print(f"  ✗ ERROR: Subtitle profanity detection failed: {e}")
+                print(f"  Continuing without subtitle profanity detection...")
+                print()
+                subtitle_segments = []  # Ensure it's set even on error
+        else:
+            print("  (No subtitles provided for profanity detection)")
         print()
     
     # Step 2: Add manual timestamps if specified

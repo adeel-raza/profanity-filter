@@ -43,15 +43,30 @@ class SubtitleProcessor:
             # This ensures subtitles stay aligned with the cleaned video
             adjusted_entries = self._adjust_timestamps(entries, removed_segments)
             
-            # Filter out entries that become completely empty after profanity removal
-            # But keep entries that have any remaining text
-            final_entries = []
+            # Remove entries that fall completely within removed video segments
+            # (These segments were cut from video, so subtitles should be removed too)
+            # But keep entries that overlap or are outside removed segments
+            filtered_entries = []
             for entry in adjusted_entries:
-                # Keep entry if it has any non-whitespace text
-                if entry['text'].strip():
-                    final_entries.append(entry)
+                entry_start = entry['start']
+                entry_end = entry['end']
+                
+                # Check if entry is completely within a removed segment
+                completely_removed = False
+                for remove_start, remove_end in removed_segments:
+                    # Entry is completely within removed segment if:
+                    # entry_start >= remove_start AND entry_end <= remove_end
+                    if entry_start >= remove_start and entry_end <= remove_end:
+                        completely_removed = True
+                        break
+                
+                # Keep entry if:
+                # 1. It's not completely within a removed segment, AND
+                # 2. It has text (even if only whitespace after profanity removal)
+                if not completely_removed and entry['text'].strip():
+                    filtered_entries.append(entry)
             
-            adjusted_entries = final_entries
+            adjusted_entries = filtered_entries
             
             # Write output SRT
             self._write_srt(output_srt, adjusted_entries)

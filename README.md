@@ -66,24 +66,29 @@ pip install -r requirements.txt
 ### Basic Usage
 
 ```bash
-# Clean a video with subtitles (FAST - completes in minutes!)
-python3 clean.py input.mp4 output.mp4 --subs input.srt
+# Clean a video (FAST - auto-detects subtitles if same name as video)
+python3 clean.py movie.mp4
+# Output: movie_cleaned.mp4
+# Auto-detects: movie.srt (if exists in same directory)
 
-# Auto-detect subtitle file (if same name as video) - FAST mode
-python3 clean.py movie.mp4 cleaned_movie.mp4
+# With explicit subtitle file (if different name)
+python3 clean.py movie.mp4 --subs custom_subtitles.srt
 
 # Process video without subtitles (SLOW - transcribes audio, takes 4-10 hours)
-python3 clean.py video.mp4 cleaned_video.mp4
+python3 clean.py video.mp4
+# No subtitles found - will transcribe audio
 ```
 
 **Default Behavior (FAST):**
+- **Auto-detects subtitles**: If `movie.srt` exists in same directory as `movie.mp4`, uses it automatically
 - **With subtitles**: Uses subtitle timestamps (completes in **minutes**)
 - **Without subtitles**: Transcribes audio (takes **4-10 hours** for 2-hour movie)
 
 **💡 Speed Tips:**
-- **Always provide subtitles** if available - processing completes in minutes instead of hours
+- **Subtitles are auto-detected** if they have the same name as the video (e.g., `movie.mp4` + `movie.srt`)
+- No need to specify `--subs` if subtitle file has same name as video
 - Use `--audio` flag only if you want to check audio in addition to subtitles (very slow)
-- For fastest processing: `python3 clean.py movie.mp4 cleaned.mp4 --subs movie.srt`
+- For fastest processing: Just run `python3 clean.py movie.mp4` (auto-detects subtitles)
 
 ## Detailed Usage
 
@@ -94,8 +99,9 @@ python3 clean.py [input_video] [output_video] [options]
 
 Options:
   --subs SUBTITLE_FILE    Input subtitle file (SRT or VTT)
-                          Default: Auto-detects if same name as video
-                          RECOMMENDED: Always provide subtitles for fast processing (minutes vs hours)
+                          Default: Auto-detects if same name as video (e.g., movie.mp4 → movie.srt)
+                          Only specify if subtitle file has different name
+                          RECOMMENDED: Place subtitle file with same name as video for auto-detection
   --whisper-model MODEL   Whisper model size (tiny, base, small, medium, large)
                           Default: tiny (fastest, good accuracy)
                           Only used if no subtitles provided or --audio flag used

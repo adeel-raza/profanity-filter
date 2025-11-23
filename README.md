@@ -95,7 +95,9 @@ Options:
   --subs SUBTITLE_FILE    Input subtitle file (SRT or VTT)
   --whisper-model MODEL   Whisper model size (tiny, base, small, medium, large)
                           Default: tiny (fastest, good accuracy)
-  --no-audio              Skip audio profanity detection
+                          Note: Transcription takes 2-5x real-time on CPU (4-10 hours for 2-hour movie)
+  --no-audio              Skip audio profanity detection (FAST - use if you have subtitles)
+                          Processes subtitles only, completes in minutes instead of hours
   --remove-timestamps     Manually specify timestamps to remove
                           Format: "start-end,start-end" (e.g., "10-15,30-35")
 ```

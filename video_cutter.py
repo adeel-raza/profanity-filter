@@ -168,7 +168,7 @@ class VideoCutter:
                 segment_files = []
                 total_segments = len(keep_segments)
                 
-                print(f"  Extracting {total_segments} segments (using stream copy - FAST)...")
+                print(f"  Extracting {total_segments} segments (re-encoding for accuracy - slower but precise)...")
                 for i, (start, end) in enumerate(keep_segments, 1):
                     duration = end - start
                     segment_file = temp_dir / f'segment_{i:04d}.mp4'
@@ -176,13 +176,16 @@ class VideoCutter:
                     
                     print(f"    Extracting segment {i}/{total_segments}: {start:.1f}s - {end:.1f}s ({duration:.1f}s)...", end='\r')
                     
-                    # Extract segment using stream copy (FAST - no re-encoding)
-                    # Use -ss after -i for more accurate timing (slightly slower but more accurate)
+                    # Extract segment using re-encoding (SLOWER but more accurate timing)
+                    # Re-encoding ensures precise frame boundaries and accurate timing
                     extract_cmd = [
                         'ffmpeg', '-i', str(input_path),
                         '-ss', str(start),
                         '-t', str(duration),
-                        '-c', 'copy',  # Stream copy - no re-encoding (FAST!)
+                        '-c:v', 'libx264',  # Re-encode video for accuracy
+                        '-c:a', 'aac',  # Re-encode audio for accuracy
+                        '-preset', 'fast',  # Balance speed and quality
+                        '-crf', '23',  # Good quality
                         '-avoid_negative_ts', 'make_zero',
                         '-loglevel', 'error',
                         '-y', str(segment_file)
@@ -191,7 +194,7 @@ class VideoCutter:
                     subprocess.run(extract_cmd, capture_output=True, check=True)
                 
                 print()  # New line after progress
-                print(f"  ✓ All segments extracted (stream copy - no re-encoding)")
+                print(f"  ✓ All segments extracted (re-encoded for accuracy)")
                 
                 # Create concat file
                 concat_file = temp_dir / 'concat.txt'

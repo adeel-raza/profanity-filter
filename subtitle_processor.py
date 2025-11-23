@@ -467,11 +467,15 @@ class SubtitleProcessor:
                     cleaned_start = keep_start - time_removed_before
                     
                     # Map the timestamp
-                    return cleaned_start + position_in_segment
+                    mapped_time = cleaned_start + position_in_segment
+                    
+                    # Add small offset to account for video player timing differences
+                    # Subtitles appearing before audio means we need a small delay to sync
+                    return mapped_time + 0.1  # 100ms delay to sync with audio
             
             # If timestamp is at or after last keep segment, calculate total removed
             total_removed = sum(end - start for start, end in sorted_removed)
-            return original_time - total_removed
+            return original_time - total_removed + 0.1  # Add small offset
         
         adjusted = []
         for entry in entries:

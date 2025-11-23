@@ -475,7 +475,7 @@ class SubtitleProcessor:
             
             # If timestamp is at or after last keep segment, calculate total removed
             total_removed = sum(end - start for start, end in sorted_removed)
-            return original_time - total_removed
+            return original_time - total_removed + 0.3  # Add delay
         
         adjusted = []
         for entry in entries:

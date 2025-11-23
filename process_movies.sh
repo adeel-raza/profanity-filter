@@ -24,3 +24,4 @@ python generate_summary.py "movies" "movies/cleaned" 2>&1
 
 
 
+

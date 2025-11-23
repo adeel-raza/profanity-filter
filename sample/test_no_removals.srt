@@ -51,11 +51,11 @@ You're a king.
 You have an army, greatest navy in the history of the world.
 
 14
-00:00:25,419 --> 00:00:26,618
+00:00:25,419 --> 00:00:26,617
 lost forever.
 
 15
-00:00:26,618 --> 00:00:30,318
+00:00:26,617 --> 00:00:30,318
 This is the grandson of the 17th richest man in California.
 
 16
@@ -103,15 +103,15 @@ You got 37 beers.
 But he did put it on you, Miss.
 
 27
-00:00:51,658 --> 00:00:55,497
+00:00:51,658 --> 00:00:55,496
 You still owe large two places you shouldn't.
 
 28
-00:00:55,497 --> 00:00:57,857
+00:00:55,496 --> 00:00:57,856
 Why do you want door number three?
 
 29
-00:00:57,857 --> 00:00:59,218
+00:00:57,856 --> 00:00:59,218
 How else do I get out?
 
 30
@@ -119,11 +119,11 @@ How else do I get out?
 I ain't payment.
 
 31
-00:00:59,698 --> 00:01:02,738
+00:00:59,698 --> 00:01:02,737
 I am of the universe and you know what it's worth.
 
 32
-00:01:02,738 --> 00:01:03,418
+00:01:02,737 --> 00:01:03,417
 Worth plenty.
 
 33
@@ -171,11 +171,11 @@ I understand.
 You get up, you get out.
 
 44
-00:01:38,737 --> 00:01:41,978
+00:01:38,736 --> 00:01:41,977
 260 is requested.
 
 45
-00:01:41,978 --> 00:01:43,617
+00:01:41,977 --> 00:01:43,617
 What's this?
 
 46
@@ -183,6 +183,6 @@ What's this?
 This much money, what's a car?
 
 47
-00:01:48,737 --> 00:01:49,938
+00:01:48,736 --> 00:01:49,938
 What do you want to be able to say to me?
 

@@ -148,15 +148,18 @@ class VideoCutter:
         try:
             # Use filter_complex with concat for more reliable segment cutting
             if len(keep_segments) == 1:
-                # Single segment - use stream copy for speed (no re-encoding)
+                # Single segment - use re-encoding for accuracy
                 start, end = keep_segments[0]
                 duration = end - start
-                # Use -ss before -i for faster seeking
+                # Use -ss after -i for accurate timing
                 cmd = [
-                    'ffmpeg', '-ss', str(start),
-                    '-i', str(input_path),
+                    'ffmpeg', '-i', str(input_path),
+                    '-ss', str(start),
                     '-t', str(duration),
-                    '-c', 'copy',  # Stream copy - no re-encoding (FAST!)
+                    '-c:v', 'libx264',  # Re-encode video for accuracy
+                    '-c:a', 'aac',  # Re-encode audio for accuracy
+                    '-preset', 'fast',  # Balance speed and quality
+                    '-crf', '23',  # Good quality
                     '-avoid_negative_ts', 'make_zero',
                     '-y', str(output_path)
                 ]

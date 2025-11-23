@@ -25,7 +25,8 @@ def main():
         description='Automatically remove profanity from videos and subtitles'
     )
     parser.add_argument('input', type=str, help='Input video file (MP4, MKV, etc.)')
-    parser.add_argument('output', type=str, help='Output cleaned video file')
+    parser.add_argument('output', type=str, nargs='?', default=None,
+                       help='Output cleaned video file (optional - defaults to input_cleaned.ext)')
     parser.add_argument('--subs', type=str, default=None,
                        help='Input subtitle file (SRT or VTT). If not provided, will auto-detect from video name.')
     parser.add_argument('--whisper-model', type=str, default='tiny',
@@ -38,7 +39,13 @@ def main():
     args = parser.parse_args()
     
     input_path = Path(args.input)
-    output_path = Path(args.output)
+    
+    # Auto-generate output filename if not provided
+    if args.output:
+        output_path = Path(args.output)
+    else:
+        # Generate output filename: input_cleaned.ext
+        output_path = input_path.parent / f"{input_path.stem}_cleaned{input_path.suffix}"
     
     if not input_path.exists():
         print(f"Error: Input file not found: {input_path}")

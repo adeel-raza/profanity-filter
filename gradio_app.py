@@ -18,7 +18,7 @@ from timestamp_merger import TimestampMerger
 from subtitle_processor import SubtitleProcessor
 
 
-def clean_video(video_file, subtitle_file, whisper_model, progress=gr.Progress()):
+def clean_video(video_file, subtitle_file, progress=gr.Progress()):
     """
     Clean video using the profanity filter
     
@@ -57,16 +57,17 @@ def clean_video(video_file, subtitle_file, whisper_model, progress=gr.Progress()
         log_messages.append("\nStep 1: Detecting profanity in audio...")
         
         try:
-            audio_detector = AudioProfanityDetector(model_size=whisper_model)
+            # Use 'tiny' model by default for fast processing
+            audio_detector = AudioProfanityDetector(model_size='tiny')
             progress(0.2, desc="Transcribing audio with Whisper...")
             audio_segments = audio_detector.detect(input_video)
             
             log_messages.append(f"Found {len(audio_segments)} profanity segment(s)")
             if audio_segments:
-                for start, end, word in audio_segments[:5]:  # Show first 5
-                    log_messages.append(f"  - {start:.2f}s to {end:.2f}s: '{word}'")
-                if len(audio_segments) > 5:
-                    log_messages.append(f"  ... and {len(audio_segments) - 5} more")
+                for start, end, word in audio_segments[:3]:  # Show first 3
+                    log_messages.append(f"  {start:.1f}s-{end:.1f}s: '{word}'")
+                if len(audio_segments) > 3:
+                    log_messages.append(f"  ... {len(audio_segments) - 3} more")
         except Exception as e:
             log_messages.append(f"ERROR: Audio profanity detection failed: {e}")
             audio_segments = []
@@ -104,14 +105,14 @@ def clean_video(video_file, subtitle_file, whisper_model, progress=gr.Progress()
                     cleaned_subtitle = str(output_subtitle)
             
             progress(1.0, desc="Complete!")
-            log_messages.append("\nSUCCESS! Video copied (no profanity found).")
+            log_messages.append("\n✓ No profanity found - video copied")
             return str(output_video), cleaned_subtitle, "\n".join(log_messages)
         
         # Step 3: Cut out segments
         progress(0.6, desc="Cutting out profanity segments...")
-        log_messages.append(f"\nStep 3: Cutting out {len(all_segments)} segment(s)...")
+        log_messages.append(f"\nStep 3: Cutting {len(all_segments)} segment(s)...")
         total_removed = sum(end - start for start, end in all_segments)
-        log_messages.append(f"Total time to remove: {total_removed:.2f} seconds")
+        log_messages.append(f"Removing {total_removed:.1f}s...")
         
         cutter = VideoCutter()
         success = cutter.cut_segments(input_video, output_video, all_segments)
@@ -119,7 +120,7 @@ def clean_video(video_file, subtitle_file, whisper_model, progress=gr.Progress()
         if not success:
             raise Exception("Failed to process video")
         
-        log_messages.append("Video cutting complete")
+        log_messages.append("✓ Complete")
         
         # Step 4: Process subtitles
         cleaned_subtitle = None
@@ -139,17 +140,14 @@ def clean_video(video_file, subtitle_file, whisper_model, progress=gr.Progress()
                 subtitle_processor.process_vtt(subtitle_path, output_subtitle, all_segments)
                 cleaned_subtitle = str(output_subtitle)
             
-            log_messages.append("Subtitles processed")
+            log_messages.append("✓ Subtitles cleaned")
         
         progress(1.0, desc="Complete!")
-        log_messages.append("\n" + "=" * 60)
-        log_messages.append("SUCCESS!")
-        log_messages.append("=" * 60)
-        log_messages.append(f"Cleaned video: {output_video.name}")
+        log_messages.append("\n✓ SUCCESS")
+        log_messages.append(f"Video: {output_video.name}")
         if cleaned_subtitle:
-            log_messages.append(f"Cleaned subtitles: {Path(cleaned_subtitle).name}")
-        log_messages.append(f"Removed {len(all_segments)} segment(s)")
-        log_messages.append(f"Total time removed: {total_removed:.2f} seconds")
+            log_messages.append(f"Subtitles: {Path(cleaned_subtitle).name}")
+        log_messages.append(f"Removed: {len(all_segments)} segment(s), {total_removed:.1f}s")
         
         return str(output_video), cleaned_subtitle, "\n".join(log_messages)
         
@@ -170,16 +168,9 @@ def create_interface():
         gr.Markdown("""
         # Movie Profanity Filter
         
-        **AI-powered tool to remove profanity, curse words, and obscene language from videos and subtitles.**
+        Remove profanity from videos using AI. Upload video and optional subtitles to create family-friendly content.
         
-        Upload your video (and optional subtitles) to create a family-friendly version.
-        
-        **Features:**
-        - Uses OpenAI Whisper for accurate speech-to-text
-        - Detects 1,132+ profanity words
-        - Automatically cuts profanity segments from video
-        - Cleans subtitles and adjusts timestamps
-        - Fast processing (7-15 min for 2-hour movie)
+        **Features:** OpenAI Whisper transcription • 1,132+ profanity words detected • Automatic video cutting • Subtitle cleaning
         """)
         
         with gr.Row():
@@ -194,13 +185,6 @@ def create_interface():
                     label="Upload Subtitles (Optional - SRT or VTT)",
                     file_types=[".srt", ".vtt"],
                     type="filepath"
-                )
-                
-                model_choice = gr.Radio(
-                    choices=["tiny", "base", "small"],
-                    value="tiny",
-                    label="Whisper Model Size",
-                    info="Larger models are more accurate but slower. 'tiny' is recommended for most videos."
                 )
                 
                 process_btn = gr.Button("Clean Video", variant="primary", size="lg")
@@ -224,39 +208,20 @@ def create_interface():
                 )
         
         gr.Markdown("""
-        ### Notes:
-        - **Processing Time**: Depends on video length and model size
-          - Tiny model: ~5-10 min for 2-hour movie
-          - Base model: ~10-20 min for 2-hour movie
-          - Small model: ~20-40 min for 2-hour movie
-        - **File Size Limit**: Maximum 5 GB per video (Hugging Face Spaces limit)
-        - **Privacy**: All processing happens on the server. Files are deleted after processing.
-        - **Supported Formats**: MP4, MKV, MOV, AVI and more (via FFmpeg)
+        **Processing:** ~10-30 min for 2-hour movie with subtitles (recommended). Without subtitles: 4-10 hours.  
+        **Formats:** MP4, MKV, MOV, AVI. **Privacy:** Files deleted after processing. **Limit:** 5 GB (platform limit).
         """)
         
         # Connect the interface
         process_btn.click(
             fn=clean_video,
-            inputs=[video_input, subtitle_input, model_choice],
+            inputs=[video_input, subtitle_input],
             outputs=[video_output, subtitle_output, log_output]
         )
         
-        # Example section
         gr.Markdown("""
-        ### How It Works:
-        1. Upload your video file
-        2. (Optional) Upload subtitle file (SRT or VTT)
-        3. Select Whisper model size
-        4. Click "Clean Video"
-        5. Wait for processing (progress shown in log)
-        6. Download cleaned video and subtitles
-        
-        The tool will:
-        - Transcribe audio using Whisper AI
-        - Detect profanity words (1,132+ words)
-        - Cut out profanity segments from video
-        - Remove profanity from subtitles
-        - Adjust subtitle timestamps to match cleaned video
+        **How it works:** Upload video → (Optional) Add subtitles → Click "Clean Video" → Download cleaned files.  
+        The tool transcribes audio, detects profanity, cuts segments, and cleans subtitles automatically.
         """)
     
     return demo

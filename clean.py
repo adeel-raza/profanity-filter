@@ -18,6 +18,7 @@ from audio_profanity_detector import AudioProfanityDetector
 from video_cutter import VideoCutter
 from timestamp_merger import TimestampMerger
 from subtitle_processor import SubtitleProcessor
+from generate_subtitles import generate_subtitles
 
 
 def main():
@@ -68,6 +69,39 @@ def main():
                 subtitle_input = potential_sub
                 break
     
+    # If no subtitle file found, generate one first for accurate cleaning
+    if not subtitle_input:
+        print("=" * 60)
+        print("AUTOMATED MOVIE CLEANER - PROFANITY FILTER")
+        print("=" * 60)
+        print(f"Input: {input_path}")
+        print(f"Output: {output_path}")
+        print()
+        print("Step 0: Generating subtitles (required for accurate cleaning)...")
+        print("-" * 60)
+        print("  No subtitle file found - generating SRT from video audio...")
+        print(f"  Using Whisper model: {args.whisper_model}")
+        print("  ⚠ This will take 4-10 hours for a 2-hour movie on CPU")
+        print("  💡 Tip: Provide subtitles with --subs for faster processing")
+        print()
+        
+        # Generate SRT file
+        subtitle_input = input_path.parent / f"{input_path.stem}.srt"
+        try:
+            success = generate_subtitles(input_path, subtitle_input, args.whisper_model)
+            if not success:
+                print("  ✗ ERROR: Failed to generate subtitles")
+                print("  Continuing without subtitles (will transcribe audio on-the-fly)...")
+                subtitle_input = None
+            else:
+                print(f"  ✓ Subtitles generated: {subtitle_input}")
+                print()
+        except Exception as e:
+            print(f"  ✗ ERROR: Failed to generate subtitles: {e}")
+            print("  Continuing without subtitles (will transcribe audio on-the-fly)...")
+            subtitle_input = None
+            print()
+    
     print("=" * 60)
     print("AUTOMATED MOVIE CLEANER - PROFANITY FILTER")
     print("=" * 60)
@@ -105,10 +139,10 @@ def main():
             subtitle_segments = []  # Ensure it's set even on error
     
     # Priority 2: Transcribe audio if:
-    # - --audio flag is set, OR
-    # - No subtitles available, OR
+    # - --audio flag is set (user explicitly wants audio check), OR
     # - Subtitles found but no profanity detected (to catch profanity in audio)
-    should_transcribe_audio = args.audio or (not subtitle_input) or (subtitle_input and len(subtitle_segments) == 0)
+    # Note: We no longer transcribe audio if no subtitles - we generate SRT first instead
+    should_transcribe_audio = args.audio or (subtitle_input and len(subtitle_segments) == 0)
     
     if should_transcribe_audio:
         if subtitle_input and args.audio:
@@ -117,10 +151,6 @@ def main():
         elif subtitle_input and len(subtitle_segments) == 0:
             print("Step 1b: No profanity in subtitles - transcribing audio to check...")
             print("  ⚠ This will take 4-10 hours for a 2-hour movie on CPU")
-        elif not subtitle_input:
-            print("Step 1: No subtitles found - transcribing audio (SLOW)...")
-            print("  ⚠ This will take 4-10 hours for a 2-hour movie on CPU")
-            print("  💡 Tip: Provide subtitles with --subs for faster processing")
         
         print("-" * 60)
         try:

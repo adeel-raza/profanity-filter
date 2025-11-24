@@ -132,15 +132,10 @@ class VideoCutter:
         if use_qsv_override is not None:
             use_qsv = use_qsv_override
         else:
-            # Properly check for QSV encoder support
             try:
-                result = subprocess.run(['ffmpeg', '-hide_banner', '-encoders'], 
-                                      capture_output=True, text=True, check=True)
-                use_qsv = 'h264_qsv' in result.stdout
-                if use_qsv:
-                    print("  ✓ Intel Quick Sync Video (QSV) detected - attempting hardware acceleration")
-                else:
-                    print("  Intel QSV not detected - using CPU encoding")
+                subprocess.run(['ffmpeg', '-hide_banner', '-encoders', '|', 'grep', 'qsv'], capture_output=True, check=True)
+                use_qsv = True
+                print("  ✓ Intel Quick Sync Video (QSV) detected - attempting hardware acceleration")
             except:
                 use_qsv = False
                 print("  Intel QSV not detected - using CPU encoding")
@@ -148,32 +143,33 @@ class VideoCutter:
         try:
             # Use filter_complex with concat for more reliable segment cutting
             if len(keep_segments) == 1:
-                # Single segment - use re-encoding for accuracy
+                # Single segment - simple cut
                 start, end = keep_segments[0]
                 duration = end - start
-                # Use -ss after -i for accurate timing
-                print(f"  Processing single segment with FFmpeg...")
                 cmd = [
                     'ffmpeg', '-i', str(input_path),
                     '-ss', str(start),
                     '-t', str(duration),
-                    '-c:v', 'libx264',  # Re-encode video for accuracy
-                    '-c:a', 'aac',  # Re-encode audio for accuracy
-                    '-preset', 'fast',  # Balance speed and quality
-                    '-crf', '23',  # Good quality
+                    '-c:v', 'h264_qsv' if use_qsv else 'libx264',
+                    '-preset', 'fast' if use_qsv else 'medium',
+                    '-c:a', 'copy',  # Copy audio for speed
                     '-avoid_negative_ts', 'make_zero',
                     '-y', str(output_path)
                 ]
-                result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+                if not use_qsv:
+                    cmd.extend(['-crf', '23'])
+                else:
+                    # Force nv12 for QSV compatibility
+                    cmd.extend(['-vf', 'format=nv12', '-global_quality', '25'])
 
             else:
-                # Multiple segments - use stream copy for speed (no re-encoding)
+                # Multiple segments - extract each, then concat
                 import tempfile
                 temp_dir = Path(tempfile.mkdtemp())
                 segment_files = []
                 total_segments = len(keep_segments)
                 
-                print(f"  Extracting {total_segments} segments (re-encoding for accuracy - slower but precise)...")
+                print(f"  Extracting {total_segments} segments to keep...")
                 for i, (start, end) in enumerate(keep_segments, 1):
                     duration = end - start
                     segment_file = temp_dir / f'segment_{i:04d}.mp4'
@@ -181,25 +177,30 @@ class VideoCutter:
                     
                     print(f"    Extracting segment {i}/{total_segments}: {start:.1f}s - {end:.1f}s ({duration:.1f}s)...", end='\r')
                     
-                    # Extract segment using re-encoding (SLOWER but more accurate timing)
-                    # Re-encoding ensures precise frame boundaries and accurate timing
+                    # Extract segment
                     extract_cmd = [
                         'ffmpeg', '-i', str(input_path),
                         '-ss', str(start),
                         '-t', str(duration),
-                        '-c:v', 'libx264',  # Re-encode video for accuracy
-                        '-c:a', 'aac',  # Re-encode audio for accuracy
-                        '-preset', 'fast',  # Balance speed and quality
-                        '-crf', '23',  # Good quality
+                        '-c:v', 'h264_qsv' if use_qsv else 'libx264',
+                        '-preset', 'fast',
+                        '-c:a', 'aac',
+                        '-b:a', '128k',
                         '-avoid_negative_ts', 'make_zero',
                         '-loglevel', 'error',
                         '-y', str(segment_file)
                     ]
+                    if not use_qsv:
+                        extract_cmd.extend(['-crf', '23'])
+                    else:
+                        # QSV needs explicit pixel format conversion sometimes
+                        # Force nv12 pixel format which is standard for HW encoding
+                        extract_cmd.extend(['-vf', 'format=nv12', '-global_quality', '25'])
 
                     subprocess.run(extract_cmd, capture_output=True, check=True)
                 
                 print()  # New line after progress
-                print(f"  ✓ All segments extracted (re-encoded for accuracy)")
+                print(f"  ✓ All segments extracted")
                 
                 # Create concat file
                 concat_file = temp_dir / 'concat.txt'
@@ -209,17 +210,21 @@ class VideoCutter:
                 
                 # Concatenate segments
                 print(f"  Concatenating {total_segments} segments into final video...")
-                print(f"  Final concatenation (this may take a few minutes)...")
                 cmd = [
                     'ffmpeg', '-f', 'concat',
                     '-safe', '0',
                     '-i', str(concat_file),
                     '-c', 'copy',  # Copy streams for speed
-                    '-fflags', '+genpts',  # Generate presentation timestamps for accurate duration
                     '-loglevel', 'error',
                     '-y', str(output_path)
                 ]
-                result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            
+            if len(keep_segments) == 1:
+                print(f"  Processing single segment with FFmpeg...")
+            else:
+                print(f"  Final concatenation (this may take a few minutes)...")
+            
+            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
             print(f"  ✓ Video cutting complete")
             return True
         

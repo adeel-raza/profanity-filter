@@ -29,7 +29,7 @@ async function processVideo() {
     
     // Show progress section
     document.getElementById('progressSection').style.display = 'block';
-    document.getElementById('uploadSection').style.display = 'none';
+    document.getElementById('uploadSection')?.style.setProperty('display', 'none');
     document.getElementById('resultsSection').style.display = 'none';
     
     // Create form data
@@ -165,7 +165,6 @@ function resetForm() {
     document.getElementById('optionsBox').style.display = 'none';
     document.getElementById('progressSection').style.display = 'none';
     document.getElementById('resultsSection').style.display = 'none';
-    document.getElementById('uploadSection').style.display = 'block';
     
     if (statusCheckInterval) {
         clearInterval(statusCheckInterval);

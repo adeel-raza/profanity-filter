@@ -1,0 +1,21 @@
+# SiteGround Python App Configuration
+# Enable Python
+AddHandler fcgid-script .py
+Options +ExecCGI
+
+# Rewrite rules for Flask app
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ web_app.py/$1 [QSA,L]
+
+# Security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# File upload size limit (adjust based on your hosting)
+php_value upload_max_filesize 2048M
+php_value post_max_size 2048M

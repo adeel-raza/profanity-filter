@@ -467,15 +467,11 @@ class SubtitleProcessor:
                     cleaned_start = keep_start - time_removed_before
                     
                     # Map the timestamp
-                    mapped_time = cleaned_start + position_in_segment
-                    
-                    # Return mapped time without delay first
-                    # Delay will be added only if needed based on testing
-                    return mapped_time
+                    return cleaned_start + position_in_segment
             
             # If timestamp is at or after last keep segment, calculate total removed
             total_removed = sum(end - start for start, end in sorted_removed)
-            return original_time - total_removed + 0.3  # Add delay
+            return original_time - total_removed
         
         adjusted = []
         for entry in entries:

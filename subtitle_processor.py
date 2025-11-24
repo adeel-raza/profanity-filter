@@ -76,12 +76,23 @@ class SubtitleProcessor:
                 if starts_in_removal:
                     continue
                 
-                # For entries that overlap with removed segments, clip them
-                # Keep only the parts that are NOT in removed segments
-                clipped_entries = self._clip_entry_to_keep_segments(
-                    entry, removed_segments
-                )
-                entries_to_process.extend(clipped_entries)
+                # For entries that don't start in removal and aren't completely removed,
+                # check if they overlap with any removal
+                overlaps_removal = False
+                for remove_start, remove_end in removed_segments:
+                    if entry_start < remove_end and entry_end > remove_start:
+                        overlaps_removal = True
+                        break
+                
+                if overlaps_removal:
+                    # Entry overlaps with removal - clip it
+                    clipped_entries = self._clip_entry_to_keep_segments(
+                        entry, removed_segments
+                    )
+                    entries_to_process.extend(clipped_entries)
+                else:
+                    # Entry doesn't overlap - just add it for adjustment
+                    entries_to_process.append(entry)
             
             # Now adjust timestamps for entries we're keeping
             # This ensures subtitles stay aligned with the cleaned video

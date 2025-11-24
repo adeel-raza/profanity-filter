@@ -104,14 +104,19 @@ def main():
             print()
             subtitle_segments = []  # Ensure it's set even on error
     
-    # Priority 2: Transcribe audio if requested with --audio flag OR if no subtitles available
-    should_transcribe_audio = args.audio or (not subtitle_input)
+    # Priority 2: Transcribe audio if:
+    # - --audio flag is set, OR
+    # - No subtitles available, OR
+    # - Subtitles found but no profanity detected (to catch profanity in audio)
+    should_transcribe_audio = args.audio or (not subtitle_input) or (subtitle_input and len(subtitle_segments) == 0)
     
     if should_transcribe_audio:
         if subtitle_input and args.audio:
             print("Step 1b: Also transcribing audio (--audio flag specified)...")
             print("  ⚠ This will take 4-10 hours for a 2-hour movie on CPU")
-            print("  💡 Tip: Remove --audio flag to use subtitles only (much faster)")
+        elif subtitle_input and len(subtitle_segments) == 0:
+            print("Step 1b: No profanity in subtitles - transcribing audio to check...")
+            print("  ⚠ This will take 4-10 hours for a 2-hour movie on CPU")
         elif not subtitle_input:
             print("Step 1: No subtitles found - transcribing audio (SLOW)...")
             print("  ⚠ This will take 4-10 hours for a 2-hour movie on CPU")

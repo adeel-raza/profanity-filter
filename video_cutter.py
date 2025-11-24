@@ -152,6 +152,7 @@ class VideoCutter:
                 start, end = keep_segments[0]
                 duration = end - start
                 # Use -ss after -i for accurate timing
+                print(f"  Processing single segment with FFmpeg...")
                 cmd = [
                     'ffmpeg', '-i', str(input_path),
                     '-ss', str(start),
@@ -163,6 +164,7 @@ class VideoCutter:
                     '-avoid_negative_ts', 'make_zero',
                     '-y', str(output_path)
                 ]
+                result = subprocess.run(cmd, capture_output=True, text=True, check=True)
 
             else:
                 # Multiple segments - use stream copy for speed (no re-encoding)
@@ -207,6 +209,7 @@ class VideoCutter:
                 
                 # Concatenate segments
                 print(f"  Concatenating {total_segments} segments into final video...")
+                print(f"  Final concatenation (this may take a few minutes)...")
                 cmd = [
                     'ffmpeg', '-f', 'concat',
                     '-safe', '0',
@@ -216,13 +219,7 @@ class VideoCutter:
                     '-loglevel', 'error',
                     '-y', str(output_path)
                 ]
-            
-            if len(keep_segments) == 1:
-                print(f"  Processing single segment with FFmpeg...")
-            else:
-                print(f"  Final concatenation (this may take a few minutes)...")
-            
-            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+                result = subprocess.run(cmd, capture_output=True, text=True, check=True)
             print(f"  ✓ Video cutting complete")
             return True
         

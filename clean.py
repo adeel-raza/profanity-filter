@@ -96,6 +96,7 @@ def main():
                     print(f"    - {start:.2f}s to {end:.2f}s ({end-start:.2f}s): '{words}'")
             else:
                 print("    No profanity detected in subtitles")
+                print("    💡 Will transcribe audio to check for profanity...")
             print()
         except Exception as e:
             print(f"  ✗ ERROR: Subtitle profanity detection failed: {e}")

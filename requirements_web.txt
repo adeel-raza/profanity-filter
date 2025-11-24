@@ -1,0 +1,14 @@
+# Web interface requirements for SiteGround deployment
+Flask>=2.3.0
+Werkzeug>=2.3.0
+
+# Core dependencies for profanity filtering
+openai-whisper>=20231117
+torch>=2.0.0
+torchaudio>=2.0.0
+numpy>=1.24.0
+yt-dlp>=2024.0.0
+
+# Note: FFmpeg must be installed on the server
+# SiteGround may require you to install it or use their support
+

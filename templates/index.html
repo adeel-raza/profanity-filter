@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Free online video profanity filter. Remove curse words and profanity from videos automatically. Create family-friendly content with AI-powered video cleaning tool.">
+    <meta name="keywords" content="video profanity filter, remove curse words from video, clean video profanity, family friendly video, video cleaner, profanity remover">
+    <meta name="author" content="Video Profanity Filter">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Video Profanity Filter - Remove Curse Words from Videos">
+    <meta property="og:description" content="Free online tool to automatically remove profanity and curse words from videos. Create family-friendly content instantly.">
+    <meta property="og:image" content="/static/og-image.jpg">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="Video Profanity Filter - Remove Curse Words from Videos">
+    <meta property="twitter:description" content="Free online tool to automatically remove profanity and curse words from videos.">
+    
+    <title>Video Profanity Filter - Remove Curse Words from Videos Online | Free Tool</title>
+    
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="canonical" href="https://yourdomain.com/">
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Video Profanity Filter",
+      "description": "Free online tool to automatically remove profanity and curse words from videos using AI",
+      "url": "https://yourdomain.com",
+      "applicationCategory": "MultimediaApplication",
+      "operatingSystem": "Any",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "featureList": [
+        "Remove profanity from videos",
+        "Automatic subtitle generation",
+        "Family-friendly video creation",
+        "AI-powered speech recognition"
+      ]
+    }
+    </script>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>🎬 Video Profanity Filter</h1>
+            <p class="tagline">Remove curse words and profanity from videos automatically</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <h2>Create Family-Friendly Videos Instantly</h2>
+            <p>Upload your video and let our AI-powered tool automatically detect and remove profanity, curse words, and inappropriate language. Get a clean, family-friendly version of your video in minutes.</p>
+        </section>
+
+        <section class="upload-section">
+            <div class="upload-box" id="uploadBox">
+                <div class="upload-icon">📤</div>
+                <h3>Upload Your Video</h3>
+                <p>Supported formats: MP4, MKV, AVI, MOV, WEBM (Max 2GB)</p>
+                <input type="file" id="videoInput" accept="video/*" style="display: none;">
+                <button class="btn btn-primary" onclick="document.getElementById('videoInput').click()">
+                    Choose Video File
+                </button>
+                <div id="fileName" class="file-name"></div>
+            </div>
+
+            <div class="options-box" id="optionsBox" style="display: none;">
+                <h3>Processing Options</h3>
+                <div class="form-group">
+                    <label for="whisperModel">Whisper Model (Accuracy vs Speed):</label>
+                    <select id="whisperModel" class="form-control">
+                        <option value="tiny" selected>Tiny (Fastest, Good Accuracy)</option>
+                        <option value="base">Base (Balanced)</option>
+                        <option value="small">Small (Better Accuracy)</option>
+                        <option value="medium">Medium (High Accuracy, Slower)</option>
+                        <option value="large">Large (Best Accuracy, Slowest)</option>
+                    </select>
+                    <small>For long videos, use "Tiny" for faster processing</small>
+                </div>
+                <button class="btn btn-success" id="processBtn" onclick="processVideo()">
+                    Start Processing
+                </button>
+            </div>
+        </section>
+
+        <section class="progress-section" id="progressSection" style="display: none;">
+            <h3>Processing Your Video</h3>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">Initializing...</div>
+            <div class="progress-details" id="progressDetails"></div>
+        </section>
+
+        <section class="results-section" id="resultsSection" style="display: none;">
+            <h3>✅ Processing Complete!</h3>
+            <div class="results-box">
+                <div class="result-item">
+                    <h4>Cleaned Video</h4>
+                    <button class="btn btn-download" onclick="downloadFile('video')">
+                        📥 Download Cleaned Video
+                    </button>
+                </div>
+                <div class="result-item">
+                    <h4>Cleaned Subtitles</h4>
+                    <button class="btn btn-download" onclick="downloadFile('subtitle')">
+                        📥 Download Cleaned Subtitles (SRT)
+                    </button>
+                </div>
+            </div>
+            <button class="btn btn-secondary" onclick="resetForm()">Process Another Video</button>
+        </section>
+
+        <section class="features">
+            <h2>Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h3>AI-Powered Detection</h3>
+                    <p>Uses OpenAI Whisper for accurate speech recognition and profanity detection</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Fast Processing</h3>
+                    <p>With subtitles, processing completes in minutes. Without subtitles, auto-generates them first</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Precise Cutting</h3>
+                    <p>Frame-accurate video editing removes only profanity segments, keeping your content intact</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📝</div>
+                    <h3>Subtitle Support</h3>
+                    <p>Automatically generates and cleans subtitles, ensuring perfect synchronization</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>100% Private</h3>
+                    <p>All processing happens on our servers. Your videos are automatically deleted after download</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🆓</div>
+                    <h3>Completely Free</h3>
+                    <p>No registration, no payment, no limits. Use as much as you need</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="how-it-works">
+            <h2>How It Works</h2>
+            <ol class="steps">
+                <li>
+                    <strong>Upload Your Video</strong>
+                    <p>Select your video file (MP4, MKV, AVI, MOV, or WEBM format)</p>
+                </li>
+                <li>
+                    <strong>Automatic Processing</strong>
+                    <p>Our AI automatically generates subtitles (if needed) and detects profanity</p>
+                </li>
+                <li>
+                    <strong>Precise Removal</strong>
+                    <p>Profanity segments are precisely cut from both video and audio tracks</p>
+                </li>
+                <li>
+                    <strong>Download Clean Content</strong>
+                    <p>Get your cleaned video and synchronized subtitles ready for family viewing</p>
+                </li>
+            </ol>
+        </section>
+
+        <section class="faq">
+            <h2>Frequently Asked Questions</h2>
+            <div class="faq-item">
+                <h3>How long does processing take?</h3>
+                <p>With existing subtitles: 2-5 minutes for a 2-hour movie. Without subtitles: 4-10 hours on CPU (subtitles are auto-generated first).</p>
+            </div>
+            <div class="faq-item">
+                <h3>What video formats are supported?</h3>
+                <p>MP4, MKV, AVI, MOV, and WEBM formats are supported. Maximum file size is 2GB.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Is my video kept private?</h3>
+                <p>Yes! All processing happens securely. Videos are automatically deleted after you download them.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Does it work with subtitles?</h3>
+                <p>Yes! If you have subtitles, they're used for faster processing. If not, we automatically generate them first.</p>
+            </div>
+            <div class="faq-item">
+                <h3>What profanity words are filtered?</h3>
+                <p>Over 1,100 profanity words including curse words, sexual terms, abusive language, and obscene phrases.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Video Profanity Filter. Free tool for creating family-friendly content.</p>
+            <p>Powered by OpenAI Whisper AI</p>
+        </div>
+    </footer>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
+

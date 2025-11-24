@@ -264,7 +264,7 @@ def main():
             print("Error: Failed to process video")
             sys.exit(1)
     
-    # Step 4: Process subtitles if provided
+    # Step 4: Process subtitles (always process if available, including generated ones)
     output_subtitle = None
     if subtitle_input:
         print("Step 4: Processing subtitles...")
@@ -286,9 +286,9 @@ def main():
             success = subtitle_processor.process_srt(subtitle_input, output_subtitle, all_segments)
         
         if success:
-            print(f"  Cleaned subtitles saved to: {output_subtitle}")
+            print(f"  ✓ Cleaned subtitles saved to: {output_subtitle}")
         else:
-            print(f"  Warning: Failed to process subtitles")
+            print(f"  ⚠ Warning: Failed to process subtitles")
         print()
     
     print("=" * 60)

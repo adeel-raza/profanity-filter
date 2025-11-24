@@ -15,9 +15,25 @@ jobs:
           fetch-depth: 0
           lfs: true
       
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+      
+      - name: Add Hugging Face remote
+        run: |
+          git remote add huggingface https://${{ secrets.HF_USERNAME }}:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/${{ secrets.HF_USERNAME }}/video-profanity-filter || true
+          git remote set-url huggingface https://${{ secrets.HF_USERNAME }}:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/${{ secrets.HF_USERNAME }}/video-profanity-filter
+      
+      - name: Fetch and merge remote changes
+        run: |
+          git fetch huggingface main || true
+          git pull huggingface main --no-rebase --allow-unrelated-histories -X ours || true
+      
       - name: Push to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: git push https://${{ secrets.HF_USERNAME }}:$HF_TOKEN@huggingface.co/spaces/${{ secrets.HF_USERNAME }}/video-profanity-filter main
+        run: |
+          git push huggingface main || git push huggingface main --force
 
 

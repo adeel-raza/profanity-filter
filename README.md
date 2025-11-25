@@ -57,16 +57,18 @@ See the tool in action with our sample video:
 The cleaned video maintains perfect audio-video sync and subtitle alignment. All profanity words were precisely detected and removed while preserving the natural flow of the content.
 
 ### Original Video (Before)
-[![Original Video](https://img.youtube.com/vi/YOUTUBE_VIDEO_ID_1/0.jpg)](https://www.youtube.com/watch?v=YOUTUBE_VIDEO_ID_1)
-
-**Or download**: [Original Video (6.3 MB)](https://github.com/adeel-raza/profanity-filter/raw/main/sample/original_video.mp4)
+**Watch**: [Original Video (6.3 MB)](https://github.com/adeel-raza/profanity-filter/raw/main/sample/original_video.mp4) - Click to play in browser
 
 ### Cleaned Video (After)
-[![Cleaned Video](https://img.youtube.com/vi/YOUTUBE_VIDEO_ID_2/0.jpg)](https://www.youtube.com/watch?v=YOUTUBE_VIDEO_ID_2)
+**Watch**: [Cleaned Video (9.5 MB)](https://github.com/adeel-raza/profanity-filter/raw/main/sample/original_video_cleaned.mp4) - Click to play in browser
 
-**Or download**: [Cleaned Video (9.5 MB)](https://github.com/adeel-raza/profanity-filter/raw/main/sample/original_video_cleaned.mp4)
+**Note**: GitHub README doesn't support inline video playback. The links above open videos directly in your browser (no download required). 
 
-**To show videos inline**: Upload the sample videos to YouTube (as unlisted videos) and replace `YOUTUBE_VIDEO_ID_1` and `YOUTUBE_VIDEO_ID_2` with the actual YouTube video IDs. This will display video thumbnails that link to YouTube for playback.
+**Alternative options for inline display:**
+- **Vimeo**: Upload videos to Vimeo (free account) and embed
+- **GitHub Releases**: Create a release and link to video assets
+- **GitHub Pages**: Host a demo page with embedded videos
+- **Cloudinary/Imgur**: Free video hosting with embed codes
 
 **Try it yourself**: 
 ```bash

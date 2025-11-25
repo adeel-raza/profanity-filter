@@ -1,21 +1,8 @@
----
-title: Video Profanity Filter - Remove Profanity from Videos | AI-Powered Clean Video Tool
-emoji: 🎬
-colorFrom: blue
-colorTo: purple
-sdk: gradio
-sdk_version: "6.0.0"
-app_file: app.py
-pinned: false
----
-
 # Video Profanity Filter - AI-Powered Clean Video Tool
 
 **Remove profanity, curse words, and offensive language from videos automatically.** Create family-friendly versions of movies and videos using AI-powered speech-to-text transcription and intelligent video editing. Perfect for content creators, educators, and families.
 
-> **📹 See it in action**: Check out our [Before/After Example](#-beforeafter-example) below showing real results from a sample video!
-
-## 🎯 What This Tool Does
+## What This Tool Does
 
 Automatically detects and removes profanity from videos by:
 - **AI Transcription**: Uses OpenAI Whisper for accurate speech-to-text
@@ -24,15 +11,15 @@ Automatically detects and removes profanity from videos by:
 - **Subtitle Sync**: Automatically adjusts subtitles to match cleaned video
 - **Quality Preserved**: Maintains original video quality and file size
 
-## ✨ Key Features
+## Key Features
 
-- **🤖 AI-Powered Transcription**: OpenAI Whisper for accurate speech-to-text with word-level timestamps
-- **⚡ Fast Processing**: 10-30 minutes for 2-hour movies with subtitles (recommended)
-- **🎯 Smart Detection**: Detects 1,132+ profanity words including multi-word phrases
-- **✂️ Precise Editing**: Frame-accurate video cutting removes only profanity segments
-- **📝 Subtitle Support**: Auto-detects SRT/VTT files, cleans and syncs subtitles automatically
-- **📺 YouTube Ready**: Download and process videos directly from YouTube
-- **🎬 Quality Preserved**: Maintains original video quality and encoding settings
+- **AI-Powered Transcription**: OpenAI Whisper for accurate speech-to-text with word-level timestamps
+- **Fast Processing**: 10-30 minutes for 2-hour movies with subtitles (recommended)
+- **Smart Detection**: Detects 1,132+ profanity words including multi-word phrases
+- **Precise Editing**: Frame-accurate video cutting removes only profanity segments
+- **Subtitle Support**: Auto-detects SRT/VTT files, cleans and syncs subtitles automatically
+- **YouTube Ready**: Download and process videos directly from YouTube
+- **Quality Preserved**: Maintains original video quality and encoding settings
 
 ## Installation
 
@@ -57,38 +44,31 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-## 📊 Before/After Example
+## Before/After Example
 
-**Real results from processing a sample video:**
+See the tool in action with our sample video:
 
-| Metric | Original Video | Cleaned Video |
-|--------|---------------|---------------|
-| **Duration** | 3.1 minutes | 2.9 minutes |
-| **File Size** | 6.3 MB | 9.5 MB |
-| **Profanity Segments** | 19 instances | 0 (all removed) |
-| **Time Removed** | - | 13.5 seconds |
-| **Processing Time** | - | ~2 minutes |
-| **Subtitle Lines** | 284 | 312 (adjusted) |
+**Sample Video Results:**
+- **Original Video**: 3.1 minutes, 6.3 MB
+- **Cleaned Video**: 2.9 minutes, 9.5 MB (profanity segments removed)
+- **Profanity Removed**: 19 segments totaling 13.5 seconds
+- **Processing Time**: ~2 minutes (with subtitles)
 
-**Results:**
-- ✅ All 19 profanity words/phrases detected and removed
-- ✅ Perfect audio-video synchronization maintained
-- ✅ Subtitle timestamps automatically adjusted
-- ✅ Natural flow of content preserved
-- ✅ No gaps or awkward cuts in the cleaned video
+The cleaned video maintains perfect audio-video sync and subtitle alignment. All profanity words were precisely detected and removed while preserving the natural flow of the content.
+
+**Watch the results:**
+- [Original Video (Before)](sample/original_video.mp4)
+- [Cleaned Video (After)](sample/original_video_cleaned.mp4)
 
 **Try it yourself**: 
-The sample video files are available in the `sample/` directory. To test:
 ```bash
-# Clone the repository first
+# Clone the repository
 git clone https://github.com/adeel-raza/profanity-filter.git
 cd profanity-filter
 
 # Process the sample video
 python3 clean.py sample/original_video.mp4 sample/original_video_cleaned.mp4 --subs sample/original_video.srt
 ```
-
-**Note**: Sample video files (`*.mp4`) are large and gitignored, but subtitle files (`*.srt`) are included. You can use your own videos or download sample videos separately to test the tool.
 
 ## 🚀 Quick Start
 
@@ -119,7 +99,7 @@ python3 clean.py input_video.mp4 output_cleaned.mp4 --audio
 python3 clean.py input_video.mp4 output_cleaned.mp4 --audio --whisper-model tiny
 ```
 
-## 🔧 How It Works
+## How It Works
 
 The tool uses a multi-step process to ensure accurate profanity removal:
 
@@ -130,7 +110,7 @@ The tool uses a multi-step process to ensure accurate profanity removal:
 5. **📝 Subtitle Processing**: Filters profanity text and adjusts timestamps to match cleaned video perfectly
 6. **✅ Quality Matching**: Preserves original video quality and encoding settings
 
-## ⚡ Processing Speed
+## Processing Speed
 
 ### With Subtitles (Recommended - Fastest) ⚡
 - **2-hour movie**: ~10-30 minutes total
@@ -148,7 +128,7 @@ The tool uses a multi-step process to ensure accurate profanity removal:
   - Base model: ~60-90 minutes
   - Small model: ~90-120 minutes
 
-**💡 Pro Tip**: Always provide subtitle files when available! Processing with subtitles is **20-50x faster** than audio transcription.
+**Pro Tip**: Always provide subtitle files when available! Processing with subtitles is **20-50x faster** than audio transcription.
 
 ## Command Line Options
 
@@ -200,7 +180,7 @@ python3 clean.py movie.mp4 movie_cleaned.mp4 --audio --whisper-model tiny
 - **Cleaned Video**: `[input]_cleaned.mp4` - Video with profanity segments removed
 - **Cleaned Subtitles**: `[input]_cleaned.srt` - Subtitles with profanity filtered and timestamps adjusted
 
-## 🛡️ Profanity Detection
+## Profanity Detection
 
 The tool uses a comprehensive database of **1,132+ profanity words and phrases** including:
 - **Curse words**: Common profanity and vulgar language
@@ -210,7 +190,7 @@ The tool uses a comprehensive database of **1,132+ profanity words and phrases**
 
 **Smart Detection**: Uses whole-word matching to avoid false positives (e.g., "class" won't trigger on "classroom").
 
-## 🔬 Technical Details
+## Technical Details
 
 - **Video Processing**: FFmpeg with frame-accurate cutting and quality matching
 - **Audio Transcription**: OpenAI Whisper with word-level timestamps for precise detection
@@ -236,7 +216,7 @@ Install FFmpeg:
 - Provide subtitle files instead of transcribing audio
 - Use GPU if available (automatic detection)
 
-## 🎬 Use Cases
+## Use Cases
 
 - **Content Creators**: Create family-friendly versions of your videos for broader audiences
 - **Educators**: Prepare educational content suitable for classrooms
@@ -244,20 +224,16 @@ Install FFmpeg:
 - **Streaming Platforms**: Automate content moderation and filtering
 - **Video Editors**: Batch process multiple videos with profanity removal
 
-## 📄 License
+## License
 
 MIT License - Free to use for personal and commercial projects
 
-## 🤝 Contributing
+## Contributing
 
 Contributions welcome! Please open an issue or pull request on GitHub.
 
-## 💬 Support
+## Support
 
 - **GitHub Issues**: Report bugs and request features
 - **Documentation**: Check the `USAGE.md` file for detailed guides
 - **Examples**: See the `sample/` directory for before/after examples
-
----
-
-**Made with ❤️ for creating family-friendly content**

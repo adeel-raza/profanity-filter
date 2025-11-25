@@ -57,16 +57,16 @@ See the tool in action with our sample video:
 The cleaned video maintains perfect audio-video sync and subtitle alignment. All profanity words were precisely detected and removed while preserving the natural flow of the content.
 
 ### Original Video (Before)
-<video width="640" height="360" controls>
-  <source src="sample/original_video.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+[![Original Video](https://img.shields.io/badge/▶️-Watch%20Original%20Video-blue)](https://github.com/adeel-raza/profanity-filter/raw/main/sample/original_video.mp4)
+
+**Direct link**: [Download/View Original Video](https://github.com/adeel-raza/profanity-filter/raw/main/sample/original_video.mp4)
 
 ### Cleaned Video (After)
-<video width="640" height="360" controls>
-  <source src="sample/original_video_cleaned.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+[![Cleaned Video](https://img.shields.io/badge/▶️-Watch%20Cleaned%20Video-green)](https://github.com/adeel-raza/profanity-filter/raw/main/sample/original_video_cleaned.mp4)
+
+**Direct link**: [Download/View Cleaned Video](https://github.com/adeel-raza/profanity-filter/raw/main/sample/original_video_cleaned.mp4)
+
+**Note**: Click the links above to watch the videos. GitHub will open them in your browser's video player.
 
 **Try it yourself**: 
 ```bash

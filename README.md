@@ -56,9 +56,17 @@ See the tool in action with our sample video:
 
 The cleaned video maintains perfect audio-video sync and subtitle alignment. All profanity words were precisely detected and removed while preserving the natural flow of the content.
 
-**Watch the results:**
-- [Original Video (Before)](sample/original_video.mp4)
-- [Cleaned Video (After)](sample/original_video_cleaned.mp4)
+### Original Video (Before)
+<video width="640" height="360" controls>
+  <source src="sample/original_video.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
+### Cleaned Video (After)
+<video width="640" height="360" controls>
+  <source src="sample/original_video_cleaned.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
 
 **Try it yourself**: 
 ```bash

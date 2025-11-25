@@ -68,12 +68,14 @@ See the tool in action with our sample video:
 The cleaned video maintains perfect audio-video sync and subtitle alignment. All profanity words were precisely detected and removed while preserving the natural flow of the content.
 
 ### Original Video (Before)
-<div style="padding:56.25% 0 0 0;position:relative;"><iframe src="https://player.vimeo.com/video/1140277069?badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479" frameborder="0" allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share" referrerpolicy="strict-origin-when-cross-origin" style="position:absolute;top:0;left:0;width:100%;height:100%;" title="original_video"></iframe></div><script src="https://player.vimeo.com/api/player.js"></script>
+[![Original Video](https://vumbnail.com/1140277069.jpg)](https://vimeo.com/1140277069)
+
+**Watch on Vimeo**: [Original Video](https://vimeo.com/1140277069) | **Download**: [MP4 (6.3 MB)](https://github.com/adeel-raza/profanity-filter/raw/main/sample/original_video.mp4)
 
 ### Cleaned Video (After)
-<div style="padding:56.25% 0 0 0;position:relative;"><iframe src="https://player.vimeo.com/video/1140277103?badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479" frameborder="0" allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share" referrerpolicy="strict-origin-when-cross-origin" style="position:absolute;top:0;left:0;width:100%;height:100%;" title="original_video_cleaned"></iframe></div><script src="https://player.vimeo.com/api/player.js"></script>
+[![Cleaned Video](https://vumbnail.com/1140277103.jpg)](https://vimeo.com/1140277103)
 
-**Download links**: [Original Video (6.3 MB)](https://github.com/adeel-raza/profanity-filter/raw/main/sample/original_video.mp4) | [Cleaned Video (9.5 MB)](https://github.com/adeel-raza/profanity-filter/raw/main/sample/original_video_cleaned.mp4)
+**Watch on Vimeo**: [Cleaned Video](https://vimeo.com/1140277103) | **Download**: [MP4 (9.5 MB)](https://github.com/adeel-raza/profanity-filter/raw/main/sample/original_video_cleaned.mp4)
 
 **Try it yourself**: 
 ```bash

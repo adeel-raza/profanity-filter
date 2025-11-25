@@ -68,12 +68,12 @@ See the tool in action with our sample video:
 The cleaned video maintains perfect audio-video sync and subtitle alignment. All profanity words were precisely detected and removed while preserving the natural flow of the content.
 
 ### Original Video (Before)
-[![Original Video](https://vumbnail.com/1140277069.jpg)](https://vimeo.com/1140277069)
+<video src="https://github.com/adeel-raza/profanity-filter/raw/main/sample/original_video.mp4" controls="controls" muted="muted" width="600"></video>
 
 **Watch on Vimeo**: [Original Video](https://vimeo.com/1140277069) | **Download**: [MP4 (6.3 MB)](https://github.com/adeel-raza/profanity-filter/raw/main/sample/original_video.mp4)
 
 ### Cleaned Video (After)
-[![Cleaned Video](https://vumbnail.com/1140277103.jpg)](https://vimeo.com/1140277103)
+<video src="https://github.com/adeel-raza/profanity-filter/raw/main/sample/original_video_cleaned.mp4" controls="controls" muted="muted" width="600"></video>
 
 **Watch on Vimeo**: [Cleaned Video](https://vimeo.com/1140277103) | **Download**: [MP4 (9.5 MB)](https://github.com/adeel-raza/profanity-filter/raw/main/sample/original_video_cleaned.mp4)
 

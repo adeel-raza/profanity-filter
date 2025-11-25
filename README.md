@@ -1,3 +1,14 @@
+---
+title: Video Profanity Filter
+emoji: 🎬
+colorFrom: blue
+colorTo: purple
+sdk: gradio
+sdk_version: "6.0.0"
+app_file: app.py
+pinned: false
+---
+
 # Video Profanity Filter - AI-Powered Clean Video Tool
 
 **Remove profanity, curse words, and offensive language from videos automatically.** Create family-friendly versions of movies and videos using AI-powered speech-to-text transcription and intelligent video editing. Perfect for content creators, educators, and families.
@@ -62,13 +73,7 @@ The cleaned video maintains perfect audio-video sync and subtitle alignment. All
 ### Cleaned Video (After)
 **Watch**: [Cleaned Video (9.5 MB)](https://github.com/adeel-raza/profanity-filter/raw/main/sample/original_video_cleaned.mp4) - Click to play in browser
 
-**Note**: GitHub README doesn't support inline video playback. The links above open videos directly in your browser (no download required). 
-
-**Alternative options for inline display:**
-- **Vimeo**: Upload videos to Vimeo (free account) and embed
-- **GitHub Releases**: Create a release and link to video assets
-- **GitHub Pages**: Host a demo page with embedded videos
-- **Cloudinary/Imgur**: Free video hosting with embed codes
+**Note**: Videos are also available via [GitHub Issues](https://github.com/adeel-raza/profanity-filter/issues) for inline viewing. The direct links above open videos in your browser (no download required).
 
 **Try it yourself**: 
 ```bash

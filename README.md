@@ -13,6 +13,8 @@ pinned: false
 
 **Remove profanity, curse words, and offensive language from videos automatically.** Create family-friendly versions of movies and videos using AI-powered speech-to-text transcription and intelligent video editing. Perfect for content creators, educators, and families.
 
+> **📹 See it in action**: Check out our [Before/After Example](#-beforeafter-example) below showing real results from a sample video!
+
 ## 🎯 What This Tool Does
 
 Automatically detects and removes profanity from videos by:
@@ -57,25 +59,36 @@ pip install -r requirements.txt
 
 ## 📊 Before/After Example
 
-See the tool in action with our sample video:
+**Real results from processing a sample video:**
 
-**Sample Video Results:**
-- **Original Video**: 3.1 minutes, 6.3 MB
-- **Cleaned Video**: 2.9 minutes, 9.5 MB (profanity segments removed)
-- **Profanity Removed**: 19 segments totaling 13.5 seconds
-- **Processing Time**: ~2 minutes (with subtitles)
-- **Subtitle Lines**: 284 → 312 (profanity filtered, timestamps adjusted)
+| Metric | Original Video | Cleaned Video |
+|--------|---------------|---------------|
+| **Duration** | 3.1 minutes | 2.9 minutes |
+| **File Size** | 6.3 MB | 9.5 MB |
+| **Profanity Segments** | 19 instances | 0 (all removed) |
+| **Time Removed** | - | 13.5 seconds |
+| **Processing Time** | - | ~2 minutes |
+| **Subtitle Lines** | 284 | 312 (adjusted) |
 
-The cleaned video maintains perfect audio-video sync and subtitle alignment. All profanity words were precisely detected and removed while preserving the natural flow of the content.
+**Results:**
+- ✅ All 19 profanity words/phrases detected and removed
+- ✅ Perfect audio-video synchronization maintained
+- ✅ Subtitle timestamps automatically adjusted
+- ✅ Natural flow of content preserved
+- ✅ No gaps or awkward cuts in the cleaned video
 
 **Try it yourself**: 
-1. Clone the repository
-2. Process the sample video in the `sample/` directory:
+The sample video files are available in the `sample/` directory. To test:
 ```bash
+# Clone the repository first
+git clone https://github.com/adeel-raza/profanity-filter.git
+cd profanity-filter
+
+# Process the sample video
 python3 clean.py sample/original_video.mp4 sample/original_video_cleaned.mp4 --subs sample/original_video.srt
 ```
 
-**Note**: Sample video files are included in the repository. Check the `sample/` directory for `original_video.mp4` and `original_video.srt` to test the tool yourself!
+**Note**: Sample video files (`*.mp4`) are large and gitignored, but subtitle files (`*.srt`) are included. You can use your own videos or download sample videos separately to test the tool.
 
 ## 🚀 Quick Start
 

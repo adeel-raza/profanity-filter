@@ -57,12 +57,16 @@ See the tool in action with our sample video:
 The cleaned video maintains perfect audio-video sync and subtitle alignment. All profanity words were precisely detected and removed while preserving the natural flow of the content.
 
 ### Original Video (Before)
-Click to watch: [Original Video (6.3 MB)](https://github.com/adeel-raza/profanity-filter/raw/main/sample/original_video.mp4)
+[![Original Video](https://img.youtube.com/vi/YOUTUBE_VIDEO_ID_1/0.jpg)](https://www.youtube.com/watch?v=YOUTUBE_VIDEO_ID_1)
 
-### Cleaned Video (After)  
-Click to watch: [Cleaned Video (9.5 MB)](https://github.com/adeel-raza/profanity-filter/raw/main/sample/original_video_cleaned.mp4)
+**Or download**: [Original Video (6.3 MB)](https://github.com/adeel-raza/profanity-filter/raw/main/sample/original_video.mp4)
 
-**Note**: GitHub doesn't support inline video playback in README files. Click the links above to view the videos in your browser. The videos will play directly in the browser - no download required.
+### Cleaned Video (After)
+[![Cleaned Video](https://img.youtube.com/vi/YOUTUBE_VIDEO_ID_2/0.jpg)](https://www.youtube.com/watch?v=YOUTUBE_VIDEO_ID_2)
+
+**Or download**: [Cleaned Video (9.5 MB)](https://github.com/adeel-raza/profanity-filter/raw/main/sample/original_video_cleaned.mp4)
+
+**To show videos inline**: Upload the sample videos to YouTube (as unlisted videos) and replace `YOUTUBE_VIDEO_ID_1` and `YOUTUBE_VIDEO_ID_2` with the actual YouTube video IDs. This will display video thumbnails that link to YouTube for playback.
 
 **Try it yourself**: 
 ```bash

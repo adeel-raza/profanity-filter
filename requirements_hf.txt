@@ -2,16 +2,14 @@
 # This includes all dependencies needed for the web interface
 
 # Core dependencies for profanity filtering
-openai-whisper>=20231117
+faster-whisper>=1.2.1  # Primary transcription engine (4-10x faster, CTranslate2 backend)
 torch>=2.0.0
-torchaudio>=2.0.0
 numpy>=1.24.0
 
-# Web interface - updated to latest version
-# Gradio 6.0.0+ (latest version, security fixes)
+# Web interface - Gradio 6.0.0+
 gradio>=6.0.0
 huggingface_hub>=0.20.0
+spaces>=0.43.0  # Required for Gradio hot-reloading on Hugging Face Spaces
 
-# Note: FFmpeg must be installed on the system
-# Hugging Face Spaces has FFmpeg pre-installed
+# Note: FFmpeg is pre-installed on Hugging Face Spaces
 

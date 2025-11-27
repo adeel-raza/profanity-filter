@@ -1,15 +1,8 @@
 # Core dependencies for profanity filtering
-openai-whisper>=20231117
+faster-whisper>=1.2.1  # Primary transcription engine (4-10x faster than OpenAI Whisper)
 torch>=2.0.0
-torchaudio>=2.0.0
 numpy>=1.24.0
 yt-dlp>=2024.0.0  # For YouTube video downloads
 
-# Optional: Web interface (for Hugging Face Spaces deployment)
-# gradio==4.7.1
-# huggingface_hub>=0.20.0
-
 # Note: FFmpeg must be installed on the system
 # Install with: sudo apt install ffmpeg (Linux) or brew install ffmpeg (macOS)
-
-yt-dlp>=2024.0.0

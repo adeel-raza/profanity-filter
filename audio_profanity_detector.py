@@ -153,8 +153,8 @@ class AudioProfanityDetector:
                     if word in self.PROFANITY_WORDS:
                         start = word_info.get('start', 0)
                         end = word_info.get('end', 0)
-                        # Add small padding around word
-                        padding = 0.3
+                        # Add small padding around word (reduced for more accuracy)
+                        padding = 0.15  # Reduced from 0.3 to 0.15 for more precise cuts
                         profanity_segments.append((
                             max(0, start - padding),
                             end + padding,
@@ -195,7 +195,12 @@ class AudioProfanityDetector:
         return profanity_segments
     
     def _merge_nearby(self, segments: List[Tuple[float, float, str]]) -> List[Tuple[float, float, str]]:
-        """Merge profanity segments that are close together"""
+        """Merge profanity segments that are close together
+        
+        Uses aggressive merging to catch split phrases like 'fuck you', 'shit head', etc.
+        Since we only detect actual profanity words, consecutive profanity within 1.5s
+        is almost certainly part of the same phrase.
+        """
         if not segments:
             return []
         
@@ -205,8 +210,10 @@ class AudioProfanityDetector:
         current_words_set = {current_words}
         
         for start, end, word in segments[1:]:
-            # Merge if within 1 second
-            if start <= current_end + 1.0:
+            # Aggressively merge consecutive profanity words within 1.5 seconds
+            # This catches split phrases where Whisper detects words separately
+            # e.g., "fuck" (79.76-80.08) + "you" (80.08-80.88) -> merge into one segment
+            if start <= current_end + 1.5:
                 current_end = max(current_end, end)
                 current_words_set.add(word)
             else:

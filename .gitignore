@@ -13,14 +13,12 @@ build/
 
 # Movies and video files (exclude from repo)
 movies/
+# Exclude ALL sample videos (too large for Hugging Face)
 sample/*.mp4
 sample/*.mkv
-sample/*.mov
 sample/*.avi
-sample/cleaned/*.mp4
-sample/cleaned/*.mkv
-sample/cleaned/*.mov
-sample/cleaned/*.avi
+# Ignore faster-whisper test artifacts
+sample/*faster_whisper*
 
 # Keep sample subtitles for examples
 !sample/*.srt

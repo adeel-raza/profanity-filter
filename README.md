@@ -23,54 +23,54 @@ tags:
 
 **Watch movies YOUR way with your family - completely FREE!** Remove profanity, curse words, and offensive language from ANY video automatically. Unlike VidAngel or ClearPlay, no subscription or Netflix account required. Works with local video files, YouTube downloads, and any MP4/MKV content.
 
-🎯 **Perfect for families who want to enjoy movies together without inappropriate language**  
-💰 **100% FREE alternative to VidAngel ($9.99/month) and ClearPlay ($7.99/month)**  
-🔒 **Privacy-focused: Everything runs locally on your computer**  
-⚡ **AI-powered with faster-whisper for accurate profanity detection**
+**Perfect for families who want to enjoy movies together without inappropriate language**  
+**100% FREE alternative to VidAngel ($9.99/month) and ClearPlay ($7.99/month)**  
+**Privacy-focused: Everything runs locally on your computer**  
+**AI-powered with faster-whisper for accurate profanity detection**
 
 ## Why Choose This Free Profanity Filter?
 
-### 💰 Save Money - No Subscriptions
+### Save Money - No Subscriptions
 - **VidAngel**: $9.99/month + requires Netflix/Amazon Prime
 - **ClearPlay**: $7.99/month + requires compatible devices
 - **This App**: **100% FREE** - works with any video file
 
-### 🎬 Watch Movies Your Way
+### Watch Movies Your Way
 Unlike VidAngel and ClearPlay that only work with specific streaming services, this tool works with:
 - Local video files (MP4, MKV, AVI, etc.)
 - YouTube downloads (via yt-dlp)
 - DVDs and Blu-rays (ripped to digital)
 - ANY video source - no restrictions
 
-### 🔒 Privacy & Control
+### Privacy & Control
 - Everything runs on YOUR computer
 - No cloud uploads or streaming required
 - Your videos stay private
 - Complete control over content filtering
 
-### ⚡ How It Works - The Technology Behind 95%+ Accuracy
+## How It Works - The Technology Behind 95%+ Accuracy
 
 This Netflix profanity filter uses a **3-layer approach** for near-perfect profanity removal:
 
-#### 1. **AI Audio Transcription (Word-Level Precision)**
+### 1. AI Audio Transcription (Word-Level Precision)
 - Uses **faster-whisper** (CTranslate2-based AI model) to transcribe every spoken word
 - Each word gets a **precise timestamp** (accurate to 0.1 seconds)
 - Example: "fuck" detected at 79.76s-80.08s, "you" at 80.08s-80.88s
 - Unlike subtitle-based filters that cut entire sentences, we cut only the bad words!
 
-#### 2. **Smart Multi-Word Detection (Phrase Recognition)**
+### 2. Smart Multi-Word Detection (Phrase Recognition)
 - Automatically detects **1,132+ profanity words** including variations
 - **Intelligent merging**: Combines split phrases like "fuck you", "bull shit" into single cuts
 - **Context-aware**: Uses 1.5-second window to catch phrases spoken together
 - **Zero false positives**: Whole-word matching prevents "class" from triggering "ass"
 
-#### 3. **Frame-Accurate Video Cutting**
+### 3. Frame-Accurate Video Cutting
 - **FFmpeg-powered editing**: Industry-standard video processing tool
 - **Surgical precision**: Removes only profanity segments (typically 0.3-2 seconds each)
 - **Quality preservation**: Original video bitrate, resolution, and encoding maintained
 - **Smooth transitions**: Seamless cuts without audio glitches or visual artifacts
 
-#### Result: 95%+ Profanity-Free Videos
+### Result: 95%+ Profanity-Free Videos
 - **179 segments detected** in our test (99-minute movie)
 - **2.88 minutes removed** (97% of content preserved)
 - **Edge cases**: Some creative slang or muffled audio may slip through
@@ -78,16 +78,16 @@ This Netflix profanity filter uses a **3-layer approach** for near-perfect profa
 
 ## Key Features - VidAngel & ClearPlay Alternative
 
-✅ **No Monthly Subscription** - Save $96-120/year compared to VidAngel or ClearPlay  
-✅ **Works Offline** - No internet required after initial setup  
-✅ **Any Video Source** - Not limited to Netflix or specific streaming services  
-✅ **Fast AI Transcription** - Uses faster-whisper (CTranslate2) for 4-10x speed improvement  
-✅ **Smart Profanity Detection** - Identifies 1,132+ curse words and offensive phrases  
-✅ **Precise Editing** - Word-level timestamps remove only profanity, keeps dialogue intact  
-✅ **Family Safe** - Create clean versions for kids and family movie nights  
-✅ **YouTube Compatible** - Download and clean YouTube videos  
-✅ **Quality Preserved** - Maintains original video quality and encoding  
-✅ **Open Source** - Free forever, community-driven improvements
+- **No Monthly Subscription** - Save $96-120/year compared to VidAngel or ClearPlay  
+- **Works Offline** - No internet required after initial setup  
+- **Any Video Source** - Not limited to Netflix or specific streaming services  
+- **Fast AI Transcription** - Uses faster-whisper (CTranslate2) for 4-10x speed improvement  
+- **Smart Profanity Detection** - Identifies 1,132+ curse words and offensive phrases  
+- **Precise Editing** - Word-level timestamps remove only profanity, keeps dialogue intact  
+- **Family Safe** - Create clean versions for kids and family movie nights  
+- **YouTube Compatible** - Download and clean YouTube videos  
+- **Quality Preserved** - Maintains original video quality and encoding  
+- **Open Source** - Free forever, community-driven improvements
 
 ## System Requirements
 
@@ -180,7 +180,7 @@ cd profanity-filter
 python3 clean.py sample/original_video.mp4 sample/original_video_cleaned.mp4 --subs sample/original_video.srt
 ```
 
-## 🚀 Quick Start - Simple for Non-Technical Users
+## Quick Start - Simple for Non-Technical Users
 
 ### Easiest Method (Copy & Paste)
 
@@ -247,7 +247,7 @@ python3 clean.py input_video.mp4 --remove-timestamps "10-15,30-35"
 
 ### The 5-Step Profanity Removal Process
 
-#### Step 1: **AI Audio Transcription** 🎤
+#### Step 1: AI Audio Transcription
 - **Technology**: faster-whisper (OpenAI Whisper optimized with CTranslate2)
 - **Process**: Converts speech to text with **word-level timestamps** (±0.1s accuracy)
 - **Example Output**: 
@@ -259,13 +259,13 @@ python3 clean.py input_video.mp4 --remove-timestamps "10-15,30-35"
 - **Why accurate**: Trained on 680,000 hours of multilingual speech data
 - **Speed**: Processes at 10-12x real-time speed on modern CPUs
 
-#### Step 2: **Profanity Detection** 🔍
+#### Step 2: Profanity Detection
 - **Database**: 1,132+ profanity words including variations and slang
 - **Matching**: Whole-word exact matching (prevents false positives)
 - **Categories**: F-words, sexual terms, abusive language, religious profanity
 - **Smart filtering**: Excludes common words like "damn" (not considered obscene)
 
-#### Step 3: **Intelligent Phrase Merging** 🧠
+#### Step 3: Intelligent Phrase Merging
 - **Problem**: AI sometimes splits phrases ("fuck" + "you" = 2 separate detections)
 - **Solution**: Automatically merges words within 1.5 seconds into single cuts
 - **Examples caught**:
@@ -274,7 +274,7 @@ python3 clean.py input_video.mp4 --remove-timestamps "10-15,30-35"
   - "ass hole" → Single cut
 - **Result**: Natural speech flow maintained, no awkward gaps
 
-#### Step 4: **Frame-Accurate Video Cutting** ✂️
+#### Step 4: Frame-Accurate Video Cutting
 - **Tool**: FFmpeg (Hollywood-grade video processing)
 - **Precision**: Cuts at exact keyframes (±0.1 second accuracy)
 - **Method**: 
@@ -283,7 +283,7 @@ python3 clean.py input_video.mp4 --remove-timestamps "10-15,30-35"
   3. Re-encode with original quality settings
 - **Smart encoding**: Matches original bitrate, resolution, codec automatically
 
-#### Step 5: **Subtitle Synchronization** 📝
+#### Step 5: Subtitle Synchronization
 - **Automatic adjustment**: Shifts all subtitle timestamps after each cut
 - **Text cleaning**: Removes profanity from subtitle text
 - **Format support**: SRT and VTT formats
@@ -291,11 +291,11 @@ python3 clean.py input_video.mp4 --remove-timestamps "10-15,30-35"
 
 ### Why 95%+ Accuracy?
 
-✅ **Word-level timestamps** (not sentence-level like competitors)  
-✅ **1,132+ word database** (comprehensive coverage)  
-✅ **Intelligent phrase merging** (catches split expressions)  
-✅ **Context-aware detection** (whole-word matching)  
-✅ **Frame-accurate cutting** (surgical precision)
+- **Word-level timestamps** (not sentence-level like competitors)  
+- **1,132+ word database** (comprehensive coverage)  
+- **Intelligent phrase merging** (catches split expressions)  
+- **Context-aware detection** (whole-word matching)  
+- **Frame-accurate cutting** (surgical precision)
 
 ### Edge Cases (That 5%)
 - Heavy accents or unclear audio may be misheard by AI
@@ -451,11 +451,11 @@ Some people just prefer watching movies without constant cursing - and that's ok
 Unlike simple word filters, this Netflix profanity filter uses AI-powered transcription with a comprehensive database of **1,132+ profanity words and phrases**:
 
 ### What Gets Filtered
-- ✅ **Curse Words**: F-words, S-words, and all common profanity
-- ✅ **Sexual Content**: Inappropriate sexual references and terms
-- ✅ **Abusive Language**: Offensive and derogatory terms
-- ✅ **Multi-Word Phrases**: Intelligently detects "fuck you", "bull shit", etc.
-- ✅ **Variations**: Catches misspellings and creative variations
+- **Curse Words**: F-words, S-words, and all common profanity
+- **Sexual Content**: Inappropriate sexual references and terms
+- **Abusive Language**: Offensive and derogatory terms
+- **Multi-Word Phrases**: Intelligently detects "fuck you", "bull shit", etc.
+- **Variations**: Catches misspellings and creative variations
 
 ### Smart Detection Features
 - **Word-Level Precision**: Only removes profanity, keeps clean dialogue

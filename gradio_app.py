@@ -283,7 +283,9 @@ def create_interface():
                     interactive=False
                 )
         
-        gr.Markdown("""
+    # Free Profanity Filter for Movies & Videos - VidAngel & ClearPlay Alternative
+
+    **Created by [Adeel Raza](https://elearningevolve.com/about) - Contact: info@elearningevolve.com**
         ### ⏱️ Processing Time & System Requirements
         
         **With AI Transcription (Recommended):**

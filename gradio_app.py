@@ -284,27 +284,29 @@ Upload your video -> AI transcribes audio -> Detects profanity -> Removes offens
                     interactive=False
                 )
         
-    # Free Profanity Filter for Movies & Videos - VidAngel & ClearPlay Alternative
+        gr.Markdown("""
+# Free Profanity Filter for Movies & Videos - VidAngel & ClearPlay Alternative
 
-    **Created by [Adeel Raza](https://elearningevolve.com/about) - Contact: info@elearningevolve.com**
-        ### Processing Time & System Requirements
-        
-        **With AI Transcription (Recommended):**
-        - Short videos (5-15 min): 2-5 minutes processing
-        - Full movies (90-120 min): 15-30 minutes processing
-        - Long content (2-3 hours): 30-45 minutes processing
-        
-        **With Subtitles (Faster):**
-        - Any length: ~10-20 minutes for cutting/encoding
-        
-        **Formats:** MP4, MKV, MOV, AVI | **Privacy:** Files auto-deleted after processing | **Limit:** 5GB
-        
-        ### Free to Install on Your PC
-        Want faster processing? Download and run on your own computer - completely FREE!
-        - No internet required after setup
-        - Process unlimited videos locally
-        - Better performance on your hardware
-        - [Download from GitHub](https://github.com/adeel-raza/profanity-filter)
+**Created by [Adeel Raza](https://elearningevolve.com/about) - Contact: info@elearningevolve.com**
+
+### Processing Time & System Requirements
+
+**With AI Transcription (Recommended):**
+- Short videos (5-15 min): 2-5 minutes processing
+- Full movies (90-120 min): 15-30 minutes processing
+- Long content (2-3 hours): 30-45 minutes processing
+
+**With Subtitles (Faster):**
+- Any length: ~10-20 minutes for cutting/encoding
+
+**Formats:** MP4, MKV, MOV, AVI | **Privacy:** Files auto-deleted after processing | **Limit:** 5GB
+
+### Free to Install on Your PC
+Want faster processing? Download and run on your own computer - completely FREE!
+- No internet required after setup
+- Process unlimited videos locally
+- Better performance on your hardware
+- [Download from GitHub](https://github.com/adeel-raza/profanity-filter)
         """)
         
         # Connect the interface

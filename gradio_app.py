@@ -243,13 +243,7 @@ python3 clean.py input.mp4 output.mp4 --subs custom_subs.srt
 **Open Source. No subscription. No cloud uploads. Your movies, your way.**
         """)
         
-        gr.Markdown("""
-### How It Works
-Upload your video -> AI transcribes audio -> Detects profanity -> Removes offensive segments -> Download clean version!
-
-**Perfect for**: Family movie nights, Religious communities, Elderly care, Educational settings, Content creators, Anyone who prefers clean content
-        """)
-        
+        # Upload section at top
         with gr.Row():
             with gr.Column():
                 video_input = gr.File(
@@ -265,7 +259,16 @@ Upload your video -> AI transcribes audio -> Detects profanity -> Removes offens
                 )
                 
                 process_btn = gr.Button("Clean Video", variant="primary", size="lg")
-            
+        
+        gr.Markdown("""
+### How It Works
+Upload your video -> AI transcribes audio -> Detects profanity -> Removes offensive segments -> Download clean version!
+
+**Perfect for**: Family movie nights, Religious communities, Elderly care, Educational settings, Content creators, Anyone who prefers clean content
+        """)
+        
+        # Output section
+        with gr.Row():
             with gr.Column():
                 video_output = gr.File(
                     label="Cleaned Video",

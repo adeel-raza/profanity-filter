@@ -39,64 +39,26 @@ class SubtitleProcessor:
             # This removes profanity words but keeps the rest of the sentence
             entries = self._filter_profanity(entries)
             
-            # First, identify entries that should be removed or clipped
-            # Use ORIGINAL timestamps for this check (before adjustment)
-            entries_to_process = []
+            # Process entries - simpler approach: remove overlapping subtitles entirely
+            # This avoids complex clipping that can cause timing issues
+            entries_to_keep = []
             for entry in entries:
-                entry_start = entry['start']  # Original timestamp
-                entry_end = entry['end']      # Original timestamp
+                entry_start = entry['start']
+                entry_end = entry['end']
                 
-                # Check if entry is completely within a removed segment
-                completely_removed = False
-                for remove_start, remove_end in removed_segments:
-                    if entry_start >= remove_start and entry_end <= remove_end:
-                        completely_removed = True
-                        break
-                
-                # Skip entries completely within removed segments
-                if completely_removed:
-                    continue
-                
-                # Check if entry starts inside a removal (should only keep part after removal)
-                starts_in_removal = False
-                for remove_start, remove_end in removed_segments:
-                    if remove_start <= entry_start < remove_end:
-                        starts_in_removal = True
-                        # If entry starts in removal, only keep part after removal
-                        if entry_end > remove_end:
-                            entries_to_process.append({
-                                'index': entry['index'],
-                                'start': remove_end,
-                                'end': entry_end,
-                                'text': entry['text']
-                            })
-                        # If entry ends within removal, it's completely removed
-                        break
-                
-                if starts_in_removal:
-                    continue
-                
-                # For entries that don't start in removal and aren't completely removed,
-                # check if they overlap with any removal
+                # Check if entry overlaps with any removed segment
                 overlaps_removal = False
                 for remove_start, remove_end in removed_segments:
                     if entry_start < remove_end and entry_end > remove_start:
                         overlaps_removal = True
                         break
                 
-                if overlaps_removal:
-                    # Entry overlaps with removal - clip it
-                    clipped_entries = self._clip_entry_to_keep_segments(
-                        entry, removed_segments
-                    )
-                    entries_to_process.extend(clipped_entries)
-                else:
-                    # Entry doesn't overlap - just add it for adjustment
-                    entries_to_process.append(entry)
+                # Only keep entries that don't overlap with removed segments at all
+                if not overlaps_removal:
+                    entries_to_keep.append(entry)
             
-            # Now adjust timestamps for entries we're keeping
-            # This ensures subtitles stay aligned with the cleaned video
-            adjusted_entries = self._adjust_timestamps(entries_to_process, removed_segments)
+            # Adjust timestamps for kept entries
+            adjusted_entries = self._adjust_timestamps(entries_to_keep, removed_segments)
             
             # Filter out entries that have no text after profanity removal
             final_entries = []
@@ -177,7 +139,7 @@ class SubtitleProcessor:
         text = '\n'.join(line for line in lines if line)
         return text.strip()
     
-    def detect_profanity_segments(self, subtitle_path: Path) -> List[Tuple[float, float, str]]:
+    def detect_profanity_segments(self, subtitle_path: Path, srt_window: float = None, pad: float = 0.2) -> List[Tuple[float, float, str]]:
         """
         Detect profanity in subtitle file and return segments with timestamps.
         
@@ -231,11 +193,20 @@ class SubtitleProcessor:
                             found_profanity.append(word)
                 
                 if found_profanity:
-                    # Add small padding around subtitle segment
-                    padding = 0.2
+                    # Determine segment bounds for removal
+                    if srt_window is not None and srt_window > 0:
+                        duration = max(0.0, entry['end'] - entry['start'])
+                        window = min(srt_window, duration if duration > 0 else srt_window)
+                        center = (entry['start'] + entry['end']) / 2.0 if duration > 0 else entry['start']
+                        start = max(0.0, center - window / 2.0)
+                        end = start + window
+                    else:
+                        # Default behavior: use the full cue with small padding
+                        start = max(0.0, entry['start'] - pad)
+                        end = entry['end'] + pad
                     profanity_segments.append((
-                        max(0, entry['start'] - padding),
-                        entry['end'] + padding,
+                        start,
+                        end,
                         ', '.join(sorted(set(found_profanity)))
                     ))
             

@@ -38,16 +38,16 @@ def main():
                        help='[Advanced] Extra padding (seconds) added before/after each subtitle cue when removing in subtitle-driven detection. Default: 0.0')
     parser.add_argument('--merge-gap', type=float, default=0.06,
                        help='Max gap (seconds) between segments to merge. Default: 0.06 (minimal, per-word behavior)')
-    parser.add_argument('--expand-pad', type=float, default=0.15,
-                       help='Expand each detected segment by this padding before cutting (applied to start and end). Default: 0.15 (150ms) to ensure complete removal')
+    parser.add_argument('--expand-pad', type=float, default=0.0,
+                       help='Expand each detected segment by this padding before cutting (applied to start and end). Default: 0.0 to avoid trimming clean syllables')
     parser.add_argument('--model', type=str, default='base',
                        help='Whisper model size: tiny (fastest), base (recommended), small, medium, large (most accurate). Default: base')
     parser.add_argument('--force-audio', action='store_true',
                        help='Use audio transcription to detect profanities (default behavior). Subtitles, if provided/auto-detected, are used only for text cleaning and embedding.')
     parser.add_argument('--use-subs-detection', action='store_true',
                        help='[Advanced] Use provided/auto-detected subtitles for profanity detection instead of audio. Not recommended unless you specifically want cue-level removal.')
-    parser.add_argument('--phrase-gap', type=float, default=2.0,
-                       help='Max gap (seconds) between consecutive detected profanity words to merge into one phrase segment. Default: 2.0')
+    parser.add_argument('--phrase-gap', type=float, default=1.5,
+                       help='Max gap (seconds) between consecutive detected profanity words to merge into one phrase segment. Default: 1.5')
     parser.add_argument('--remove-timestamps', type=str, default=None,
                        help='Manually specify additional timestamps to remove (format: "start-end,start-end" e.g., "6-11,23-30")')
     parser.add_argument('--log-time', type=str, default=None,

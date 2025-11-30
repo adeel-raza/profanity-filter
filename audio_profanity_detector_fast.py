@@ -14,6 +14,16 @@ class AudioProfanityDetectorFast:
     """Detects profanity in audio using faster-whisper with optional enhancements"""
 
     PROFANITY_WORDS = PROFANITY_WORDS
+    
+    # Common profanity phrases to detect as complete units
+    PROFANITY_PHRASES = {
+        'fuck you', 'fuck off', 'fuck this', 'fuck that', 'fuck me', 'fuck her', 'fuck him',
+        'shit head', 'shit face', 'shit for brains', 'bull shit', 'bullshit',
+        'ass hole', 'asshole', 'dumb ass', 'dumbass', 'smart ass', 'smartass',
+        'son of a bitch', 'sonofabitch', 'mother fucker', 'motherfucker',
+        'piece of shit', 'dick head', 'dickhead', 'cock sucker', 'cocksucker',
+        'piss off', 'piss off', 'screw you', 'screw off'
+    }
 
     _MODEL_ORDER = ['tiny', 'base', 'small', 'medium', 'large']
 
@@ -170,8 +180,10 @@ class AudioProfanityDetectorFast:
                 except Exception as e:
                     print(f"  ⚠ Failed to dump transcript: {e}")
             
-            # Find profanity words
+            # Find profanity words and phrases
             print(f"  Searching {len(all_words)} words for profanity...")
+            
+            # First pass: detect individual profanity words
             for word_info in all_words:
                 word = word_info.word.strip().lower().rstrip('.,!?;:')
                 if word in self.PROFANITY_WORDS:
@@ -184,7 +196,26 @@ class AudioProfanityDetectorFast:
                         word
                     ))
             
-            print(f"  ✓ Profanity search complete: {len(profanity_segments)} profanity word(s) found")
+            # Second pass: detect profanity phrases (2-word combinations)
+            for i in range(len(all_words) - 1):
+                word1_info = all_words[i]
+                word2_info = all_words[i + 1]
+                
+                word1 = word1_info.word.strip().lower().rstrip('.,!?;:')
+                word2 = word2_info.word.strip().lower().rstrip('.,!?;:')
+                
+                phrase = f"{word1} {word2}"
+                if phrase in self.PROFANITY_PHRASES:
+                    start = word1_info.start
+                    end = word2_info.end
+                    padding = 0.15
+                    profanity_segments.append((
+                        max(0, start - padding),
+                        end + padding,
+                        phrase
+                    ))
+            
+            print(f"  ✓ Profanity search complete: {len(profanity_segments)} profanity segment(s) found")
             
             # Merge nearby profanity (within 1 second)
             if profanity_segments:
@@ -249,6 +280,8 @@ class AudioProfanityDetectorFast:
                 except Exception as e:
                     print(f"  ⚠ Failed to dump transcript: {e}")
             print(f"  Searching {len(all_words)} words for profanity...")
+            
+            # First pass: detect individual profanity words
             for word_info in all_words:
                 word = word_info.word.strip().lower().rstrip('.,!?;:')
                 if word in self.PROFANITY_WORDS:
@@ -260,7 +293,27 @@ class AudioProfanityDetectorFast:
                         end + padding,
                         word
                     ))
-            print(f"  ✓ Profanity search complete: {len(profanity_segments)} profanity word(s) found")
+            
+            # Second pass: detect profanity phrases (2-word combinations)
+            for i in range(len(all_words) - 1):
+                word1_info = all_words[i]
+                word2_info = all_words[i + 1]
+                
+                word1 = word1_info.word.strip().lower().rstrip('.,!?;:')
+                word2 = word2_info.word.strip().lower().rstrip('.,!?;:')
+                
+                phrase = f"{word1} {word2}"
+                if phrase in self.PROFANITY_PHRASES:
+                    start = word1_info.start
+                    end = word2_info.end
+                    padding = 0.15
+                    profanity_segments.append((
+                        max(0, start - padding),
+                        end + padding,
+                        phrase
+                    ))
+            
+            print(f"  ✓ Profanity search complete: {len(profanity_segments)} profanity segment(s) found")
             if profanity_segments:
                 print(f"  Merging nearby profanity segments...")
                 profanity_segments = self._merge_nearby(profanity_segments)

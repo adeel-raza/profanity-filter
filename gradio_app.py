@@ -165,95 +165,89 @@ def create_interface():
     # Use compatible Gradio version - theme parameter not available in older versions
     # Remove theme parameter for compatibility with Hugging Face Spaces
     with gr.Blocks(title="Free Profanity Filter for Movies & Videos - VidAngel & ClearPlay Alternative") as demo:
-    # Free Profanity Filter for Movies & Videos - VidAngel & ClearPlay Alternative
+        gr.Markdown("""
+# Free Profanity Filter for Movies & Videos - VidAngel & ClearPlay Alternative
 
-    **Created by [Adeel Raza](https://elearningevolve.com/about) - Contact: info@elearningevolve.com**
+**Created by [Adeel Raza](https://elearningevolve.com/about) - Contact: info@elearningevolve.com**
 
-    # Free Profanity Filter for Movies & Videos - VidAngel & ClearPlay Alternative
+**Watch movies YOUR way - completely FREE!** Remove profanity, curse words, and offensive language from ANY video automatically. No subscription or Netflix account required. Works with local video files, YouTube downloads, and any MP4/MKV content.
 
-    **Watch movies YOUR way - completely FREE!** Remove profanity, curse words, and offensive language from ANY video automatically. No subscription or Netflix account required. Works with local video files, YouTube downloads, and any MP4/MKV content.
+**Perfect for families who want to enjoy movies together without inappropriate language**  
+**100% FREE alternative to VidAngel ($9.99/month) and ClearPlay ($7.99/month)**  
+**Privacy-focused: Everything runs locally on your computer**  
+**AI-powered with enhanced dialogue detection using faster-whisper**
 
-    **Perfect for families who want to enjoy movies together without inappropriate language**  
-    **100% FREE alternative to VidAngel ($9.99/month) and ClearPlay ($7.99/month)**  
-    **Privacy-focused: Everything runs locally on your computer**  
-    **AI-powered with enhanced dialogue detection using faster-whisper**
+---
 
-    ---
+## Why Choose This Free Profanity Filter?
 
-    ## Why Choose This Free Profanity Filter?
+### Save Money - No Subscriptions
+- **VidAngel**: $9.99/month + requires Netflix/Amazon Prime  
+- **ClearPlay**: $7.99/month + requires compatible devices  
+- **This App**: **100% FREE** - works with any video file
 
-    ### Save Money - No Subscriptions
-    - **VidAngel**: $9.99/month + requires Netflix/Amazon Prime  
-    - **ClearPlay**: $7.99/month + requires compatible devices  
-    - **This App**: **100% FREE** - works with any video file
+### Watch Movies Your Way
+Unlike VidAngel and ClearPlay that only work with specific streaming services, this tool works with:  
+- Local video files (MP4, MKV, AVI, etc.)  
+- YouTube downloads (via yt-dlp)  
+- DVDs and Blu-rays (ripped to digital)  
+- ANY video source - no restrictions
 
-    ### Watch Movies Your Way
-    Unlike VidAngel and ClearPlay that only work with specific streaming services, this tool works with:  
-    - Local video files (MP4, MKV, AVI, etc.)  
-    - YouTube downloads (via yt-dlp)  
-    - DVDs and Blu-rays (ripped to digital)  
-    - ANY video source - no restrictions
+### Privacy & Control
+- Everything runs on **YOUR computer**  
+- **No cloud uploads** or streaming required  
+- Your videos stay private  
+- Complete control over content filtering
 
-    ### Privacy & Control
-    - Everything runs on **YOUR computer**  
-    - **No cloud uploads** or streaming required  
-    - Your videos stay private  
-    - Complete control over content filtering
+---
 
-    ---
+## How It Works
 
-    ## How It Works
+- AI Audio Transcription (Word-Level Precision): Uses the base model by default for best accuracy. Each word gets a precise timestamp (+/-0.1s). Only the bad words are cut, not whole sentences.
+- Smart Multi-Word Detection: Detects 1,192+ profanity words and intelligently merges phrases like "fuck you" or "bull shit". Whole-word matching prevents false positives.
+- Frame-Accurate Video Cutting: FFmpeg-powered, removes only profanity segments (0.3-2s each), preserves original quality, and ensures smooth transitions.
 
-    # How It Works
-    #
-    # - AI Audio Transcription (Word-Level Precision): Uses the base model by default for best accuracy. Each word gets a precise timestamp (+/-0.1s). Only the bad words are cut, not whole sentences.
-    # - Smart Multi-Word Detection: Detects 1,192+ profanity words and intelligently merges phrases like "fuck you" or "bull shit". Whole-word matching prevents false positives.
-    # - Frame-Accurate Video Cutting: FFmpeg-powered, removes only profanity segments (0.3-2s each), preserves original quality, and ensures smooth transitions.
+---
 
-    ---
+## Usage
 
-    ## Usage
+**Basic:**
+```bash
+python3 clean.py input.mp4 output.mp4
+# Output: output.mp4 (cleaned)
+```
 
-    **Basic:**
-    ```bash
-    python3 clean.py input.mp4 output.mp4
-    # Output: output.mp4 (cleaned)
-    ```
+**Faster (less accurate):**
+```bash
+python3 clean.py input.mp4 output.mp4 --model tiny
+# Tiny model is faster but may miss profanity, especially in movies with music or background noise.
+```
 
-    **Faster (less accurate):**
-    ```bash
-    python3 clean.py input.mp4 output.mp4 --model tiny
-    # Tiny model is faster but may miss profanity, especially in movies with music or background noise.
-    ```
+**Subtitles:**
+- If your subtitle file has the same name as your video (e.g. `movie.mp4` and `movie.srt`) and is in the same directory, it will be auto-detected. You do not need to specify `--subs` in this case.
 
-    **Subtitles:**
-    - If your subtitle file has the same name as your video (e.g. `movie.mp4` and `movie.srt`) and is in the same directory, it will be auto-detected. You do not need to specify `--subs` in this case.
+**Manual:**
+```bash
+python3 clean.py input.mp4 output.mp4 --subs custom_subs.srt
+```
 
-    **Manual:**
-    ```bash
-    python3 clean.py input.mp4 output.mp4 --subs custom_subs.srt
-    ```
+---
 
-    ---
+## System Requirements
+- 2-hour movie takes ~6 hours on CPU (base model)
+- GPU (optional): 30-60 minutes
+- RAM: 8GB or more recommended
 
+---
 
-
-    system_requirements = (
-        "System Requirements:\n"
-        "- 2-hour movie takes ~6 hours on CPU (base model)\n"
-        "- GPU (optional): 30-60 minutes\n"
-        "- RAM: 8GB or more recommended\n"
-    )
-    gr.Markdown(system_requirements)
-
-    ---
-
-    **Open Source. No subscription. No cloud uploads. Your movies, your way.**
+**Open Source. No subscription. No cloud uploads. Your movies, your way.**
         """)
-        ### How It Works
-        Upload your video -> AI transcribes audio -> Detects profanity -> Removes offensive segments -> Download clean version!
         
-        **Perfect for**: Family movie nights, Religious communities, Elderly care, Educational settings, Content creators, Anyone who prefers clean content
+        gr.Markdown("""
+### How It Works
+Upload your video -> AI transcribes audio -> Detects profanity -> Removes offensive segments -> Download clean version!
+
+**Perfect for**: Family movie nights, Religious communities, Elderly care, Educational settings, Content creators, Anyone who prefers clean content
         """)
         
         with gr.Row():

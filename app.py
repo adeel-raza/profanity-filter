@@ -1,6 +1,7 @@
 """
 Hugging Face Spaces Entry Point
 This file is used when deploying to Hugging Face Spaces
+Updated: 2025-11-30
 """
 
 from gradio_app import create_interface

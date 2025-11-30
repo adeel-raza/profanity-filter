@@ -176,7 +176,26 @@ def create_interface():
 **100% FREE alternative to VidAngel ($9.99/month) and ClearPlay ($7.99/month)**  
 **Privacy-focused: Everything runs locally on your computer**  
 **AI-powered with enhanced dialogue detection using faster-whisper**
-
+        """)
+        
+        # Upload section at top
+        with gr.Row():
+            with gr.Column():
+                video_input = gr.File(
+                    label="Upload Video",
+                    file_types=["video"],
+                    type="filepath"
+                )
+                
+                subtitle_input = gr.File(
+                    label="Upload Subtitles (Optional - SRT or VTT)",
+                    file_types=[".srt", ".vtt"],
+                    type="filepath"
+                )
+                
+                process_btn = gr.Button("Clean Video", variant="primary", size="lg")
+        
+        gr.Markdown("""
 ---
 
 ## Why Choose This Free Profanity Filter?
@@ -242,23 +261,6 @@ python3 clean.py input.mp4 output.mp4 --subs custom_subs.srt
 
 **Open Source. No subscription. No cloud uploads. Your movies, your way.**
         """)
-        
-        # Upload section at top
-        with gr.Row():
-            with gr.Column():
-                video_input = gr.File(
-                    label="Upload Video",
-                    file_types=["video"],
-                    type="filepath"
-                )
-                
-                subtitle_input = gr.File(
-                    label="Upload Subtitles (Optional - SRT or VTT)",
-                    file_types=[".srt", ".vtt"],
-                    type="filepath"
-                )
-                
-                process_btn = gr.Button("Clean Video", variant="primary", size="lg")
         
         gr.Markdown("""
 ### How It Works

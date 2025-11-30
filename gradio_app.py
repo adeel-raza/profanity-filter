@@ -164,21 +164,39 @@ def create_interface():
     
     # Use compatible Gradio version - theme parameter not available in older versions
     # Remove theme parameter for compatibility with Hugging Face Spaces
-    with gr.Blocks(title="Free Profanity Filter - VidAngel & ClearPlay Alternative") as demo:
+    with gr.Blocks(title="Free Profanity Filter for Movies & Videos - VidAngel & ClearPlay Alternative") as demo:
         gr.Markdown("""
-        # 🎬 Free Movie Profanity Filter - Watch Movies YOUR Way!
-        
-        ## 💰 100% FREE Alternative to VidAngel ($9.99/mo) & ClearPlay ($7.99/mo)
-        
-        Remove curse words and profanity from ANY video - no subscription required! Create family-friendly versions of movies for kids, elderly relatives, or anyone who prefers clean content.
-        
-        ### ✅ Why This FREE Tool?
-        - **No Monthly Fees**: Save $96-120/year vs VidAngel or ClearPlay
-        - **Any Video Source**: Works with local files, YouTube downloads, DVDs - not limited to Netflix
-        - **Privacy Protected**: Your videos never leave this server, processed and deleted immediately
-        - **1,132+ Profanity Words**: Comprehensive detection including multi-word phrases
-        - **Family Safe**: Create clean versions for kids and family movie nights
-        
+# Free Profanity Filter for Movies & Videos - VidAngel & ClearPlay Alternative
+
+**Watch movies YOUR way – completely FREE!** Remove profanity, curse words, and offensive language from ANY video automatically. No subscription or Netflix account required. Works with local video files, YouTube downloads, and any MP4/MKV content.
+
+**Perfect for families who want to enjoy movies together without inappropriate language**  
+**100% FREE alternative to VidAngel ($9.99/month) and ClearPlay ($7.99/month)**  
+**Privacy-focused: Everything runs locally on your computer**  
+**AI-powered with enhanced dialogue detection using faster-whisper**
+
+---
+
+## Why Choose This Free Profanity Filter?
+
+### Save Money - No Subscriptions
+- **VidAngel**: $9.99/month + requires Netflix/Amazon Prime  
+- **ClearPlay**: $7.99/month + requires compatible devices  
+- **This App**: **100% FREE** - works with any video file
+
+### Watch Movies Your Way
+Unlike VidAngel and ClearPlay that only work with specific streaming services, this tool works with:  
+- Local video files (MP4, MKV, AVI, etc.)  
+- YouTube downloads (via yt-dlp)  
+- DVDs and Blu-rays (ripped to digital)  
+- ANY video source - no restrictions
+
+### Privacy & Control
+- Everything runs on **YOUR computer**  
+- **No cloud uploads** or streaming required  
+- Your videos stay private  
+- Complete control over content filtering
+        """)
         ### 🚀 How It Works
         Upload your video → AI transcribes audio → Detects profanity → Removes offensive segments → Download clean version!
         

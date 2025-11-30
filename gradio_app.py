@@ -171,7 +171,7 @@ def create_interface():
 
     # Free Profanity Filter for Movies & Videos - VidAngel & ClearPlay Alternative
 
-    **Watch movies YOUR way – completely FREE!** Remove profanity, curse words, and offensive language from ANY video automatically. No subscription or Netflix account required. Works with local video files, YouTube downloads, and any MP4/MKV content.
+    **Watch movies YOUR way - completely FREE!** Remove profanity, curse words, and offensive language from ANY video automatically. No subscription or Netflix account required. Works with local video files, YouTube downloads, and any MP4/MKV content.
 
     **Perfect for families who want to enjoy movies together without inappropriate language**  
     **100% FREE alternative to VidAngel ($9.99/month) and ClearPlay ($7.99/month)**  

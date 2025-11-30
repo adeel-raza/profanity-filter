@@ -204,7 +204,7 @@ def create_interface():
 
     ## How It Works
 
-    1. **AI Audio Transcription (Word-Level Precision)**: Uses the base model by default for best accuracy. Each word gets a precise timestamp (±0.1s). Only the bad words are cut, not whole sentences.
+    1. **AI Audio Transcription (Word-Level Precision)**: Uses the base model by default for best accuracy. Each word gets a precise timestamp (+/-0.1s). Only the bad words are cut, not whole sentences.
     2. **Smart Multi-Word Detection**: Detects 1,192+ profanity words and intelligently merges phrases like "fuck you" or "bull shit". Whole-word matching prevents false positives.
     3. **Frame-Accurate Video Cutting**: FFmpeg-powered, removes only profanity segments (0.3-2s each), preserves original quality, and ensures smooth transitions.
 

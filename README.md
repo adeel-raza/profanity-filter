@@ -20,7 +20,6 @@ tags:
   - local-processing
   - privacy
 #
----
 title: Free Profanity Filter for Movies & Videos - VidAngel & ClearPlay Alternative
 emoji: 🎬
 colorFrom: blue
@@ -42,7 +41,6 @@ tags:
   - open-source
   - local-processing
   - privacy
----
 
 # 🚀 Try the Online Demo
 
@@ -50,7 +48,6 @@ Want to see how it works before installing? **Try the app instantly in your brow
 
 [![Hugging Face Spaces](https://img.shields.io/badge/Live%20Demo-Hugging%20Face-blue?logo=huggingface)](https://huggingface.co/spaces/adeel-raza/video-profanity-filter)
 
----
 
 # 🚀 Try the Online Demo
 

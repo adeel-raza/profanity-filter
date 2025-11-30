@@ -244,9 +244,9 @@ def create_interface():
     **Open Source. No subscription. No cloud uploads. Your movies, your way.**
         """)
         ### 🚀 How It Works
-        Upload your video → AI transcribes audio → Detects profanity → Removes offensive segments → Download clean version!
+        Upload your video -> AI transcribes audio -> Detects profanity -> Removes offensive segments -> Download clean version!
         
-        **Perfect for**: Family movie nights • Religious communities • Elderly care • Educational settings • Content creators • Anyone who prefers clean content
+        **Perfect for**: Family movie nights, Religious communities, Elderly care, Educational settings, Content creators, Anyone who prefers clean content
         """)
         
         with gr.Row():
@@ -296,14 +296,14 @@ def create_interface():
         **With Subtitles (Faster):**
         - Any length: ~10-20 minutes for cutting/encoding
         
-        **Formats:** MP4, MKV, MOV, AVI • **Privacy:** Files auto-deleted after processing • **Limit:** 5GB
+        **Formats:** MP4, MKV, MOV, AVI | **Privacy:** Files auto-deleted after processing | **Limit:** 5GB
         
         ### 💡 Free to Install on Your PC
         Want faster processing? Download and run on your own computer - completely FREE!
         - No internet required after setup
         - Process unlimited videos locally
         - Better performance on your hardware
-        - [Download from GitHub →](https://github.com/adeel-raza/profanity-filter)
+        - [Download from GitHub](https://github.com/adeel-raza/profanity-filter)
         """)
         
         # Connect the interface
@@ -345,7 +345,7 @@ def create_interface():
         Your videos are processed securely on this server and automatically deleted after download. No data is stored or shared. For complete privacy, download the tool and run locally on your computer!
         
         ### 💬 Keywords
-        Profanity filter • Netflix profanity filter • Movie content filter • VidAngel alternative • ClearPlay alternative • Family-friendly movies • Remove curse words • Clean movie versions • Enjoy movies your way • Free video filter • Parental controls
+        Profanity filter, Netflix profanity filter, Movie content filter, VidAngel alternative, ClearPlay alternative, Family-friendly movies, Remove curse words, Clean movie versions, Enjoy movies your way, Free video filter, Parental controls
         
         ---
         

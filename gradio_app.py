@@ -57,8 +57,8 @@ def clean_video(video_file, subtitle_file, progress=gr.Progress()):
         log_messages.append("\nStep 1: Detecting profanity in audio...")
         
         try:
-            # Use 'tiny' model by default for fast processing
-            audio_detector = AudioProfanityDetectorFast(model_size='tiny')
+            # Use 'tiny' model by default for fast processing with aggressive merging
+            audio_detector = AudioProfanityDetectorFast(model_size='tiny', phrase_gap=2.0)
             progress(0.2, desc="Transcribing audio with Whisper...")
             audio_segments = audio_detector.detect(input_video)
             
@@ -81,6 +81,17 @@ def clean_video(video_file, subtitle_file, progress=gr.Progress()):
             audio_segments_tuples = [(start, end) for start, end, word in audio_segments]
             all_segments = merger.merge(all_segments, audio_segments_tuples)
             log_messages.append(f"Merged into {len(all_segments)} segment(s) to remove")
+        
+        # Add padding around segments to ensure complete removal
+        expand_pad = 0.15  # Add 150ms padding before and after each segment
+        expanded_segments = []
+        for start, end in all_segments:
+            new_start = max(0, start - expand_pad)
+            # Don't expand end beyond video duration (we'll let FFmpeg handle this)
+            new_end = end + expand_pad
+            expanded_segments.append((new_start, new_end))
+        all_segments = expanded_segments
+        log_messages.append(f"Added {expand_pad}s padding to {len(all_segments)} segment(s)")
         
         if not all_segments:
             progress(0.6, desc="No profanity detected. Processing subtitles...")

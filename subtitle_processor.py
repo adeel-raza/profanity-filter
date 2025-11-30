@@ -39,26 +39,9 @@ class SubtitleProcessor:
             # This removes profanity words but keeps the rest of the sentence
             entries = self._filter_profanity(entries)
             
-            # Process entries - simpler approach: remove overlapping subtitles entirely
-            # This avoids complex clipping that can cause timing issues
-            entries_to_keep = []
-            for entry in entries:
-                entry_start = entry['start']
-                entry_end = entry['end']
-                
-                # Check if entry overlaps with any removed segment
-                overlaps_removal = False
-                for remove_start, remove_end in removed_segments:
-                    if entry_start < remove_end and entry_end > remove_start:
-                        overlaps_removal = True
-                        break
-                
-                # Only keep entries that don't overlap with removed segments at all
-                if not overlaps_removal:
-                    entries_to_keep.append(entry)
-            
-            # Adjust timestamps for kept entries
-            adjusted_entries = self._adjust_timestamps(entries_to_keep, removed_segments)
+            # Adjust timestamps for all entries to match the cleaned video
+            # Keep all subtitles but adjust their timing
+            adjusted_entries = self._adjust_timestamps(entries, removed_segments)
             
             # Filter out entries that have no text after profanity removal
             final_entries = []
@@ -506,17 +489,14 @@ class SubtitleProcessor:
             # Parse VTT entries
             entries = self._parse_vtt(content)
             
-            # Filter out entries that fall within removed segments
-            filtered_entries = self._filter_entries(entries, removed_segments)
+            # Filter profanity from subtitle text
+            entries = self._filter_profanity(entries)
             
             # Adjust timestamps to account for removed time
-            adjusted_entries = self._adjust_timestamps(filtered_entries, removed_segments)
-            
-            # Filter profanity from remaining subtitle text
-            filtered_entries = self._filter_profanity(adjusted_entries)
+            adjusted_entries = self._adjust_timestamps(entries, removed_segments)
             
             # Write output VTT
-            self._write_vtt(output_vtt, filtered_entries)
+            self._write_vtt(output_vtt, adjusted_entries)
             
             return True
             

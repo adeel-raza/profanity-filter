@@ -178,7 +178,7 @@ def create_interface():
 **AI-powered with enhanced dialogue detection using faster-whisper**
         """)
         
-        # Upload section at top
+        # Upload and output section
         with gr.Row():
             with gr.Column():
                 video_input = gr.File(
@@ -194,6 +194,24 @@ def create_interface():
                 )
                 
                 process_btn = gr.Button("Clean Video", variant="primary", size="lg")
+            
+            with gr.Column():
+                video_output = gr.File(
+                    label="Cleaned Video",
+                    type="filepath"
+                )
+                
+                subtitle_output = gr.File(
+                    label="Cleaned Subtitles",
+                    type="filepath"
+                )
+                
+                log_output = gr.Textbox(
+                    label="Processing Log",
+                    lines=15,
+                    max_lines=20,
+                    interactive=False
+                )
         
         gr.Markdown("""
 ---
@@ -269,25 +287,7 @@ Upload your video -> AI transcribes audio -> Detects profanity -> Removes offens
 **Perfect for**: Family movie nights, Religious communities, Elderly care, Educational settings, Content creators, Anyone who prefers clean content
         """)
         
-        # Output section
-        with gr.Row():
-            with gr.Column():
-                video_output = gr.File(
-                    label="Cleaned Video",
-                    type="filepath"
-                )
-                
-                subtitle_output = gr.File(
-                    label="Cleaned Subtitles",
-                    type="filepath"
-                )
-                
-                log_output = gr.Textbox(
-                    label="Processing Log",
-                    lines=15,
-                    max_lines=20,
-                    interactive=False
-                )
+
         
         gr.Markdown("""
 # Free Profanity Filter for Movies & Videos - VidAngel & ClearPlay Alternative

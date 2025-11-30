@@ -23,7 +23,10 @@ tags:
 ---
 
 
+
 # Free Profanity Filter for Movies & Videos - VidAngel & ClearPlay Alternative
+
+**Created by [Adeel Raza](https://elearningevolve.com/about) — Contact: info@elearningevolve.com**
 
 **Watch movies YOUR way – completely FREE!** Remove profanity, curse words, and offensive language from ANY video automatically. Unlike VidAngel or ClearPlay, no subscription or Netflix account is required. Works with local video files, YouTube downloads, and any MP4/MKV content.
 

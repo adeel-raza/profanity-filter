@@ -165,7 +165,10 @@ def create_interface():
     # Use compatible Gradio version - theme parameter not available in older versions
     # Remove theme parameter for compatibility with Hugging Face Spaces
     with gr.Blocks(title="Free Profanity Filter for Movies & Videos - VidAngel & ClearPlay Alternative") as demo:
-        gr.Markdown("""
+    # Free Profanity Filter for Movies & Videos - VidAngel & ClearPlay Alternative
+
+    **Created by [Adeel Raza](https://elearningevolve.com/about) — Contact: info@elearningevolve.com**
+
     # Free Profanity Filter for Movies & Videos - VidAngel & ClearPlay Alternative
 
     **Watch movies YOUR way – completely FREE!** Remove profanity, curse words, and offensive language from ANY video automatically. No subscription or Netflix account required. Works with local video files, YouTube downloads, and any MP4/MKV content.

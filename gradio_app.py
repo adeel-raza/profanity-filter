@@ -245,7 +245,7 @@ def create_interface():
 
     **Open Source. No subscription. No cloud uploads. Your movies, your way.**
         """)
-        ### 🚀 How It Works
+        ### How It Works
         Upload your video -> AI transcribes audio -> Detects profanity -> Removes offensive segments -> Download clean version!
         
         **Perfect for**: Family movie nights, Religious communities, Elderly care, Educational settings, Content creators, Anyone who prefers clean content
@@ -288,7 +288,7 @@ def create_interface():
     # Free Profanity Filter for Movies & Videos - VidAngel & ClearPlay Alternative
 
     **Created by [Adeel Raza](https://elearningevolve.com/about) - Contact: info@elearningevolve.com**
-        ### ⏱️ Processing Time & System Requirements
+        ### Processing Time & System Requirements
         
         **With AI Transcription (Recommended):**
         - Short videos (5-15 min): 2-5 minutes processing
@@ -300,7 +300,7 @@ def create_interface():
         
         **Formats:** MP4, MKV, MOV, AVI | **Privacy:** Files auto-deleted after processing | **Limit:** 5GB
         
-        ### 💡 Free to Install on Your PC
+        ### Free to Install on Your PC
         Want faster processing? Download and run on your own computer - completely FREE!
         - No internet required after setup
         - Process unlimited videos locally
@@ -316,7 +316,7 @@ def create_interface():
         )
         
         gr.Markdown("""
-        ### 📖 How to Use (Simple 3-Step Process)
+        ### How to Use (Simple 3-Step Process)
         
         1. **Upload** your video file (MP4, MKV, etc.)
         2. **Optional**: Upload subtitle file for faster processing (SRT/VTT)
@@ -325,7 +325,7 @@ def create_interface():
         
         The AI automatically transcribes audio, detects 1,132+ profanity words, removes offensive segments, and generates clean subtitles.
         
-        ### 🆚 Compare to Paid Services
+        ### Compare to Paid Services
         
         | Feature | This Tool | VidAngel | ClearPlay |
         |---------|-----------|----------|-----------|
@@ -335,7 +335,7 @@ def create_interface():
         | **Privacy** | **100% secure** | Account required | Account required |
         | **Download** | **✅ Yes** | ❌ Streaming only | ❌ Streaming only |
         
-        ### 🎯 Perfect For
+        ### Perfect For
         - **Parents**: Create G/PG versions of PG-13/R movies for kids
         - **Religious Groups**: Clean content for church events and gatherings
         - **Educators**: Use movie clips in classrooms appropriately
@@ -343,10 +343,10 @@ def create_interface():
         - **Content Creators**: Clean source material for family YouTube channels
         - **Personal Preference**: Enjoy movies without constant cursing!
         
-        ### 🔒 Privacy & Security
+        ### Privacy & Security
         Your videos are processed securely on this server and automatically deleted after download. No data is stored or shared. For complete privacy, download the tool and run locally on your computer!
         
-        ### 💬 Keywords
+        ### Keywords
         Profanity filter, Netflix profanity filter, Movie content filter, VidAngel alternative, ClearPlay alternative, Family-friendly movies, Remove curse words, Clean movie versions, Enjoy movies your way, Free video filter, Parental controls
         
         ---

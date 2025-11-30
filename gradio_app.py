@@ -236,10 +236,11 @@ def create_interface():
 
     ---
 
+
     **System Requirements:**
-    - 2-hour movie takes ~6 hours on CPU (base model)
-    - GPU (optional): 30-60 minutes
-    - RAM: 8GB+ recommended
+    2-hour movie takes ~6 hours on CPU (base model)
+    GPU (optional): 30-60 minutes
+    RAM: 8GB+ recommended
 
     ---
 

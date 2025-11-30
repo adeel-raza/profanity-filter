@@ -59,10 +59,11 @@ Unlike VidAngel and ClearPlay that only work with specific streaming services, t
 ## How It Works - The Technology Behind 95%+ Accuracy
 
 ### 1. AI Audio Transcription (Word-Level Precision)
-- Uses **faster-whisper** (CTranslate2-based AI model) to transcribe every spoken word  
+- Uses **faster-whisper base model** (default, accurate) to transcribe every spoken word  
 - Each word gets a **precise timestamp** (±0.1 seconds)  
 - Example: `"fuck"` detected at 79.76s-80.08s, `"you"` at 80.08s-80.88s  
 - Only cuts the **bad words**, unlike subtitle-based filters that cut entire sentences
+- **Tiny model** is available for faster processing, but is less accurate and may miss profanity, especially in movies with music or background noise.
 
 ### 2. Smart Multi-Word Detection (Phrase Recognition)
 - Automatically detects **1,192+ profanity words** including variations  
@@ -171,8 +172,8 @@ python3 clean.py video.mp4 video_cleaned.mp4
 
 ### Advanced Options
 ```bash
-# High accuracy model
-python3 clean.py input.mp4 output.mp4 --model base
+# Use tiny model for faster but less accurate results (may miss profanity)
+python3 clean.py input.mp4 output.mp4 --model tiny
 
 # Mute profanity instead of cutting
 python3 clean.py input.mp4 output.mp4 --mute-only
@@ -180,6 +181,9 @@ python3 clean.py input.mp4 output.mp4 --mute-only
 # Manually remove timestamps
 python3 clean.py input.mp4 output.mp4 --remove-timestamps "10-15,30-35"
 ```
+
+**Note:**
+- If your subtitle file has the same name as your video (e.g. `movie.mp4` and `movie.srt`) and is in the same directory, it will be auto-detected. You do not need to specify `--subs` in this case.
 
 ## Why Choose This Free Profanity Filter?
 

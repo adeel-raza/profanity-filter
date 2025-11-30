@@ -39,16 +39,15 @@ class SubtitleProcessor:
             # This removes profanity words but keeps the rest of the sentence
             entries = self._filter_profanity(entries)
             
-            # Process entries: keep non-overlapping, remove overlapping
-            # This ensures subtitle timing remains accurate
-            entries_to_keep = []
+            # Process entries: clip overlapping subtitles to preserve content
+            processed_entries = []
             for entry in entries:
-                entry_start = entry['start']
-                entry_end = entry['end']
-                
                 # Skip empty entries after profanity filtering
                 if not entry['text'].strip():
                     continue
+                
+                entry_start = entry['start']
+                entry_end = entry['end']
                 
                 # Check if entry overlaps with any removed segment
                 overlaps_removal = False
@@ -57,12 +56,16 @@ class SubtitleProcessor:
                         overlaps_removal = True
                         break
                 
-                # Only keep entries that don't overlap with removed segments
-                if not overlaps_removal:
-                    entries_to_keep.append(entry)
+                if overlaps_removal:
+                    # Clip the entry to non-overlapping segments
+                    clipped_entries = self._clip_entry_to_keep_segments(entry, removed_segments)
+                    processed_entries.extend(clipped_entries)
+                else:
+                    # Entry doesn't overlap - keep as-is for timestamp adjustment
+                    processed_entries.append(entry)
             
-            # Adjust timestamps for kept entries
-            adjusted_entries = self._adjust_timestamps(entries_to_keep, removed_segments)
+            # Adjust timestamps for all processed entries
+            adjusted_entries = self._adjust_timestamps(processed_entries, removed_segments)
             
             adjusted_entries = final_entries
             
@@ -507,26 +510,33 @@ class SubtitleProcessor:
             # Filter profanity from subtitle text
             entries = self._filter_profanity(entries)
             
-            # Filter out entries that overlap with removed segments
-            filtered_entries = []
+            # Process entries: clip overlapping subtitles to preserve content
+            processed_entries = []
             for entry in entries:
+                # Skip empty entries after profanity filtering
                 if not entry['text'].strip():
                     continue
-                    
+                
                 entry_start = entry['start']
                 entry_end = entry['end']
                 
+                # Check if entry overlaps with any removed segment
                 overlaps_removal = False
                 for remove_start, remove_end in removed_segments:
                     if entry_start < remove_end and entry_end > remove_start:
                         overlaps_removal = True
                         break
                 
-                if not overlaps_removal:
-                    filtered_entries.append(entry)
+                if overlaps_removal:
+                    # Clip the entry to non-overlapping segments
+                    clipped_entries = self._clip_entry_to_keep_segments(entry, removed_segments)
+                    processed_entries.extend(clipped_entries)
+                else:
+                    # Entry doesn't overlap - keep as-is for timestamp adjustment
+                    processed_entries.append(entry)
             
             # Adjust timestamps to account for removed time
-            adjusted_entries = self._adjust_timestamps(filtered_entries, removed_segments)
+            adjusted_entries = self._adjust_timestamps(processed_entries, removed_segments)
             
             # Write output VTT
             self._write_vtt(output_vtt, adjusted_entries)

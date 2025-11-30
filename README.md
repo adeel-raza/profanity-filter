@@ -1,4 +1,3 @@
-
 ---
 title: Free Profanity Filter for Movies & Videos - VidAngel & ClearPlay Alternative
 emoji: 🎬

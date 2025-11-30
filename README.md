@@ -1,3 +1,10 @@
+# 🚀 Try the Online Demo
+
+Want to see how it works before installing? **Try the app instantly in your browser:**
+
+[![Hugging Face Spaces](https://img.shields.io/badge/Live%20Demo-Hugging%20Face-blue?logo=huggingface)](https://huggingface.co/spaces/adeel-raza/video-profanity-filter)
+
+---
 ---
 title: Free Profanity Filter for Movies & Videos - VidAngel & ClearPlay Alternative
 emoji: 🎬

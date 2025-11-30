@@ -12,7 +12,7 @@ from io import StringIO
 import shutil
 
 # Import cleaning components
-from audio_profanity_detector import AudioProfanityDetector
+from audio_profanity_detector_fast import AudioProfanityDetectorFast
 from video_cutter import VideoCutter
 from timestamp_merger import TimestampMerger
 from subtitle_processor import SubtitleProcessor
@@ -58,7 +58,7 @@ def clean_video(video_file, subtitle_file, progress=gr.Progress()):
         
         try:
             # Use 'tiny' model by default for fast processing
-            audio_detector = AudioProfanityDetector(model_size='tiny')
+            audio_detector = AudioProfanityDetectorFast(model_size='tiny')
             progress(0.2, desc="Transcribing audio with Whisper...")
             audio_segments = audio_detector.detect(input_video)
             

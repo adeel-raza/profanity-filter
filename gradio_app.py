@@ -167,7 +167,7 @@ def create_interface():
     with gr.Blocks(title="Free Profanity Filter for Movies & Videos - VidAngel & ClearPlay Alternative") as demo:
     # Free Profanity Filter for Movies & Videos - VidAngel & ClearPlay Alternative
 
-    **Created by [Adeel Raza](https://elearningevolve.com/about) — Contact: info@elearningevolve.com**
+    **Created by [Adeel Raza](https://elearningevolve.com/about) - Contact: info@elearningevolve.com**
 
     # Free Profanity Filter for Movies & Videos - VidAngel & ClearPlay Alternative
 

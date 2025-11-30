@@ -57,8 +57,14 @@ def clean_video(video_file, subtitle_file, progress=gr.Progress()):
         log_messages.append("\nStep 1: Detecting profanity in audio...")
         
         try:
-            # Use 'tiny' model by default for fast processing with aggressive merging
-            audio_detector = AudioProfanityDetectorFast(model_size='tiny', phrase_gap=2.0)
+            # Use same settings as CLI for better detection
+            audio_detector = AudioProfanityDetectorFast(
+                model_size='tiny',  # Keep tiny for speed, but with enhancements
+                phrase_gap=2.0,
+                dialog_enhance=True,  # Apply speech-focused filtering
+                min_wpm=40.0,  # Warn if words per minute below threshold
+                auto_upgrade=True  # Retry with next larger model once if WPM < min_wpm
+            )
             progress(0.2, desc="Transcribing audio with Whisper...")
             audio_segments = audio_detector.detect(input_video)
             

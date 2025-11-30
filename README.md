@@ -1,61 +1,17 @@
-title: Free Profanity Filter for Movies & Videos - VidAngel & ClearPlay Alternative
-emoji: 🎬
-colorFrom: blue
-colorTo: purple
-sdk: gradio
-sdk_version: "6.0.0"
-app_file: app.py
-pinned: false
-tags:
-  - profanity-filter
-  - video-filter
-  - family-friendly
-  - movie-cleaner
-  - content-filter
-  - parental-controls
-  - vidangel-alternative
-  - clearplay-alternative
-  - netflix-filter
-  - open-source
-  - local-processing
-  - privacy
-#
-title: Free Profanity Filter for Movies & Videos - VidAngel & ClearPlay Alternative
-emoji: 🎬
-colorFrom: blue
-colorTo: purple
-sdk: gradio
-sdk_version: "6.0.0"
-app_file: app.py
-pinned: false
-tags:
-  - profanity-filter
-  - video-filter
-  - family-friendly
-  - movie-cleaner
-  - content-filter
-  - parental-controls
-  - vidangel-alternative
-  - clearplay-alternative
-  - netflix-filter
-  - open-source
-  - local-processing
-  - privacy
-
-# 🚀 Try the Online Demo
-
-Want to see how it works before installing? **Try the app instantly in your browser:**
-
-[![Hugging Face Spaces](https://img.shields.io/badge/Live%20Demo-Hugging%20Face-blue?logo=huggingface)](https://huggingface.co/spaces/adeel-raza/video-profanity-filter)
-
-
-# 🚀 Try the Online Demo
-
-Want to see how it works before installing? **Try the app instantly in your browser:**
-
-[![Hugging Face Spaces](https://img.shields.io/badge/Live%20Demo-Hugging%20Face-blue?logo=huggingface)](https://huggingface.co/spaces/adeel-raza/video-profanity-filter)
 
 ---
+title: Free Profanity Filter for Movies & Videos - VidAngel & ClearPlay Alternative
+emoji: 🎬
+colorFrom: blue
+colorTo: purple
+sdk: gradio
+sdk_version: "6.0.0"
+app_file: app.py
+pinned: false
+tags:
+  - profanity-filter
+  - video-filter
+  - family-friendly
   - movie-cleaner
   - content-filter
   - parental-controls
@@ -65,6 +21,15 @@ Want to see how it works before installing? **Try the app instantly in your brow
   - open-source
   - local-processing
   - privacy
+---
+
+
+# 🚀 Try the Online Demo
+
+Want to see how it works before installing? **Try the app instantly in your browser:**
+
+[![Hugging Face Spaces](https://img.shields.io/badge/Live%20Demo-Hugging%20Face-blue?logo=huggingface)](https://huggingface.co/spaces/adeel-raza/video-profanity-filter)
+
 ---
 
 

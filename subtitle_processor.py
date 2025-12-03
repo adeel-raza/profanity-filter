@@ -67,8 +67,6 @@ class SubtitleProcessor:
             # Adjust timestamps for all processed entries
             adjusted_entries = self._adjust_timestamps(processed_entries, removed_segments)
             
-            adjusted_entries = final_entries
-            
             # Write output SRT
             self._write_srt(output_srt, adjusted_entries)
             

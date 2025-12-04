@@ -42,9 +42,27 @@ DONATION_SECTION='
 '
 
 count=0
+EXCLUDE_REPOS=("movie_cleaner")  # Repos to skip (already have donation button)
+
 for repo in "$REPOS_DIR"/*/; do
     if [ -d "$repo/.git" ]; then
         repo_name=$(basename "$repo")
+        
+        # Skip excluded repos
+        skip_repo=0
+        for exclude in "${EXCLUDE_REPOS[@]}"; do
+            if [ "$repo_name" = "$exclude" ]; then
+                skip_repo=1
+                break
+            fi
+        done
+        
+        if [ $skip_repo -eq 1 ]; then
+            echo ""
+            echo "Skipping: $repo_name (already has donation button)"
+            continue
+        fi
+        
         echo ""
         echo "Processing: $repo_name"
         

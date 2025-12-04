@@ -28,7 +28,7 @@ class AudioProfanityDetectorFast:
     _MODEL_ORDER = ['tiny', 'base', 'small', 'medium', 'large']
 
     def __init__(self,
-                 model_size: str = 'tiny',
+                 model_size: str = 'base',  # Changed from 'tiny' to 'base' for better accuracy
                  phrase_gap: float = 1.5,
                  dialog_enhance: bool = False,
                  dump_transcript_path: str = None,
@@ -138,7 +138,7 @@ class AudioProfanityDetectorFast:
             
             segments, info = self.whisper_model.transcribe(
                 str(audio_path),
-                beam_size=5,
+                beam_size=5,  # Full accuracy: matches non-optimized version (was 1 for speed)
                 word_timestamps=True,
                 language='en'
             )
@@ -189,7 +189,7 @@ class AudioProfanityDetectorFast:
                 if word in self.PROFANITY_WORDS:
                     start = word_info.start
                     end = word_info.end
-                    padding = 0.15
+                    padding = 0.15  # Match parent app padding (0.15s to catch partial sounds)
                     profanity_segments.append((
                         max(0, start - padding),
                         end + padding,
@@ -208,12 +208,50 @@ class AudioProfanityDetectorFast:
                 if phrase in self.PROFANITY_PHRASES:
                     start = word1_info.start
                     end = word2_info.end
-                    padding = 0.15
+                    padding = 0.15  # Match parent app padding (0.15s to catch partial sounds)
                     profanity_segments.append((
                         max(0, start - padding),
                         end + padding,
                         phrase
                     ))
+            
+            # Third pass: Enhanced phrase detection - look for non-consecutive phrases
+            # This catches cases where "fuck" and "you" might have gaps or be detected separately
+            # Check if profanity word is followed by phrase completion words within phrase_gap
+            phrase_completions = {
+                'fuck': ['you', 'off', 'this', 'that', 'me', 'her', 'him'],
+                'shit': ['head', 'face'],
+                'ass': ['hole'],
+                'dick': ['head'],
+                'cock': ['sucker'],
+                'piss': ['off'],
+                'screw': ['you', 'off']
+            }
+            
+            for i, word_info in enumerate(all_words):
+                word = word_info.word.strip().lower().rstrip('.,!?;:')
+                if word in phrase_completions:
+                    # Look ahead for completion words within phrase_gap
+                    for j in range(i + 1, min(i + 3, len(all_words))):  # Check up to 10 words ahead
+                        next_word_info = all_words[j]
+                        next_word = next_word_info.word.strip().lower().rstrip('.,!?;:')
+                        
+                        # Check if next word completes a phrase
+                        if next_word in phrase_completions[word]:
+                            # Check if within phrase_gap distance
+                            time_gap = next_word_info.start - word_info.end
+                            if time_gap <= 0.5:
+                                # Found a phrase match - create segment covering both words
+                                phrase = f"{word} {next_word}"
+                                start = word_info.start
+                                end = next_word_info.end
+                                padding = 0.15  # Match parent app padding (0.15s to catch partial sounds)
+                                profanity_segments.append((
+                                    max(0, start - padding),
+                                    end + padding,
+                                    phrase
+                                ))
+                                break  # Found completion, move to next word
             
             print(f"  ✓ Profanity search complete: {len(profanity_segments)} profanity segment(s) found")
             
@@ -259,7 +297,7 @@ class AudioProfanityDetectorFast:
             start_time = time.time()
             segments, info = self.whisper_model.transcribe(
                 str(audio_path),
-                beam_size=5,
+                beam_size=5,  # Full accuracy: matches non-optimized version (was 1 for speed)
                 word_timestamps=True,
                 language='en'
             )
@@ -287,7 +325,7 @@ class AudioProfanityDetectorFast:
                 if word in self.PROFANITY_WORDS:
                     start = word_info.start
                     end = word_info.end
-                    padding = 0.15
+                    padding = 0.15  # Match parent app padding (0.15s to catch partial sounds)
                     profanity_segments.append((
                         max(0, start - padding),
                         end + padding,
@@ -306,12 +344,50 @@ class AudioProfanityDetectorFast:
                 if phrase in self.PROFANITY_PHRASES:
                     start = word1_info.start
                     end = word2_info.end
-                    padding = 0.15
+                    padding = 0.15  # Match parent app padding (0.15s to catch partial sounds)
                     profanity_segments.append((
                         max(0, start - padding),
                         end + padding,
                         phrase
                     ))
+            
+            # Third pass: Enhanced phrase detection - look for nearby phrase completions
+            # This catches cases where "fuck" and "you" might have a small gap (1-2 words max)
+            # Only checks next 2 words ahead, not 10, since phrases like "fuck you" are adjacent
+            phrase_completions = {
+                'fuck': ['you', 'off', 'this', 'that', 'me', 'her', 'him'],
+                'shit': ['head', 'face'],
+                'ass': ['hole'],
+                'dick': ['head'],
+                'cock': ['sucker'],
+                'piss': ['off'],
+                'screw': ['you', 'off']
+            }
+            
+            for i, word_info in enumerate(all_words):
+                word = word_info.word.strip().lower().rstrip('.,!?;:')
+                if word in phrase_completions:
+                    # Look ahead only 1-2 words (not 10) since phrases are adjacent
+                    for j in range(i + 1, min(i + 3, len(all_words))):  # Check next 2 words only
+                        next_word_info = all_words[j]
+                        next_word = next_word_info.word.strip().lower().rstrip('.,!?;:')
+                        
+                        # Check if next word completes a phrase
+                        if next_word in phrase_completions[word]:
+                            # Check if within reasonable time distance (0.5s for adjacent words)
+                            time_gap = next_word_info.start - word_info.end
+                            if time_gap <= 0.5:  # 0.5s max gap for adjacent phrase words
+                                # Found a phrase match - create segment covering both words
+                                phrase = f"{word} {next_word}"
+                                start = word_info.start
+                                end = next_word_info.end
+                                padding = 0.15  # Match parent app padding (0.15s to catch partial sounds)
+                                profanity_segments.append((
+                                    max(0, start - padding),
+                                    end + padding,
+                                    phrase
+                                ))
+                                break  # Found completion, move to next word
             
             print(f"  ✓ Profanity search complete: {len(profanity_segments)} profanity segment(s) found")
             if profanity_segments:

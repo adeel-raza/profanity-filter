@@ -1,6 +1,6 @@
 # Core dependencies for profanity filtering
 faster-whisper>=1.2.1  # Primary transcription engine (4-10x faster than OpenAI Whisper)
-torch>=2.0.0
+# torch>=2.0.0  # REMOVED: Not needed for faster-whisper (uses CTranslate2, not PyTorch)
 numpy>=1.24.0
 yt-dlp>=2024.0.0  # For YouTube video downloads
 

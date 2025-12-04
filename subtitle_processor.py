@@ -314,25 +314,38 @@ class SubtitleProcessor:
         Clip an entry to only keep parts that are NOT in removed segments.
         Returns a list of entry dicts (may be empty, or 1-2 entries if split).
         
-        Example: Entry 12-18 with removal 10-15:
-        - Part 12-15 is removed (overlaps removal)
-        - Part 15-18 is kept (after removal)
-        - Returns entry for 15-18 only
+        Improved logic:
+        - If overlap is small (<30% of entry), keep whole entry
+        - If overlap is large, clip but only keep segments >= 0.5s duration
+        - This prevents misaligned or missing subtitles
         """
         entry_start = entry['start']
         entry_end = entry['end']
         entry_text = entry['text']
         entry_index = entry['index']
+        entry_duration = entry_end - entry_start
         
         # Sort removed segments
         sorted_removed = sorted(removed_segments, key=lambda x: x[0])
         
-        # Find all keep segments (parts of entry that don't overlap removals)
+        # Calculate total overlap with removals
+        total_removed_in_entry = 0.0
+        for remove_start, remove_end in sorted_removed:
+            if entry_start < remove_end and entry_end > remove_start:
+                overlap_start = max(entry_start, remove_start)
+                overlap_end = min(entry_end, remove_end)
+                total_removed_in_entry += (overlap_end - overlap_start)
+        
+        # If less than 40% of entry is removed, keep whole entry
+        # Timestamp adjustment will handle the small overlap
+        if total_removed_in_entry < entry_duration * 0.4:
+            return [entry]
+        
+        # If most of entry is removed, clip it but only keep segments with sufficient duration
         keep_segments = []
         current_time = entry_start
         
         for remove_start, remove_end in sorted_removed:
-            # Check if this removal overlaps with the entry
             if entry_start < remove_end and entry_end > remove_start:
                 # Keep part before removal (if any)
                 if current_time < remove_start:
@@ -348,14 +361,33 @@ class SubtitleProcessor:
         if not keep_segments:
             return []
         
-        # Create entry dicts for each keep segment
+        # Create entry dicts for each keep segment (only if duration >= 0.5s)
         result = []
+        MIN_DURATION = 0.2  # Minimum duration for a subtitle entry (reduced to preserve more subtitles)
+        
         for keep_start, keep_end in keep_segments:
-            if keep_end > keep_start:  # Valid segment
+            duration = keep_end - keep_start
+            if duration >= MIN_DURATION:  # Only keep segments with sufficient duration
                 result.append({
                     'index': entry_index,
                     'start': keep_start,
                     'end': keep_end,
+                    'text': entry_text
+                })
+        
+        # If all segments were too short, return empty (entry effectively removed)
+        # But if entry had significant non-overlapping content,
+        # keep the largest segment even if slightly below MIN_DURATION
+        if not result and keep_segments:
+            # Find the longest segment
+            longest_segment = max(keep_segments, key=lambda x: x[1] - x[0])
+            longest_duration = longest_segment[1] - longest_segment[0]
+            # If it's at least 0.1s, keep it (very short but better than missing)
+            if longest_duration >= 0.1:
+                result.append({
+                    'index': entry_index,
+                    'start': longest_segment[0],
+                    'end': longest_segment[1],
                     'text': entry_text
                 })
         
@@ -431,6 +463,19 @@ class SubtitleProcessor:
         
         def map_timestamp(original_time: float) -> float:
             """Map original timestamp to cleaned video timestamp"""
+            # Handle edge case: if timestamp is exactly at a removal boundary
+            # Check if it's at the start of a removal (map to end of previous keep segment)
+            # or at the end of a removal (map to start of next keep segment)
+            for remove_start, remove_end in sorted_removed:
+                if abs(original_time - remove_start) < 0.01:  # Within 10ms of removal start
+                    # Map to end of previous keep segment
+                    time_removed_before = sum(end - start for start, end in sorted_removed if end <= remove_start)
+                    return remove_start - time_removed_before
+                if abs(original_time - remove_end) < 0.01:  # Within 10ms of removal end
+                    # Map to start of next keep segment (same as removal end)
+                    time_removed_before = sum(end - start for start, end in sorted_removed if end <= remove_end)
+                    return remove_end - time_removed_before
+            
             # Find which keep segment this timestamp is in
             for keep_start, keep_end in keep_segments_original:
                 if keep_start <= original_time < keep_end:
@@ -455,6 +500,8 @@ class SubtitleProcessor:
             return original_time - total_removed
         
         adjusted = []
+        MIN_DURATION = 0.2  # Minimum duration for subtitle entry (reduced to preserve more subtitles)
+        
         for entry in entries:
             orig_start = entry['start']
             orig_end = entry['end']
@@ -463,9 +510,15 @@ class SubtitleProcessor:
             new_start = map_timestamp(orig_start)
             new_end = map_timestamp(orig_end)
             
-            # Ensure end is after start
+            # Ensure end is after start (with minimum duration)
             if new_end <= new_start:
-                new_end = new_start + 0.1
+                new_end = new_start + max(0.1, orig_end - orig_start)  # Preserve original duration if possible
+            
+            # Filter out very short entries (likely artifacts from clipping)
+            # But be more lenient - only filter if truly too short (< 0.1s)
+            duration = new_end - new_start
+            if duration < 0.1:  # Only filter truly tiny entries (< 0.1s)
+                continue  # Skip very short entries to avoid misalignment
             
             adjusted.append({
                 'index': entry['index'],

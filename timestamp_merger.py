@@ -7,6 +7,10 @@ from typing import List, Tuple
 
 class TimestampMerger:
     """Merges segments from different sources into unified timeline"""
+
+    def __init__(self, merge_gap: float = 0.30):
+        # Maximum gap (in seconds) between segments to merge
+        self.merge_gap = merge_gap
     
     def merge(self, video_segments: List[Tuple[float, float]], 
               audio_segments: List[Tuple[float, float, str]]) -> List[Tuple[float, float]]:
@@ -62,8 +66,8 @@ class TimestampMerger:
         current_start, current_end = valid_segments[0]
         
         for start, end in valid_segments[1:]:
-            # Merge if overlapping or within 0.5 seconds (scene continuity)
-            if start <= current_end + 0.5:
+            # Merge if overlapping or within configured small gap
+            if start <= current_end + self.merge_gap:
                 current_end = max(current_end, end)
             else:
                 merged.append((current_start, current_end))

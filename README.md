@@ -51,6 +51,9 @@ Want to see how it works before installing? **Try the app instantly in your brow
 
 ---
 
+
+---
+
 ## 📑 Table of Contents
 
 - [Why Choose This Free Profanity Filter?](#why-choose-this-free-profanity-filter)
@@ -93,6 +96,62 @@ Want to see how it works before installing? **Try the app instantly in your brow
   - [Easiest Method (Copy & Paste)](#easiest-method-copy-paste)
   - [For Windows Users (Drag & Drop Method)](#for-windows-users-drag-drop-method)
   - [Basic Usage Examples](#basic-usage-examples)
+- [How It Works - Technical Deep Dive](#how-it-works-technical-deep-dive)
+  - [The 4-Step Profanity Removal Process](#the-4-step-profanity-removal-process)
+  - [Why 95%+ Accuracy?](#why-95-accuracy)
+  - [Edge Cases (That 5%)](#edge-cases-that-5)
+- [Processing Time & Resource Usage](#processing-time-resource-usage)
+  - [Expected Processing Times](#expected-processing-times)
+  - [System Resource Usage](#system-resource-usage)
+  - [Comparison to Paid Services](#comparison-to-paid-services)
+  - [Tips for Faster Processing](#tips-for-faster-processing)
+- [Command Line Options](#command-line-options)
+- [Examples](#examples)
+  - [Example 1: Basic Cleaning (Recommended - Uses Base Model + Dialog Enhancement)](#example-1-basic-cleaning-recommended-uses-base-model-dialog-enhancement)
+  - [Example 2: YouTube Video](#example-2-youtube-video)
+  - [Example 3: Using Existing Subtitles (20x Faster)](#example-3-using-existing-subtitles-20x-faster)
+  - [Example 4: Maximum Accuracy Mode](#example-4-maximum-accuracy-mode)
+  - [Example 5: Speed vs Quality Trade-off](#example-5-speed-vs-quality-trade-off)
+- [Output Files](#output-files)
+- [Frequently Asked Questions](#frequently-asked-questions)
+  - [Is this really free?](#is-this-really-free)
+  - [Do I need Netflix or Amazon Prime?](#do-i-need-netflix-or-amazon-prime)
+  - [How long does processing take?](#how-long-does-processing-take)
+  - [Will it work on my computer?](#will-it-work-on-my-computer)
+  - [Is my privacy protected?](#is-my-privacy-protected)
+  - [Can I use this for YouTube videos?](#can-i-use-this-for-youtube-videos)
+  - [Does it remove all profanity?](#does-it-remove-all-profanity)
+  - [Can I customize what gets filtered?](#can-i-customize-what-gets-filtered)
+- [Use Cases - Enjoy Movies Your Way](#use-cases-enjoy-movies-your-way)
+  - [Family Movie Nights](#family-movie-nights)
+  - [Religious Communities](#religious-communities)
+  - [Elderly Care](#elderly-care)
+  - [Educational Settings](#educational-settings)
+  - [Content Creators](#content-creators)
+  - [Personal Preference](#personal-preference)
+- [Comprehensive Profanity Detection](#comprehensive-profanity-detection)
+  - [What Gets Filtered](#what-gets-filtered)
+  - [Smart Detection Features](#smart-detection-features)
+  - [Family-Friendly Content Creation](#family-friendly-content-creation)
+- [Technical Details](#technical-details)
+- [Troubleshooting](#troubleshooting)
+  - ["faster-whisper not installed"](#faster-whisper-not-installed)
+  - ["FFmpeg not found"](#ffmpeg-not-found)
+  - [Slow transcription (6+ hours for movies)](#slow-transcription-6-hours-for-movies)
+  - [Detection seems incomplete](#detection-seems-incomplete)
+  - [Out of memory errors](#out-of-memory-errors)
+- [Related Comparisons](#related-comparisons)
+  - [VidAngel vs This Tool](#vidangel-vs-this-tool)
+  - [ClearPlay vs This Tool](#clearplay-vs-this-tool)
+  - [Why Choose Free Over Paid?](#why-choose-free-over-paid)
+- [Support & Community](#support-community)
+- [License](#license)
+  - [Slow Processing](#slow-processing)
+- [Use Cases](#use-cases)
+- [Contributing](#contributing)
+- [Support](#support)
+
+---
 
 ---
 

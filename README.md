@@ -22,7 +22,6 @@ tags:
   - privacy
 ---
 
-
 # 🚀 Try the Online Demo
 
 Want to see how it works before installing? **Try the app instantly in your browser:**
@@ -30,8 +29,6 @@ Want to see how it works before installing? **Try the app instantly in your brow
 [![Hugging Face Spaces](https://img.shields.io/badge/Live%20Demo-Hugging%20Face-blue?logo=huggingface)](https://huggingface.co/spaces/adeel-raza/video-profanity-filter)
 
 ---
-
-
 
 # Free Profanity Filter for Movies & Videos - VidAngel & ClearPlay Alternative
 
@@ -51,223 +48,40 @@ Want to see how it works before installing? **Try the app instantly in your brow
 **If you find this project helpful, please consider supporting it:**
 
 <p align="center">
-
 [![Support via Stripe](https://img.shields.io/badge/Support%20via%20Stripe-635BFF?style=for-the-badge&logo=stripe&logoColor=white)](https://link.elearningevolve.com/self-pay)
-
 </p>
-
----
-
-
 
 ---
 
 ## 📑 Table of Contents
 
-- [Why Choose This Free Profanity Filter?](#why-choose-this-free-profanity-filter)
-  - [Save Money - No Subscriptions](#save-money-no-subscriptions)
-  - [Watch Movies Your Way](#watch-movies-your-way)
-  - [Privacy & Control](#privacy-control)
-- [How It Works - The Technology Behind 95%+ Accuracy](#how-it-works-the-technology-behind-95-accuracy)
-  - [1. AI Audio Transcription (Word-Level Precision)](#1-ai-audio-transcription-word-level-precision)
-  - [2. Smart Multi-Word Detection (Phrase Recognition)](#2-smart-multi-word-detection-phrase-recognition)
-  - [3. Frame-Accurate Video Cutting](#3-frame-accurate-video-cutting)
-- [CPU-Intensive Task Warning](#cpu-intensive-task-warning)
-- [Key Features - VidAngel & ClearPlay Alternative](#key-features-vidangel-clearplay-alternative)
-- [System Requirements](#system-requirements)
-  - [Minimum Specs (Budget PCs)](#minimum-specs-budget-pcs)
-  - [Recommended Specs (Faster Processing)](#recommended-specs-faster-processing)
-  - [GPU Acceleration (Optional)](#gpu-acceleration-optional)
 - [Installation - Easy Setup Guide](#installation-easy-setup-guide)
-  - [Prerequisites](#prerequisites)
-  - [Quick Setup (Copy & Paste)](#quick-setup-copy-paste)
 - [Quick Start - Simple for Non-Technical Users](#quick-start-simple-for-non-technical-users)
-  - [Clean a Video](#clean-a-video)
-  - [Use Subtitle Files for Faster Processing](#use-subtitle-files-for-faster-processing)
-  - [Download & Clean YouTube Video](#download-clean-youtube-video)
-  - [Advanced Options](#advanced-options)
-  - [1. Dialog Enhancement (Audio Preprocessing) 🆕](#1-dialog-enhancement-audio-preprocessing)
-  - [2. AI Audio Transcription (Word-Level Precision)](#2-ai-audio-transcription-word-level-precision)
-  - [3. Smart Multi-Word Detection (Phrase Recognition)](#3-smart-multi-word-detection-phrase-recognition)
-  - [4. Frame-Accurate Video Cutting](#4-frame-accurate-video-cutting)
-  - [Result: 95%+ Profanity-Free Videos](#result-95-profanity-free-videos)
-  - [⚠️ IMPORTANT: Resource Usage Warning](#important-resource-usage-warning)
-  - [Recommended Specs (Production Use)](#recommended-specs-production-use)
-  - [GPU Acceleration (Highly Recommended)](#gpu-acceleration-highly-recommended)
+- [Why Choose This Free Profanity Filter?](#why-choose-this-free-profanity-filter)
+- [How It Works - The Technology Behind 95%+ Accuracy](#how-it-works-the-technology-behind-95-accuracy)
+- [System Requirements](#system-requirements)
 - [Usage - Simple Command Line](#usage-simple-command-line)
-  - [Basic Usage (Recommended - Auto-Enhanced)](#basic-usage-recommended-auto-enhanced)
-  - [What Changed (v2.0 - Enhanced Detection)](#what-changed-v20-enhanced-detection)
-- [Why faster-whisper?](#why-faster-whisper)
-- [Before/After Example](#beforeafter-example)
-  - [Original Video (Before)](#original-video-before)
-  - [Cleaned Video (After)](#cleaned-video-after)
-  - [Easiest Method (Copy & Paste)](#easiest-method-copy-paste)
-  - [For Windows Users (Drag & Drop Method)](#for-windows-users-drag-drop-method)
-  - [Basic Usage Examples](#basic-usage-examples)
-- [How It Works - Technical Deep Dive](#how-it-works-technical-deep-dive)
-  - [The 4-Step Profanity Removal Process](#the-4-step-profanity-removal-process)
-  - [Why 95%+ Accuracy?](#why-95-accuracy)
-  - [Edge Cases (That 5%)](#edge-cases-that-5)
-- [Processing Time & Resource Usage](#processing-time-resource-usage)
-  - [Expected Processing Times](#expected-processing-times)
-  - [System Resource Usage](#system-resource-usage)
-  - [Comparison to Paid Services](#comparison-to-paid-services)
-  - [Tips for Faster Processing](#tips-for-faster-processing)
 - [Command Line Options](#command-line-options)
 - [Examples](#examples)
-  - [Example 1: Basic Cleaning (Recommended - Uses Base Model + Dialog Enhancement)](#example-1-basic-cleaning-recommended-uses-base-model-dialog-enhancement)
-  - [Example 2: YouTube Video](#example-2-youtube-video)
-  - [Example 3: Using Existing Subtitles (20x Faster)](#example-3-using-existing-subtitles-20x-faster)
-  - [Example 4: Maximum Accuracy Mode](#example-4-maximum-accuracy-mode)
-  - [Example 5: Speed vs Quality Trade-off](#example-5-speed-vs-quality-trade-off)
 - [Output Files](#output-files)
+- [Processing Time & Resource Usage](#processing-time-resource-usage)
 - [Frequently Asked Questions](#frequently-asked-questions)
-  - [Is this really free?](#is-this-really-free)
-  - [Do I need Netflix or Amazon Prime?](#do-i-need-netflix-or-amazon-prime)
-  - [How long does processing take?](#how-long-does-processing-take)
-  - [Will it work on my computer?](#will-it-work-on-my-computer)
-  - [Is my privacy protected?](#is-my-privacy-protected)
-  - [Can I use this for YouTube videos?](#can-i-use-this-for-youtube-videos)
-  - [Does it remove all profanity?](#does-it-remove-all-profanity)
-  - [Can I customize what gets filtered?](#can-i-customize-what-gets-filtered)
 - [Use Cases - Enjoy Movies Your Way](#use-cases-enjoy-movies-your-way)
-  - [Family Movie Nights](#family-movie-nights)
-  - [Religious Communities](#religious-communities)
-  - [Elderly Care](#elderly-care)
-  - [Educational Settings](#educational-settings)
-  - [Content Creators](#content-creators)
-  - [Personal Preference](#personal-preference)
 - [Comprehensive Profanity Detection](#comprehensive-profanity-detection)
-  - [What Gets Filtered](#what-gets-filtered)
-  - [Smart Detection Features](#smart-detection-features)
-  - [Family-Friendly Content Creation](#family-friendly-content-creation)
 - [Technical Details](#technical-details)
 - [Troubleshooting](#troubleshooting)
-  - ["faster-whisper not installed"](#faster-whisper-not-installed)
-  - ["FFmpeg not found"](#ffmpeg-not-found)
-  - [Slow transcription (6+ hours for movies)](#slow-transcription-6-hours-for-movies)
-  - [Detection seems incomplete](#detection-seems-incomplete)
-  - [Out of memory errors](#out-of-memory-errors)
 - [Related Comparisons](#related-comparisons)
-  - [VidAngel vs This Tool](#vidangel-vs-this-tool)
-  - [ClearPlay vs This Tool](#clearplay-vs-this-tool)
-  - [Why Choose Free Over Paid?](#why-choose-free-over-paid)
 - [Support & Community](#support-community)
 - [License](#license)
-  - [Slow Processing](#slow-processing)
-- [Use Cases](#use-cases)
 - [Contributing](#contributing)
-- [Support](#support)
-
----
-
----
-
----
-
-
----
-
-## Why Choose This Free Profanity Filter?
-
-### Save Money - No Subscriptions
-- **VidAngel**: $9.99/month + requires Netflix/Amazon Prime  
-- **ClearPlay**: $7.99/month + requires compatible devices  
-- **This App**: **100% FREE** - works with any video file
-
-### Watch Movies Your Way
-Unlike VidAngel and ClearPlay that only work with specific streaming services, this tool works with:  
-- Local video files (MP4, MKV, AVI, etc.)  
-- YouTube downloads (via yt-dlp)  
-- DVDs and Blu-rays (ripped to digital)  
-- ANY video source - no restrictions
-
-### Privacy & Control
-- Everything runs on **YOUR computer**  
-- **No cloud uploads** or streaming required  
-- Your videos stay private  
-- Complete control over content filtering
-
----
-
-## How It Works - The Technology Behind 95%+ Accuracy
-
-### 1. AI Audio Transcription (Word-Level Precision)
-- Uses **faster-whisper base model** (default, accurate) to transcribe every spoken word  
-- Each word gets a **precise timestamp** (±0.1 seconds)  
-- Example: `"fuck"` detected at 79.76s-80.08s, `"you"` at 80.08s-80.88s  
-- Only cuts the **bad words**, unlike subtitle-based filters that cut entire sentences
-- **Tiny model** is available for faster processing, but is less accurate and may miss profanity, especially in movies with music or background noise.
-
-### 2. Smart Multi-Word Detection (Phrase Recognition)
-- Automatically detects **1,192+ profanity words** including variations  
-- **Intelligent merging**: Combines split phrases like "fuck you", "bull shit" into single cuts  
-- **Context-aware**: Uses 1.5-second window to catch phrases spoken together  
-- **Zero false positives**: Whole-word matching prevents accidental cuts
-
-### 3. Frame-Accurate Video Cutting
-- **FFmpeg-powered editing**: Industry-standard video processing tool  
-- **Surgical precision**: Removes only profanity segments (0.3-2 seconds each)  
-- **Quality preservation**: Original bitrate, resolution, and encoding maintained  
-- **Smooth transitions**: Seamless cuts without audio glitches or visual artifacts
-
----
-
-## CPU-Intensive Task Warning
-
-**Important:** Video cleaning is a **CPU-intensive task**. On CPU-only systems like the **11th Gen Intel® Core™ i5-1135G7 ×8**:  
-
-- Processing a 2-hour movie can take **~6 hours**  
-- **Do not run other heavy applications** (games, video editing, compiling) simultaneously  
-- Video **encoding, decoding, and profanity removal** require sustained high CPU usage  
-- Ensure enough **RAM and disk space** is available to avoid slowdowns or failures  
-
-> Tip: For faster processing, consider a system with a GPU or using existing subtitle files (`--subs`) to reduce transcription time.
-
----
-
-## Key Features - VidAngel & ClearPlay Alternative
-
-- **No Monthly Subscription** - Save $96-120/year compared to VidAngel or ClearPlay  
-- **Works Offline** - No internet required after initial setup  
-- **Any Video Source** - Not limited to Netflix or specific streaming services  
-- **Fast AI Transcription** - Uses faster-whisper (CTranslate2) for accurate, word-level timestamps  
-- **Smart Profanity Detection** - Detects 1,192+ curse words and offensive phrases  
-- **Precise Editing** - Only removes profanity, keeps dialogue intact  
-- **Family Safe** - Clean versions for kids and family movie nights  
-- **YouTube Compatible** - Download and clean YouTube videos  
-- **Quality Preserved** - Maintains original video quality and encoding  
-- **Open Source** - Free forever, community-driven improvements
-
----
-
-## System Requirements
-
-### Minimum Specs (Budget PCs)
-- **CPU**: Dual-core processor (Intel i3, AMD Ryzen 3, or better)  
-- **RAM**: 4GB minimum (8GB recommended)  
-- **Storage**: 2GB free space + space for video files  
-- **OS**: Windows 10/11, macOS 10.15+, or Linux  
-- **Processing Time**: 2-hour movie takes **~6 hours on CPU-only systems**
-
-### Recommended Specs (Faster Processing)
-- **CPU**: Quad-core processor (Intel i5/i7, AMD Ryzen 5/7)  
-- **RAM**: 8GB or more  
-- **GPU**: NVIDIA GPU with CUDA support (optional, 3-5x faster)  
-- **Storage**: 5GB+ free space  
-- **Processing Time**: 2-hour movie takes 2-3 hours on modern CPU-only systems
-
-### GPU Acceleration (Optional)
-- **Processing Time**: 2-hour movie in ~30-60 minutes with NVIDIA GPU  
-- **Cost**: Free to use, but requires compatible hardware
 
 ---
 
 ## Installation - Easy Setup Guide
 
 ### Prerequisites
-- **Python 3.8+** (free from python.org)  
-- **FFmpeg** (free video processing tool)  
+- **Python 3.8+** (free from python.org)
+- **FFmpeg** (free video processing tool)
 - **5-10 minutes** for setup (one-time only)
 
 ### Quick Setup (Copy & Paste)
@@ -281,9 +95,11 @@ cd profanity-filter
 python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Step 3: Install dependencies
+# Step 3: Install dependencies (takes 2-5 minutes)
 pip install -r requirements.txt
 ```
+
+---
 
 ## Quick Start - Simple for Non-Technical Users
 
@@ -297,6 +113,8 @@ python3 clean.py YourMovie.mp4 YourMovie_cleaned.mp4
 ```bash
 python3 clean.py YourMovie.mp4 YourMovie_cleaned.mp4 --subs YourMovie.srt
 ```
+
+**Note:** If your subtitle file has the same name as your video (e.g. `movie.mp4` and `movie.srt`) and is in the same directory, it will be auto-detected. You do not need to specify `--subs` in this case.
 
 ### Download & Clean YouTube Video
 ```bash
@@ -316,8 +134,7 @@ python3 clean.py input.mp4 output.mp4 --mute-only
 python3 clean.py input.mp4 output.mp4 --remove-timestamps "10-15,30-35"
 ```
 
-**Note:**
-- If your subtitle file has the same name as your video (e.g. `movie.mp4` and `movie.srt`) and is in the same directory, it will be auto-detected. You do not need to specify `--subs` in this case.
+---
 
 ## Why Choose This Free Profanity Filter?
 
@@ -334,14 +151,14 @@ Unlike VidAngel and ClearPlay that only work with specific streaming services, t
 - ANY video source - no restrictions
 
 ### Privacy & Control
-- Everything runs on YOUR computer
-- No cloud uploads or streaming required
+- Everything runs on **YOUR computer**
+- **No cloud uploads** or streaming required
 - Your videos stay private
 - Complete control over content filtering
 
-## How It Works - The Technology Behind 95%+ Accuracy
+---
 
-This Netflix profanity filter uses a **4-layer approach** for near-perfect profanity removal:
+## How It Works - The Technology Behind 95%+ Accuracy
 
 ### 1. Dialog Enhancement (Audio Preprocessing) 🆕
 - **Vocal isolation**: High-pass (200Hz) and low-pass (3500Hz) filters remove music, effects, and noise
@@ -355,6 +172,7 @@ This Netflix profanity filter uses a **4-layer approach** for near-perfect profa
 - Each word gets a **precise timestamp** (accurate to 0.1 seconds)
 - Example: "fuck" detected at 79.76s-80.08s, "you" at 80.08s-80.88s
 - Unlike subtitle-based filters that cut entire sentences, we cut only the bad words!
+- **Tiny model** is available for faster processing, but is less accurate and may miss profanity, especially in movies with music or background noise.
 
 ### 3. Smart Multi-Word Detection (Phrase Recognition)
 - Automatically detects **1,192+ profanity words** including variations and sexual content
@@ -375,18 +193,35 @@ This Netflix profanity filter uses a **4-layer approach** for near-perfect profa
 - **Improvement**: Tiny model missed 100% of profanity → Enhanced base caught all instances
 - **Manual review option**: Add timestamps with `--remove-timestamps` flag for missed words
 
+---
+
+## CPU-Intensive Task Warning
+
+**Important:** Video cleaning is a **CPU-intensive task**. On CPU-only systems like the **11th Gen Intel® Core™ i5-1135G7 ×8**:
+
+- Processing a 2-hour movie can take **~6 hours**
+- **Do not run other heavy applications** (games, video editing, compiling) simultaneously
+- Video **encoding, decoding, and profanity removal** require sustained high CPU usage
+- Ensure enough **RAM and disk space** is available to avoid slowdowns or failures
+
+> Tip: For faster processing, consider a system with a GPU or using existing subtitle files (`--subs`) to reduce transcription time.
+
+---
+
 ## Key Features - VidAngel & ClearPlay Alternative
 
-- **No Monthly Subscription** - Save $96-120/year compared to VidAngel or ClearPlay  
-- **Works Offline** - No internet required after initial setup  
-- **Any Video Source** - Not limited to Netflix or specific streaming services  
-- **Fast AI Transcription** - Uses faster-whisper (CTranslate2) for 4-10x speed improvement  
-- **Smart Profanity Detection** - Identifies 1,132+ curse words and offensive phrases  
-- **Precise Editing** - Word-level timestamps remove only profanity, keeps dialogue intact  
-- **Family Safe** - Create clean versions for kids and family movie nights  
-- **YouTube Compatible** - Download and clean YouTube videos  
-- **Quality Preserved** - Maintains original video quality and encoding  
+- **No Monthly Subscription** - Save $96-120/year compared to VidAngel or ClearPlay
+- **Works Offline** - No internet required after initial setup
+- **Any Video Source** - Not limited to Netflix or specific streaming services
+- **Fast AI Transcription** - Uses faster-whisper (CTranslate2) for 4-10x speed improvement
+- **Smart Profanity Detection** - Identifies 1,192+ curse words and offensive phrases
+- **Precise Editing** - Word-level timestamps remove only profanity, keeps dialogue intact
+- **Family Safe** - Create clean versions for kids and family movie nights
+- **YouTube Compatible** - Download and clean YouTube videos
+- **Quality Preserved** - Maintains original video quality and encoding
 - **Open Source** - Free forever, community-driven improvements
+
+---
 
 ## System Requirements
 
@@ -427,28 +262,7 @@ With NVIDIA GPU and CUDA:
 
 **Note**: Unlike streaming-based filters (VidAngel, ClearPlay), this tool processes videos locally, so processing time varies by system specs. You only process once, then enjoy unlimited viewing!
 
-## Installation - Easy Setup Guide
-
-### Prerequisites
-
-- **Python 3.8+** (free from python.org)
-- **FFmpeg** (free video processing tool)
-- **5-10 minutes** for setup (one-time only)
-
-### Quick Setup (Copy & Paste)
-
-```bash
-# Step 1: Clone the repository
-git clone https://github.com/adeel-raza/profanity-filter.git
-cd profanity-filter
-
-# Step 2: Create virtual environment
-python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Step 3: Install dependencies (takes 2-5 minutes)
-pip install -r requirements.txt
-```
+---
 
 ## Usage - Simple Command Line
 
@@ -499,6 +313,8 @@ python3 clean.py input.mp4 output.mp4 --remove-timestamps "45.2-47.8,120-125"
 
 **Result:** 0% → 95%+ detection on complex audio
 
+---
+
 ## Why faster-whisper?
 
 This tool uses **faster-whisper** instead of standard OpenAI Whisper for significant performance improvements:
@@ -511,6 +327,8 @@ This tool uses **faster-whisper** instead of standard OpenAI Whisper for signifi
 **Example performance** (3-minute video, CPU):
 - Transcription: ~15 seconds (12.3x real-time)
 - Total processing: ~1 minute 40 seconds including video cutting
+
+---
 
 ## Before/After Example
 
@@ -534,7 +352,7 @@ The cleaned video maintains perfect audio-video sync and subtitle alignment. All
 
 **Watch on Vimeo**: [Cleaned Video](https://vimeo.com/1140277103) | **Download**: [MP4 (9.5 MB)](https://github.com/adeel-raza/profanity-filter/raw/main/sample/original_video_cleaned.mp4)
 
-**Try it yourself**: 
+**Try it yourself**:
 ```bash
 # Clone the repository
 git clone https://github.com/adeel-raza/profanity-filter.git
@@ -544,74 +362,7 @@ cd profanity-filter
 python3 clean.py sample/original_video.mp4 sample/original_video_cleaned.mp4 --subs sample/original_video.srt
 ```
 
-## Quick Start - Simple for Non-Technical Users
-
-### Easiest Method (Copy & Paste)
-
-**Step 1: One-Time Setup** (5 minutes)
-```bash
-# Install Python if you don't have it (skip if already installed)
-# Download from: https://www.python.org/downloads/
-
-# Download this tool
-git clone https://github.com/adeel-raza/profanity-filter.git
-cd profanity-filter
-
-# Install required software (one-time)
-pip install -r requirements.txt
-```
-
-**Step 2: Clean Your Video** (Just change the filename!)
-```bash
-# Copy your video to this folder, then run:
-python3 clean.py YourMovie.mp4 YourMovie_cleaned.mp4
-
-# That's it! The tool automatically uses optimal settings:
-# - Base model (best accuracy)
-# - Dialog enhancement (isolates speech)
-# - Auto-upgrade if needed
-```
-
-### For Windows Users (Drag & Drop Method)
-1. Install Python from https://www.python.org/downloads/
-2. Download this tool and unzip
-3. Double-click `clean_video.bat` (Windows batch file - coming soon!)
-4. Drag your video file when prompted
-5. Wait for processing to complete
-6. Find cleaned video in same folder!
-
-### Basic Usage Examples
-
-```bash
-# Simplest: Clean a video with automatic optimal settings
-python3 clean.py movie.mp4 movie_cleaned.mp4
-
-# If you have subtitle files (5x faster, skips transcription)
-python3 clean.py movie.mp4 movie_cleaned.mp4 --subs movie.srt
-
-# Download YouTube video and clean it
-yt-dlp -o "video.mp4" "https://www.youtube.com/watch?v=VIDEO_ID"
-python3 clean.py video.mp4 video_cleaned.mp4
-```
-
-### Advanced Options
-
-```bash
-# Use larger model for maximum accuracy (slower)
-python3 clean.py input.mp4 output.mp4 --model large
-
-# Disable dialog enhancement (not recommended)
-python3 clean.py input.mp4 output.mp4 --no-dialog-enhance
-
-# Save transcript for verification
-python3 clean.py input.mp4 output.mp4 --dump-transcript words.txt
-
-# Mute profanity instead of cutting (keeps video length unchanged)
-python3 clean.py input.mp4 output.mp4 --mute-only
-
-# Add manual timestamp corrections
-python3 clean.py input.mp4 output.mp4 --remove-timestamps "10-15,30-35"
-```
+---
 
 ## How It Works - Technical Deep Dive
 
@@ -623,7 +374,7 @@ python3 clean.py input.mp4 output.mp4 --remove-timestamps "10-15,30-35"
 - **Process**: Converts speech to text with **word-level timestamps** (±0.1s accuracy)
 - **Quality Monitoring**: Calculates Words Per Minute (WPM); warns if <50 (indicates under-transcription)
 - **Auto-Upgrade**: Automatically retries with larger model if transcription quality too low
-- **Example Output**: 
+- **Example Output**:
   ```
   [79.76s-80.08s] "fuck"
   [80.08s-80.88s] "you"
@@ -650,7 +401,7 @@ python3 clean.py input.mp4 output.mp4 --remove-timestamps "10-15,30-35"
 #### Step 4: Frame-Accurate Video Cutting
 - **Tool**: FFmpeg (Hollywood-grade video processing)
 - **Precision**: Cuts at exact keyframes (±0.1 second accuracy)
-- **Method**: 
+- **Method**:
   1. Extract clean segments between profanity
   2. Concatenate segments seamlessly
   3. Re-encode with original quality settings
@@ -667,10 +418,10 @@ python3 clean.py input.mp4 output.mp4 --remove-timestamps "10-15,30-35"
 - **Dialog enhancement** (isolates speech from music/effects)
 - **Base model default** (74M parameters, 2x more accurate than tiny)
 - **Auto-upgrade mechanism** (switches to larger model if WPM low)
-- **Word-level timestamps** (not sentence-level like competitors)  
-- **1,192 word database** (comprehensive coverage including sexual content)  
-- **Intelligent phrase merging** (catches split expressions)  
-- **Context-aware detection** (whole-word matching)  
+- **Word-level timestamps** (not sentence-level like competitors)
+- **1,192 word database** (comprehensive coverage including sexual content)
+- **Intelligent phrase merging** (catches split expressions)
+- **Context-aware detection** (whole-word matching)
 - **Frame-accurate cutting** (surgical precision)
 
 **Real-world example (Argo 2012 film):**
@@ -682,6 +433,8 @@ python3 clean.py input.mp4 output.mp4 --remove-timestamps "10-15,30-35"
 - Creative slang or new profanity not in database
 - Background noise masking quiet curse words
 - **Solution**: Use `--remove-timestamps "10-15"` to manually add missed segments
+
+---
 
 ## Processing Time & Resource Usage
 
@@ -726,6 +479,8 @@ python3 clean.py input.mp4 output.mp4 --remove-timestamps "10-15,30-35"
 4. Consider `--model tiny` for speed (but may miss profanity on complex audio)
 5. Run overnight or during off-hours - quality over speed recommended
 
+---
+
 ## Command Line Options
 
 ```bash
@@ -746,6 +501,8 @@ Options:
   --mute-only             Mute audio during profanity instead of cutting segments
   --remove-timestamps     Manually add timestamps to remove: "start-end,start-end"
 ```
+
+---
 
 ## Examples
 
@@ -787,10 +544,14 @@ python3 clean.py movie.mp4 movie_cleaned.mp4 --model large
 python3 clean.py movie.mp4 movie_cleaned.mp4 --model tiny --no-dialog-enhance
 ```
 
+---
+
 ## Output Files
 
 - **Cleaned Video**: `[input]_cleaned.mp4` - Video with profanity segments removed
 - **Cleaned Subtitles**: `[input]_cleaned.srt` - Subtitles with profanity filtered and timestamps adjusted
+
+---
 
 ## Frequently Asked Questions
 
@@ -818,12 +579,14 @@ It detects 1,192 profanity words (including sexual content) with 95%+ accuracy u
 ### Can I customize what gets filtered?
 Currently uses a comprehensive profanity database. Custom word lists coming in future updates!
 
+---
+
 ## Use Cases - Enjoy Movies Your Way
 
 ### Family Movie Nights
 Create clean versions of popular movies for kids without paying VidAngel subscription fees.
 
-### Religious Communities  
+### Religious Communities
 Share edited content for church events and religious education without offensive language.
 
 ### Elderly Care
@@ -837,6 +600,8 @@ Clean source material for family-friendly YouTube channels and social media.
 
 ### Personal Preference
 Some people just prefer watching movies without constant cursing - and that's okay!
+
+---
 
 ## Comprehensive Profanity Detection
 
@@ -869,6 +634,8 @@ Perfect for creating clean versions to watch with:
 
 **Enjoy movies YOUR way without the monthly subscription costs of VidAngel or ClearPlay!**
 
+---
+
 ## Technical Details
 
 - **Video Processing**: FFmpeg with frame-accurate cutting and quality matching
@@ -880,6 +647,8 @@ Perfect for creating clean versions to watch with:
 - **Subtitle Formats**: SRT and VTT fully supported
 - **Encoding**: Smart quality matching preserves original video bitrate and settings
 - **AI Model**: Uses faster-whisper 'base' model by default (74M params, int8 quantized for CPU efficiency)
+
+---
 
 ## Troubleshooting
 
@@ -912,6 +681,7 @@ Install FFmpeg:
 - Ensure adequate disk space (2x video file size needed temporarily)
 - Process shorter videos in batches if system limited
 
+---
 
 ## Related Comparisons
 
@@ -919,7 +689,7 @@ Install FFmpeg:
 - **VidAngel**: $9.99/month, requires Netflix/Prime, streaming only
 - **This Tool**: Free, works with any video, offline viewing
 
-### ClearPlay vs This Tool  
+### ClearPlay vs This Tool
 - **ClearPlay**: $7.99/month, requires compatible devices, limited content
 - **This Tool**: Free, works on any computer, unlimited content
 
@@ -930,12 +700,16 @@ Install FFmpeg:
 - **Any video source** - not locked to specific services
 - **One-time processing** - watch unlimited times
 
+---
+
 ## Support & Community
 
 - **GitHub Issues**: Report bugs and request features
 - **Discussions**: Share tips and ask questions
 - **Contributions**: Pull requests welcome!
 - **Star this repo**: Help others discover this free alternative to VidAngel and ClearPlay
+
+---
 
 ## License
 
@@ -947,29 +721,8 @@ Open source and free to use. See LICENSE file for details.
 
 **#ProfanityFilter #FamilyFriendly #VidAngelAlternative #ClearPlayAlternative #FreeMovieFilter #EnjoyMoviesYourWay**
 
-### Slow Processing
-- Use `--whisper-model tiny` for faster transcription
-- Provide subtitle files instead of transcribing audio
-- Use GPU if available (automatic detection)
-
-## Use Cases
-
-- **Content Creators**: Create family-friendly versions of your videos for broader audiences
-- **Educators**: Prepare educational content suitable for classrooms
-- **Parents**: Make movies and shows safe for children to watch
-- **Streaming Platforms**: Automate content moderation and filtering
-- **Video Editors**: Batch process multiple videos with profanity removal
-
-## License
-
-MIT License - Free to use for personal and commercial projects
+---
 
 ## Contributing
 
 Contributions welcome! Please open an issue or pull request on GitHub.
-
-## Support
-
-- **GitHub Issues**: Report bugs and request features
-- **Documentation**: Check the `USAGE.md` file for detailed guides
-- **Examples**: See the `sample/` directory for before/after examples

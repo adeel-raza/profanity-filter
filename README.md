@@ -44,12 +44,20 @@ Want to see how it works before installing? **Try the app instantly in your brow
 **Privacy-focused: Everything runs locally on your computer**  
 **AI-powered with enhanced dialogue detection using faster-whisper**
 
----## 💝 Support This ProjectIf you find this project helpful, consider supporting it:[![Support via Stripe](https://img.shields.io/badge/Support%20via%20Stripe-635BFF?style=for-the-badge&logo=stripe&logoColor=white)](https://link.elearningevolve.com/self-pay)------
+---
+
+## 💝 Support This Project
+
+**If you find this project helpful, please consider supporting it:**
+
+<p align="center">
+
+[![Support via Stripe](https://img.shields.io/badge/Support%20via%20Stripe-635BFF?style=for-the-badge&logo=stripe&logoColor=white)](https://link.elearningevolve.com/self-pay)
+
+</p>
 
 ---
 
-
----
 
 
 ---

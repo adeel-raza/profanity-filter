@@ -47,9 +47,7 @@ Want to see how it works before installing? **Try the app instantly in your brow
 
 **If you find this project helpful, please consider supporting it:**
 
-<p align="center">
 [![Support via Stripe](https://img.shields.io/badge/Support%20via%20Stripe-635BFF?style=for-the-badge&logo=stripe&logoColor=white)](https://link.elearningevolve.com/self-pay)
-</p>
 
 ---
 

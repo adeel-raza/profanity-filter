@@ -16,7 +16,7 @@ def batch_process(input_dir: Path, output_dir: Path, **kwargs):
     Args:
         input_dir: Directory containing input videos
         output_dir: Directory to save filtered videos
-        **kwargs: Additional arguments for clean.py (whisper_model, etc.)
+        **kwargs: Additional arguments for clean.py (model, mute_only, etc.)
     """
     output_dir.mkdir(parents=True, exist_ok=True)
     
@@ -71,11 +71,11 @@ def batch_process(input_dir: Path, output_dir: Path, **kwargs):
         if subtitle_path:
             cmd.extend(['--subs', str(subtitle_path)])
         
-        # Add optional arguments
-        if kwargs.get('whisper_model'):
-            cmd.extend(['--whisper-model', kwargs['whisper_model']])
-        if kwargs.get('no_audio'):
-            cmd.append('--no-audio')
+        # Add optional arguments (must match clean.py CLI)
+        if kwargs.get('model'):
+            cmd.extend(['--model', kwargs['model']])
+        if kwargs.get('mute_only'):
+            cmd.append('--mute-only')
         
         try:
             result = subprocess.run(cmd, check=True, capture_output=False)
@@ -103,10 +103,12 @@ if __name__ == '__main__':
     )
     parser.add_argument('input_dir', type=str, help='Input directory containing videos')
     parser.add_argument('output_dir', type=str, help='Output directory for filtered videos')
-    parser.add_argument('--whisper-model', type=str, default='tiny',
+    parser.add_argument('--model', type=str, default='base',
                        help='Whisper model size (tiny, base, small, medium, large)')
-    parser.add_argument('--no-audio', action='store_true',
-                       help='Skip audio profanity detection')
+    parser.add_argument('--whisper-model', dest='model', type=str, help=argparse.SUPPRESS)
+    parser.add_argument('--no-audio', action='store_true', help=argparse.SUPPRESS)
+    parser.add_argument('--mute-only', action='store_true',
+                       help='Mute profanity intervals instead of cutting segments.')
     
     args = parser.parse_args()
     
@@ -116,11 +118,13 @@ if __name__ == '__main__':
     if not input_dir.exists():
         print(f"Error: Input directory not found: {input_dir}")
         sys.exit(1)
+    if args.no_audio:
+        print("Warning: --no-audio is deprecated in batch_process.py and will be ignored.")
     
     batch_process(
         input_dir,
         output_dir,
-        whisper_model=args.whisper_model,
-        no_audio=args.no_audio
+        model=args.model,
+        mute_only=args.mute_only
     )
 

@@ -287,3 +287,21 @@ PROFANITY_WORDS = {
     'weewee', 'weenie',
 }
 
+# Optional religious/exclamatory terms. Disabled by default to avoid over-filtering
+# normal dialogue (e.g. "Oh my God" in non-offensive contexts).
+RELIGIOUS_PROFANITY_WORDS = {
+    'god', 'gods', 'goddamn', 'goddamned', 'goddamnit', 'goddammit', 'godammit',
+    'jesus', 'christ', 'jeezus',
+    'damn', 'damned', 'dammit', 'damnit', 'darn',
+    'hell', 'hells',
+    'omg', 'omfg',
+}
+
+
+def get_profanity_words(include_religious: bool = False):
+    """Return the active profanity word set for detection/filtering."""
+    words = set(PROFANITY_WORDS)
+    if include_religious:
+        words |= RELIGIOUS_PROFANITY_WORDS
+    return words
+

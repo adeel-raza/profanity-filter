@@ -128,6 +128,12 @@ python3 clean.py input.mp4 output.mp4 --model tiny
 # Mute profanity instead of cutting
 python3 clean.py input.mp4 output.mp4 --mute-only
 
+# Also filter religious/exclamatory terms
+python3 clean.py input.mp4 output.mp4 --mute-only --include-religious
+
+# Hybrid mode (requires matching subtitles)
+python3 clean.py input.mp4 output.mp4 --subs input.srt --hybrid
+
 # Manually remove timestamps
 python3 clean.py input.mp4 output.mp4 --remove-timestamps "10-15,30-35"
 ```
@@ -500,13 +506,14 @@ Options:
   --phrase-gap FLOAT      Max gap to merge consecutive profanity words into phrase segments.
   --remove-timestamps     Manually add timestamps: "start-end,start-end".
   --mute-only             Mute profanity intervals instead of cutting video timeline.
+  --include-religious     Also filter religious/exclamatory terms (god, jesus, damn, hell).
   --dump-transcript FILE  Save raw transcript words with timestamps.
   --dialog-enhance        Enable dialog enhancement (default: enabled).
   --no-dialog-enhance     Disable dialog enhancement.
   --min-wpm FLOAT         Warn if words/minute is below threshold (default: 50.0).
   --auto-upgrade-model    Retry once with larger model if transcript quality is low.
   --no-auto-upgrade       Disable automatic model upgrade.
-  --hybrid                Subtitle-first + selective audio detection (faster advanced mode).
+  --hybrid                Subtitle-first + selective audio detection (requires subtitles).
 ```
 
 ---

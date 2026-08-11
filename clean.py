@@ -68,6 +68,8 @@ def main():
                        help='Disable automatic model upgrade.')
     parser.add_argument('--hybrid', action='store_true',
                        help='Use hybrid detection: subtitles first (fast), then audio transcription for suspicious segments (maintains 99-100%% quality, 10-20x faster)')
+    parser.add_argument('--include-religious', action='store_true',
+                       help='Also filter religious/exclamatory terms (god, jesus, damn, hell, etc). Disabled by default.')
     
     args = parser.parse_args()
     
@@ -106,7 +108,11 @@ def main():
     print("=" * 60)
     print("AUTOMATED MOVIE CLEANER - PROFANITY FILTER")
     print("=" * 60)
-    subtitle_processor = SubtitleProcessor() if subtitle_input else None
+    if args.include_religious:
+        print("Religious/exclamatory filtering: ENABLED")
+    subtitle_processor = (
+        SubtitleProcessor(include_religious=args.include_religious) if subtitle_input else None
+    )
     
     # Step 1: Detect profanity using AI transcription (faster-whisper)
     # Uses word-level timestamps for precise, accurate profanity removal
@@ -119,10 +125,12 @@ def main():
         print()
         try:
             from hybrid_profanity_detector import HybridProfanityDetector
+            from profanity_words import get_profanity_words
             hybrid_detector = HybridProfanityDetector(
                 model_size=args.model,
                 phrase_gap=args.phrase_gap,
-                dialog_enhance=args.dialog_enhance
+                dialog_enhance=args.dialog_enhance,
+                profanity_words=get_profanity_words(include_religious=args.include_religious),
             )
             audio_segments = hybrid_detector.detect(input_path, subtitle_input)
             print()
@@ -133,10 +141,14 @@ def main():
             print(f"  Falling back to standard audio detection...")
             print()
             args.hybrid = False  # Fall back to standard
+    elif args.hybrid and not subtitle_input:
+        print("Warning: --hybrid requires subtitles. Falling back to standard audio detection.")
+        args.hybrid = False
     
     # Default: audio-only detection for precise per-word cuts
     if not args.hybrid:
         use_subs_for_detection = bool(subtitle_input) and args.use_subs_detection and not args.force_audio
+        run_audio_detection = True
         if use_subs_for_detection:
             print("Step 1: Using provided subtitle file for profanity detection")
             print("-" * 60)
@@ -148,44 +160,51 @@ def main():
                     for start, end, words in subtitle_segments:
                         print(f"    - {start:.2f}s to {end:.2f}s: '{words}'")
                     audio_segments = subtitle_segments
+                    run_audio_detection = False
                 else:
                     print("  ⚠ No profanity segments detected from subtitles")
+                    print("  Falling back to audio detection...")
             print("-" * 60)
             print()
         else:
             print("Step 1: Transcribing audio and detecting profanity (faster-whisper)")
-        print("-" * 60)
-        try:
-            audio_detector = AudioProfanityDetectorFast(
-                model_size=args.model,
-                phrase_gap=args.phrase_gap,
-                dialog_enhance=args.dialog_enhance,
-                dump_transcript_path=args.dump_transcript,
-                min_wpm=args.min_wpm,
-                auto_upgrade=args.auto_upgrade_model,
-            )
-            audio_segments = audio_detector.detect(input_path)
             print("-" * 60)
-            print(f"Step 1 Summary: Found {len(audio_segments)} profanity segment(s) in audio")
-            if audio_segments:
-                for start, end, word in audio_segments:
-                    print(f"    - {start:.2f}s to {end:.2f}s ({end-start:.2f}s): '{word}'")
-            else:
-                print("    ✓ No profanity detected in audio")
+
+        if run_audio_detection:
+            try:
+                audio_detector = AudioProfanityDetectorFast(
+                    model_size=args.model,
+                    phrase_gap=args.phrase_gap,
+                    dialog_enhance=args.dialog_enhance,
+                    dump_transcript_path=args.dump_transcript,
+                    min_wpm=args.min_wpm,
+                    auto_upgrade=args.auto_upgrade_model,
+                    include_religious=args.include_religious,
+                )
+                audio_segments = audio_detector.detect(input_path)
+                print("-" * 60)
+                print(f"Step 1 Summary: Found {len(audio_segments)} profanity segment(s) in audio")
+                if audio_segments:
+                    for start, end, word in audio_segments:
+                        print(f"    - {start:.2f}s to {end:.2f}s ({end-start:.2f}s): '{word}'")
+                else:
+                    print("    ✓ No profanity detected in audio")
+                print()
+            except MissingBinaryError as e:
+                print(f"  ✗ ERROR: {e}")
+                print("  Install FFmpeg and ensure ffmpeg/ffprobe are in PATH, then rerun.")
+                print("  Windows: download FFmpeg, add its bin directory to PATH, then reopen terminal.")
+                sys.exit(1)
+            except Exception as e:
+                print(f"  ✗ ERROR: Audio profanity detection failed: {e}")
+                import traceback
+                traceback.print_exc()
+                print(f"  Continuing without audio profanity detection...")
+                print()
+                audio_segments = []
+        else:
+            print(f"Step 1 Summary: Found {len(audio_segments)} profanity segment(s) from subtitles")
             print()
-        except MissingBinaryError as e:
-            print(f"  ✗ ERROR: {e}")
-            print("  Install FFmpeg and ensure ffmpeg/ffprobe are in PATH, then rerun.")
-            print("  Windows: download FFmpeg, add its bin directory to PATH, then reopen terminal.")
-            sys.exit(1)
-        except Exception as e:
-            print(f"  ✗ ERROR: Audio profanity detection failed: {e}")
-            import traceback
-            traceback.print_exc()
-            print(f"  Continuing without audio profanity detection...")
-            print()
-            audio_segments = []
-    
     
     # Step 2: Add manual timestamps if specified
     manual_segments = []
@@ -260,7 +279,7 @@ def main():
                 output_subtitle = output_dir / f"{output_base}{subtitle_input.suffix}"
             
             # Process subtitles to filter profanity words
-            subtitle_processor = SubtitleProcessor()
+            subtitle_processor = SubtitleProcessor(include_religious=args.include_religious)
             if subtitle_input.suffix.lower() == '.srt':
                 subtitle_processor.process_srt(subtitle_input, output_subtitle, [])
             elif subtitle_input.suffix.lower() == '.vtt':

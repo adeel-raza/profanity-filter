@@ -8,7 +8,7 @@ import shutil
 from pathlib import Path
 from typing import List, Tuple
 
-from profanity_words import PROFANITY_WORDS
+from profanity_words import PROFANITY_WORDS, get_profanity_words
 
 
 class MissingBinaryError(RuntimeError):
@@ -33,22 +33,15 @@ class AudioProfanityDetectorFast:
     _MODEL_ORDER = ['tiny', 'base', 'small', 'medium', 'large']
 
     def __init__(self,
-                 model_size: str = 'base',  # Changed from 'tiny' to 'base' for better accuracy
+                 model_size: str = 'base',
                  phrase_gap: float = 1.5,
                  dialog_enhance: bool = False,
                  dump_transcript_path: str = None,
                  min_wpm: float = 40.0,
-                 auto_upgrade: bool = False):
-        """Initialize audio profanity detector.
-
-        Args:
-            model_size: Whisper model size (tiny, base, small, medium, large)
-            phrase_gap: gap (s) to merge consecutive profanity words
-            dialog_enhance: apply speech-focused filtering before transcription
-            dump_transcript_path: write raw transcript words with timestamps
-            min_wpm: warn if words per minute below threshold
-            auto_upgrade: retry with next larger model once if WPM < min_wpm
-        """
+                 auto_upgrade: bool = False,
+                 profanity_words=None,
+                 include_religious: bool = False):
+        """Initialize audio profanity detector."""
         self.model_size = model_size
         self.phrase_gap = phrase_gap
         self.dialog_enhance = dialog_enhance
@@ -57,6 +50,10 @@ class AudioProfanityDetectorFast:
         self.auto_upgrade = auto_upgrade
         self._upgraded_once = False
         self.whisper_model = None
+        if profanity_words is not None:
+            self.PROFANITY_WORDS = set(profanity_words)
+        else:
+            self.PROFANITY_WORDS = get_profanity_words(include_religious=include_religious)
         self._init_whisper()
     
     def _init_whisper(self):

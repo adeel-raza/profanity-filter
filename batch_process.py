@@ -76,6 +76,10 @@ def batch_process(input_dir: Path, output_dir: Path, **kwargs):
             cmd.extend(['--model', kwargs['model']])
         if kwargs.get('mute_only'):
             cmd.append('--mute-only')
+        if kwargs.get('include_religious'):
+            cmd.append('--include-religious')
+        if kwargs.get('hybrid'):
+            cmd.append('--hybrid')
         
         try:
             result = subprocess.run(cmd, check=True, capture_output=False)
@@ -109,6 +113,10 @@ if __name__ == '__main__':
     parser.add_argument('--no-audio', action='store_true', help=argparse.SUPPRESS)
     parser.add_argument('--mute-only', action='store_true',
                        help='Mute profanity intervals instead of cutting segments.')
+    parser.add_argument('--include-religious', action='store_true',
+                       help='Also filter religious/exclamatory terms.')
+    parser.add_argument('--hybrid', action='store_true',
+                       help='Use hybrid subtitle+audio detection when subtitles exist.')
     
     args = parser.parse_args()
     
@@ -125,6 +133,8 @@ if __name__ == '__main__':
         input_dir,
         output_dir,
         model=args.model,
-        mute_only=args.mute_only
+        mute_only=args.mute_only,
+        include_religious=args.include_religious,
+        hybrid=args.hybrid,
     )
 

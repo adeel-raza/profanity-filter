@@ -11,7 +11,7 @@ Speed optimizations:
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import List, Tuple
+from typing import Dict, List, Optional, Tuple
 # Removed multiprocessing - using sequential extraction with optimized CRF values
 import os
 
@@ -117,30 +117,89 @@ class VideoCutter:
             shutil.copy2(input_path, output_path)
             return True
 
-        # Use a filter script file to avoid shell escaping/length issues.
-        # Chain volume filters so each interval is muted to silence.
-        filter_parts = [
-            f"volume=enable='between(t,{start:.3f},{end:.3f})':volume=0"
-            for start, end in segments_to_mute
-        ]
-        audio_filter = ",".join(filter_parts)
+        audio_info = self._get_audio_stream_info(input_path)
+        enable_expr = self._build_mute_enable_expr(segments_to_mute)
+        if not enable_expr:
+            print("  No valid mute intervals - copying video as-is")
+            import shutil
+            shutil.copy2(input_path, output_path)
+            return True
 
+        # Portable across modern FFmpeg: avoid non-portable -filter_script:a.
+        audio_filter = f"volume=0:enable='{enable_expr}'"
+        audio_encode_args = self._build_audio_encode_args(audio_info)
+
+        channels = audio_info.get('channels')
+        layout = audio_info.get('channel_layout') or 'unknown'
+        bitrate = audio_info.get('bit_rate')
+        print(
+            "  Audio profile: "
+            f"channels={channels if channels else 'unknown'}, "
+            f"layout={layout}, "
+            f"bitrate={bitrate // 1000 if isinstance(bitrate, int) else 'unknown'}k"
+        )
+
+        try:
+            if len(audio_filter) <= 6000:
+                cmd = [
+                    'ffmpeg', '-i', str(input_path),
+                    '-map', '0:v:0?',
+                    '-map', '0:a:0?',
+                    '-c:v', 'copy',
+                    '-af', audio_filter,
+                    *audio_encode_args,
+                    '-loglevel', 'error',
+                    '-y', str(output_path)
+                ]
+                if output_path.suffix.lower() == '.mp4':
+                    # Insert before loglevel for MP4 streaming-friendly output.
+                    cmd[cmd.index('-loglevel'):cmd.index('-loglevel')] = ['-movflags', '+faststart']
+                result = subprocess.run(cmd, capture_output=True, text=True)
+                if result.returncode == 0:
+                    print("  ✓ Audio muting complete")
+                    return True
+                print("  ✗ FFmpeg mute command failed. Return code:", result.returncode)
+                if result.stderr:
+                    err_lines = [l for l in result.stderr.splitlines() if l.strip()]
+                    print("    " + '\n    '.join(err_lines[:12]))
+                return False
+
+            return self._mute_segments_via_filter_script(
+                input_path=input_path,
+                output_path=output_path,
+                audio_filter=audio_filter,
+                audio_encode_args=audio_encode_args,
+            )
+        except Exception as e:
+            print(f"  Error during mute-only processing: {e}")
+            return False
+
+    def _mute_segments_via_filter_script(
+        self,
+        input_path: Path,
+        output_path: Path,
+        audio_filter: str,
+        audio_encode_args: List[str],
+    ) -> bool:
+        """Mute using filter_complex_script for very long mute expressions."""
         filter_script_path = None
         try:
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.af', delete=False) as script_file:
-                script_file.write(audio_filter)
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.fffilter', delete=False) as script_file:
+                script_file.write(f"[0:a:0]{audio_filter}[aout]\n")
                 filter_script_path = script_file.name
 
             cmd = [
                 'ffmpeg', '-i', str(input_path),
+                '-filter_complex_script', filter_script_path,
+                '-map', '0:v:0?',
+                '-map', '[aout]',
                 '-c:v', 'copy',
-                '-filter_script:a', filter_script_path,
-                '-c:a', 'aac',
-                '-b:a', '128k',
+                *audio_encode_args,
                 '-loglevel', 'error',
                 '-y', str(output_path)
             ]
-
+            if output_path.suffix.lower() == '.mp4':
+                cmd[cmd.index('-loglevel'):cmd.index('-loglevel')] = ['-movflags', '+faststart']
             result = subprocess.run(cmd, capture_output=True, text=True)
             if result.returncode == 0:
                 print("  ✓ Audio muting complete")
@@ -151,16 +210,83 @@ class VideoCutter:
                 err_lines = [l for l in result.stderr.splitlines() if l.strip()]
                 print("    " + '\n    '.join(err_lines[:12]))
             return False
-        except Exception as e:
-            print(f"  Error during mute-only processing: {e}")
-            return False
         finally:
             if filter_script_path and os.path.exists(filter_script_path):
                 try:
                     os.remove(filter_script_path)
                 except OSError:
                     pass
-    
+
+    def _build_mute_enable_expr(self, segments: List[Tuple[float, float]]) -> str:
+        """Build a compact enable expression for volume mute intervals."""
+        parts = []
+        for start, end in segments:
+            if end <= start:
+                continue
+            parts.append(f"between(t,{start:.3f},{end:.3f})")
+        return "+".join(parts)
+
+    def _get_audio_stream_info(self, video_path: Path) -> Dict[str, Optional[object]]:
+        """Inspect primary audio stream so mute re-encode preserves quality."""
+        info: Dict[str, Optional[object]] = {
+            'channels': None,
+            'channel_layout': None,
+            'bit_rate': None,
+            'sample_rate': None,
+            'codec_name': None,
+        }
+        try:
+            cmd = [
+                'ffprobe', '-v', 'error',
+                '-select_streams', 'a:0',
+                '-show_entries', 'stream=channels,channel_layout,bit_rate,sample_rate,codec_name',
+                '-of', 'default=noprint_wrappers=1',
+                str(video_path)
+            ]
+            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            for line in result.stdout.splitlines():
+                if '=' not in line:
+                    continue
+                key, value = line.split('=', 1)
+                value = value.strip()
+                if not value or value == 'N/A':
+                    continue
+                if key == 'channels':
+                    info['channels'] = int(float(value))
+                elif key == 'channel_layout':
+                    info['channel_layout'] = value
+                elif key == 'bit_rate':
+                    info['bit_rate'] = int(float(value))
+                elif key == 'sample_rate':
+                    info['sample_rate'] = int(float(value))
+                elif key == 'codec_name':
+                    info['codec_name'] = value
+        except Exception:
+            pass
+        return info
+
+    def _build_audio_encode_args(self, audio_info: Dict[str, Optional[object]]) -> List[str]:
+        """Choose AAC encode settings that preserve channel count and quality."""
+        args = ['-c:a', 'aac']
+
+        channels = audio_info.get('channels')
+        if isinstance(channels, int) and channels > 0:
+            # Preserve surround/stereo instead of silently downmixing to mono/default.
+            args.extend(['-ac', str(channels)])
+
+        sample_rate = audio_info.get('sample_rate')
+        if isinstance(sample_rate, int) and sample_rate > 0:
+            args.extend(['-ar', str(sample_rate)])
+
+        bit_rate = audio_info.get('bit_rate')
+        if isinstance(bit_rate, int) and bit_rate > 0:
+            target = max(160000, min(bit_rate, 640000))
+        else:
+            ch = channels if isinstance(channels, int) and channels > 0 else 2
+            target = max(160000, min(96000 * ch, 640000))
+        args.extend(['-b:a', str(target)])
+        return args
+
     def _get_duration(self, video_path: Path) -> float:
         """Get video duration in seconds"""
         try:

@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 from typing import List, Tuple, Optional
 
-from profanity_words import PROFANITY_WORDS
+from profanity_words import PROFANITY_WORDS, get_profanity_words
 
 
 class SubtitleProcessor:
@@ -14,6 +14,12 @@ class SubtitleProcessor:
     
     # Use shared profanity word list
     PROFANITY_WORDS = PROFANITY_WORDS
+
+    def __init__(self, profanity_words=None, include_religious: bool = False):
+        if profanity_words is not None:
+            self.PROFANITY_WORDS = set(profanity_words)
+        else:
+            self.PROFANITY_WORDS = get_profanity_words(include_religious=include_religious)
     
     def process_srt(self, input_srt: Path, output_srt: Path, 
                     removed_segments: List[Tuple[float, float]]) -> bool:

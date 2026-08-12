@@ -418,7 +418,7 @@ class VideoCutter:
                         '-preset', 'veryfast',  # Faster than fast, but better quality than ultrafast
                         '-threads', '0',
                         '-c:a', 'aac',
-                        '-b:a', '128k',
+                        '-b:a', '360k',
                         '-avoid_negative_ts', 'make_zero',
                         '-loglevel', 'error',
                         '-y', str(segment_file)
@@ -466,7 +466,7 @@ class VideoCutter:
                     '-preset', 'veryfast',  # Faster than fast, but better quality than ultrafast
                     '-threads', '0',
                     '-c:a', 'aac',
-                    '-b:a', '128k',
+                    '-b:a', '360k',
                     '-loglevel', 'error',
                     '-y', str(output_path)
                 ]

@@ -164,17 +164,18 @@ hardware is available:
 - Pascal GPUs such as the Quadro P2000 use `int8` (then `float32`) rather than
   unsupported/slow `float16`
 
-**Recommendation:** Prefer a GPU machine when available. In our side-by-side
-tests on the same clip, GPU was better on all three practical outcomes:
+**Recommendation:** Prefer a GPU machine when available. In our controlled
+side-by-side tests, GPU was better for:
 
 1. **Speed** — faster Whisper transcription and much faster video rebuild
 2. **Encode quality** — higher SSIM/PSNR vs the source after cutting
-3. **Cut accuracy** — tighter word timestamps around the profanity (CPU without
-   VAD stretched one word across a silence gap and over-cut clean audio)
 
-CPU still works fully via automatic fallback. Current builds also enable Whisper
-VAD filtering and clamp overstretched single-word spans so CPU cuts are less
-likely to over-remove clean dialogue.
+CPU still works fully via automatic fallback. Before VAD tuning, one CPU test
+stretched a word across silence and over-cut clean audio. Current builds use a
+tuned VAD threshold and clamp overstretched single-word spans. In the current
+three-clip validation, CPU and GPU both detected and removed all three known
+profanities with closely matching boundaries. Do not interpret the small test
+set as proof that either device is always more accurate.
 
 Install a current NVIDIA driver and the CUDA/cuDNN runtime versions required by
 your installed CTranslate2 release. Then verify detection:
@@ -222,14 +223,37 @@ Measured with the **same source file** (12.012s, 1918x802, SHA-256
 
 Notes for users:
 
-- **GPU is the better path** when available: faster, slightly higher encode
-  fidelity, and more reliable word-boundary timing in our tests.
+- **GPU is the better path** when available for speed and encode fidelity.
 - The identical-cut encode row is the fair encoder comparison (same remove
   timestamps on both machines).
 - CPU fallback remains supported. Newer builds add Whisper `vad_filter` plus a
   1.0s single-word span clamp so CPU is less likely to stretch a word across
   silence and delete clean audio.
 - Some CPU work remains even on GPU machines (audio + FFmpeg timeline filters).
+
+### Current three-clip validation after CPU VAD tuning
+
+Measured on commit `3742aec` with three distinct 12.012s clips containing known
+`shitty`, `shit`, and `fuck` dialogue. Source SHA-256 hashes were matched on
+both machines before testing.
+
+| Metric (mean of 3 clips) | Laptop CPU | Quadro P2000 GPU |
+|---|---:|---:|
+| Known profanity detected | **3/3** | **3/3** |
+| Target absent after cleaning | **3/3** | **3/3** |
+| Full `clean.py` wall clock | 20.47s | **8.51s** (~2.4x faster) |
+| Whisper transcription | 1.13s | **0.57s** (~2.0x faster) |
+| Video cutting/rebuild | 15.03s | **3.01s** (~5.0x faster) |
+| Quality vs source (SSIM, unaffected first 2s) | 0.9931 | **0.9979** |
+| Quality vs source (PSNR, unaffected first 2s) | 50.61 dB | **56.07 dB** |
+| Average cleaned file size | 10.6 MB | 14.3 MB |
+| Full output decoded without errors | **3/3** | **3/3** |
+
+Cut-boundary agreement was close: CPU vs GPU differed by an average of 0.077s
+at the start and 0.010s at the end (maximum start difference: 0.21s). Every cut
+fell inside its independently known subtitle caption. On these samples, both
+paths were accurate after tuning; GPU's measurable advantages were speed and
+visual fidelity, with about 34% larger output files.
 
 ---
 

@@ -190,6 +190,33 @@ PROFANITY_FILTER_VIDEO_ENCODER=h264_nvenc python3 clean.py input.mp4 output.mp4
 Requested hardware still falls back safely to CPU if initialization or the
 actual movie encode fails.
 
+### Verified CPU vs GPU benchmark (same 12s clip)
+
+Measured on commit `69d1359` with the **same source file** (12.012s, 1918x802,
+SHA-256 `e0848fc3…`).
+
+| Stage | Laptop (no NVIDIA GPU) | Home server (Quadro P2000) |
+|---|---|---|
+| Whisper device | CPU `int8` | CUDA `int8` |
+| Video encoder | CPU `libx264` | NVIDIA `h264_nvenc` |
+| Full `clean.py` wall clock | **16.14s** | **10.30s** (~1.6x faster) |
+| Transcription | 1.0s (12.6x realtime) | 0.5s (22.6x realtime) |
+| Identical cut encode (`2.15–5.37s` removed) | **8.97s** | **2.46s** (~3.6x faster) |
+| Quality vs source (SSIM All, first 2s keep) | **0.9948** | **0.9967** |
+| Quality vs source (PSNR avg, first 2s keep) | **52.1 dB** | **54.4 dB** |
+| Cleaned file size (identical cut) | 3.7 MB (~3.3 Mbps) | 6.3 MB (~5.8 Mbps) |
+| Peak NVENC utilization | n/a | **100%** |
+
+Notes for users:
+
+- GPU is clearly faster on both transcription and the video rebuild.
+- Quality stayed high on both paths; NVENC was slightly closer to the source on
+  this clip and used a larger bitrate.
+- End-to-end `clean.py` times can vary a little because Whisper may mark
+  slightly different word boundaries even on the same clip. The identical-cut
+  encode row above is the fair encoder comparison.
+- Some CPU work remains on GPU machines (audio + FFmpeg timeline filters).
+
 ---
 
 ## Quick Start - Simple for Non-Technical Users

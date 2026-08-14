@@ -308,6 +308,43 @@ and a Quadro P2000 server:
   GPU. Each run loaded the model separately, so these figures include startup
   overhead and should not be treated as a long-video benchmark.
 
+### Realistic CPU vs GPU comparison (after all tests)
+
+After the single-clip encode test, the three-clip VAD validation, and the
+six-clip context validation on the same laptop vs Quadro P2000 pair, this is the
+honest practical picture:
+
+| What users care about | CPU-only laptop | Quadro P2000 GPU | Realistic takeaway |
+|---|---|---|---|
+| Hard-profanity detection | Passed all known targets in the tuned tests | Passed all known targets | Both are usable for detection after VAD tuning |
+| Ambiguous false positives (`swallow these pills`, `dirty bomb`, name `Jerry`) | Correctly left alone | Correctly left alone | Context rules work the same on both devices |
+| Cut timing after VAD tuning | Matched known captions closely | Matched known captions closely | GPU is not clearly “more accurate” on the current samples |
+| Transcription speed | ~1.0–1.1s on 12s clips | ~0.5–0.6s on the same clips | GPU is about **2x** faster at Whisper |
+| Video rebuild after a cut | ~9–15s on short clips | ~2.5–3.0s on the same clips | GPU encoding is about **3.5–5x** faster |
+| Visual fidelity after cutting | SSIM ~0.993–0.995 / PSNR ~50–52 dB | SSIM ~0.997–0.998 / PSNR ~54–56 dB | GPU outputs measured closer to the source |
+| Output file size after cutting | Smaller | Larger (~30–70% in these tests) | GPU quality settings favor fidelity over size |
+| Full job with real cuts | Mean ~20.5s on three 12s clips | Mean ~8.5s on the same clips | GPU is about **2.4x** faster end-to-end |
+| Jobs with no cuts (copy-through) | Can finish sooner on short clips | May look slower because of CUDA startup | GPU advantage appears when the app actually re-encodes |
+
+**Bottom line for users:**
+
+1. Prefer a GPU machine when you have one. The realistic gains are **speed** and
+   **encode quality**, not a proven detection-accuracy monopoly.
+2. CPU remains a complete fallback. Current builds keep CPU cut timing much
+   closer to GPU by using Whisper VAD plus a 1.0s single-word span clamp.
+3. The biggest GPU win is the cut/rebuild stage (`h264_nvenc` vs `libx264`).
+   Transcription is faster too, but encoding usually dominates wall time.
+4. Short no-cut clips can hide the GPU advantage because each run still pays
+   model/device startup cost. Longer movies with real removals are where GPU
+   savings compound.
+5. Expect GPU cleaned files to be somewhat larger when quality settings are
+   held high. That is a fidelity tradeoff, not a failure.
+
+These conclusions come from controlled short clips with matched source hashes.
+Absolute times will change with movie length, resolution, bitrate, Whisper
+model size, and hardware, but the relative pattern above is what we repeatedly
+measured.
+
 ---
 
 ## Quick Start - Simple for Non-Technical Users

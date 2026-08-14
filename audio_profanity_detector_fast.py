@@ -2,11 +2,12 @@
 Audio Profanity Detector (Faster-Whisper) - Detects profanity in audio using faster-whisper
 """
 
+import os
 import subprocess
 import tempfile
 import shutil
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 from profanity_words import PROFANITY_WORDS, get_profanity_words
 
@@ -32,6 +33,11 @@ class AudioProfanityDetectorFast:
 
     _MODEL_ORDER = ['tiny', 'base', 'small', 'medium', 'large']
 
+    # Pascal GPUs (e.g. Quadro P2000 / CC 6.1) lack useful FP16 Tensor Cores.
+    # Prefer int8/float32 on CUDA; never rely on float16 there.
+    _CUDA_COMPUTE_TYPES = ('int8', 'float32')
+    _CPU_COMPUTE_TYPES = ('int8_float16', 'int8', 'float32')
+
     def __init__(self,
                  model_size: str = 'base',
                  phrase_gap: float = 1.5,
@@ -50,34 +56,112 @@ class AudioProfanityDetectorFast:
         self.auto_upgrade = auto_upgrade
         self._upgraded_once = False
         self.whisper_model = None
+        self.device = 'cpu'
+        self.compute_type = None
         if profanity_words is not None:
             self.PROFANITY_WORDS = set(profanity_words)
         else:
             self.PROFANITY_WORDS = get_profanity_words(include_religious=include_religious)
         self._init_whisper()
-    
+
+    @staticmethod
+    def _cuda_available() -> bool:
+        """Return True only when CTranslate2 can see at least one CUDA device."""
+        try:
+            import ctranslate2
+            return int(ctranslate2.get_cuda_device_count()) > 0
+        except Exception:
+            return False
+
+    @staticmethod
+    def _forced_device() -> Optional[str]:
+        """
+        Optional override: PROFANITY_FILTER_DEVICE=cpu|cuda
+        Useful for debugging; invalid values are ignored.
+        """
+        forced = os.environ.get('PROFANITY_FILTER_DEVICE', '').strip().lower()
+        if forced in ('cpu', 'cuda'):
+            return forced
+        return None
+
+    def _devices_to_try(self) -> List[str]:
+        forced = self._forced_device()
+        if forced == 'cpu':
+            return ['cpu']
+        if forced == 'cuda':
+            # Still fall back to CPU if forced CUDA load fails.
+            return ['cuda', 'cpu']
+        if self._cuda_available():
+            return ['cuda', 'cpu']
+        return ['cpu']
+
+    @classmethod
+    def _compute_types_for(cls, device: str) -> Tuple[str, ...]:
+        if device == 'cuda':
+            return cls._CUDA_COMPUTE_TYPES
+        return cls._CPU_COMPUTE_TYPES
+
+    def _try_load_model(self, WhisperModel, device: str):
+        """Try compute types for a device. Returns (model, compute_type) or (None, None)."""
+        last_error = None
+        for compute_type in self._compute_types_for(device):
+            try:
+                model = WhisperModel(
+                    self.model_size,
+                    device=device,
+                    compute_type=compute_type,
+                )
+                return model, compute_type
+            except Exception as exc:
+                last_error = exc
+                print(f"  ⚠ {device}/{compute_type} unavailable: {exc}")
+                continue
+        if last_error is not None:
+            print(f"  ⚠ Could not initialize model on {device}: {last_error}")
+        return None, None
+
     def _init_whisper(self):
-        """Initialize faster-whisper model"""
+        """Initialize faster-whisper on GPU when available, otherwise CPU."""
         try:
             from faster_whisper import WhisperModel
-            
-            print(f"  Loading faster-whisper model: {self.model_size}...")
-            # Try different compute types for CPU (int8_float16 first for best speed/accuracy balance)
-            for compute_type in ['int8_float16', 'int8', 'float32']:
-                try:
-                    self.whisper_model = WhisperModel(self.model_size, device='cpu', compute_type=compute_type)
-                    print(f"  ✓ Faster-whisper model loaded (compute_type={compute_type})")
-                    break
-                except ValueError:
-                    continue
-            
-            if self.whisper_model is None:
-                raise RuntimeError("Could not initialize faster-whisper with any compute type")
-                
         except ImportError:
             raise ImportError(
                 "faster-whisper not installed. Install with: pip install faster-whisper"
             )
+
+        print(f"  Loading faster-whisper model: {self.model_size}...")
+
+        forced = self._forced_device()
+        if forced:
+            print(f"  Device override via PROFANITY_FILTER_DEVICE={forced}")
+
+        devices = self._devices_to_try()
+        if devices[0] == 'cuda':
+            print("  ✓ CUDA GPU detected — preferring GPU")
+        else:
+            print("  No CUDA GPU available — using CPU")
+
+        self.whisper_model = None
+        self.compute_type = None
+
+        for device in devices:
+            if device == 'cpu' and 'cuda' in devices:
+                print("  Falling back to CPU...")
+
+            model, compute_type = self._try_load_model(WhisperModel, device)
+            if model is not None:
+                self.whisper_model = model
+                self.device = device
+                self.compute_type = compute_type
+                print(
+                    f"  ✓ Faster-whisper model loaded on {device.upper()} "
+                    f"(compute_type={compute_type})"
+                )
+                return
+
+        raise RuntimeError(
+            "Could not initialize faster-whisper on CUDA or CPU with any supported compute type"
+        )
     
     def detect(self, video_path: Path) -> List[Tuple[float, float, str]]:
         """
@@ -133,9 +217,14 @@ class AudioProfanityDetectorFast:
             print(f"  ✓ Audio extracted")
             
             # Transcribe with faster-whisper
-            print(f"  Transcribing audio with faster-whisper ({self.model_size} model)...")
+            print(
+                f"  Transcribing audio with faster-whisper "
+                f"({self.model_size} on {self.device.upper()}, compute_type={self.compute_type})..."
+            )
             if duration:
-                est_time = duration / 10  # faster-whisper is roughly 10x real-time on CPU
+                # Rough real-time factors: GPU is typically much faster than CPU.
+                realtime_factor = 30.0 if self.device == 'cuda' else 10.0
+                est_time = duration / realtime_factor
                 print(f"  ⏳ Estimated time: ~{est_time:.1f} seconds for {duration/60:.1f} min video")
             
             import time

@@ -77,10 +77,53 @@ Want to see how it works before installing? **Try the app instantly in your brow
 
 ## Installation - Easy Setup Guide
 
-### Prerequisites
-- **Python 3.8+** (free from python.org)
-- **FFmpeg** (free video processing tool)
-- **5-10 minutes** for setup (one-time only)
+### Prerequisites (install these first)
+
+The Python requirements file cannot install system programs such as FFmpeg. Before
+cloning the repository, install:
+
+- **Python 3.8+**, including `pip` and virtual-environment support
+- **FFmpeg and FFprobe** (FFprobe is normally included with FFmpeg)
+- **Git**
+- **An NVIDIA CUDA setup is optional**; the app automatically uses a CUDA GPU
+  when CTranslate2 can detect one and otherwise falls back to CPU
+
+#### Ubuntu / Debian
+
+```bash
+sudo apt update
+sudo apt install -y git python3 python3-pip python3-venv ffmpeg
+```
+
+#### Fedora
+
+```bash
+sudo dnf install -y git python3 python3-pip ffmpeg
+```
+
+#### macOS (Homebrew)
+
+```bash
+brew install git python ffmpeg
+```
+
+#### Windows
+
+1. Install [Python 3](https://www.python.org/downloads/) and enable
+   **Add Python to PATH** during setup.
+2. Install [Git for Windows](https://git-scm.com/download/win).
+3. Install FFmpeg with `winget install Gyan.FFmpeg`, or download it from
+   [ffmpeg.org](https://ffmpeg.org/download.html) and add its `bin` folder to
+   `PATH`.
+
+Verify the prerequisites before continuing:
+
+```bash
+python3 --version  # On Windows, use: python --version
+ffmpeg -version
+ffprobe -version
+git --version
+```
 
 ### Quick Setup (Copy & Paste)
 
@@ -94,8 +137,46 @@ python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Step 3: Install dependencies (takes 2-5 minutes)
-pip install -r requirements.txt
+python3 -m pip install --upgrade pip
+python3 -m pip install -r requirements.txt
+
+# Step 4: Confirm the command is ready
+python3 clean.py --help
 ```
+
+On Windows, activate with `venv\Scripts\activate` and replace `python3` with
+`python` in the commands above.
+
+> **Ubuntu/Debian shortcut:** `./install.sh` performs the system check, creates
+> the virtual environment, and installs the Python requirements. The manual
+> steps above are recommended on other operating systems.
+
+### Optional NVIDIA GPU acceleration
+
+The app does not require a GPU. It checks CUDA through CTranslate2 at startup:
+
+- CUDA available: loads faster-whisper on the GPU
+- CUDA unavailable or incompatible: automatically falls back to CPU
+- Pascal GPUs such as the Quadro P2000 use `int8` (then `float32`) rather than
+  unsupported/slow `float16`
+
+Install a current NVIDIA driver and the CUDA/cuDNN runtime versions required by
+your installed CTranslate2 release. Then verify detection:
+
+```bash
+nvidia-smi
+python3 -c "import ctranslate2; print('CUDA devices:', ctranslate2.get_cuda_device_count())"
+```
+
+When processing starts, the log reports the selected device and compute type.
+For troubleshooting only, force a device with:
+
+```bash
+PROFANITY_FILTER_DEVICE=cpu python3 clean.py input.mp4 output.mp4
+PROFANITY_FILTER_DEVICE=cuda python3 clean.py input.mp4 output.mp4
+```
+
+Forced CUDA still falls back safely to CPU if model initialization fails.
 
 ---
 
@@ -673,13 +754,25 @@ pip install faster-whisper
 
 ### "FFmpeg not found"
 Install FFmpeg:
-- Ubuntu/Debian: `sudo apt install ffmpeg`
+- Ubuntu/Debian: `sudo apt update && sudo apt install -y ffmpeg`
+- Fedora: `sudo dnf install -y ffmpeg`
 - macOS: `brew install ffmpeg`
-- Windows: Download from https://ffmpeg.org
+- Windows: `winget install Gyan.FFmpeg`
+
+Close and reopen the terminal after installation, then verify both binaries:
+
+```bash
+ffmpeg -version
+ffprobe -version
+```
 
 ### Slow transcription (6+ hours for movies)
 - **Expected**: Base model with dialog enhancement takes 3-6 hours per 2-hour movie on CPU
-- **GPU acceleration**: Install CUDA-enabled PyTorch for 10-20x speedup
+- **GPU acceleration**: Install compatible NVIDIA drivers plus the CUDA/cuDNN
+  runtime required by CTranslate2; the active faster-whisper path does not use
+  PyTorch
+- **Verify GPU detection**:
+  `python3 -c "import ctranslate2; print(ctranslate2.get_cuda_device_count())"`
 - **Cloud rental**: Use AWS/Google Cloud GPU instances for batch processing
 - **Alternative**: Use `--subs` with existing subtitle files (skips transcription, 20x faster)
 - **Not recommended**: `--model tiny` is much faster but misses profanity on complex audio

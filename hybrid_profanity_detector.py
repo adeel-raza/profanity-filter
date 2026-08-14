@@ -106,9 +106,7 @@ class HybridProfanityDetector:
 
             segments, _info = self.audio_detector.whisper_model.transcribe(
                 str(clip_path),
-                beam_size=5,
-                word_timestamps=True,
-                language='en',
+                **self.audio_detector._transcribe_kwargs(word_timestamps=True),
             )
 
             words = self.audio_detector.PROFANITY_WORDS
@@ -119,8 +117,12 @@ class HybridProfanityDetector:
                 for word_info in segment.words:
                     token = word_info.word.strip().lower().rstrip('.,!?;:')
                     if token in words:
-                        abs_start = start + max(0.0, float(word_info.start) - 0.15)
-                        abs_end = start + float(word_info.end) + 0.15
+                        rel_start, rel_end = self.audio_detector._clamp_word_span(
+                            float(word_info.start),
+                            float(word_info.end),
+                        )
+                        abs_start = start + max(0.0, rel_start - 0.15)
+                        abs_end = start + rel_end + 0.15
                         hits.append((abs_start, abs_end, token))
             return hits
         except Exception as e:

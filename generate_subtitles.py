@@ -135,6 +135,7 @@ def generate_subtitles(video_path: Path, output_srt: Path, model_size: str = 'ba
             word_timestamps=False,
             language='en',
             beam_size=5,
+            vad_filter=True,
         )
         # Materialize before removing the temporary audio file.
         segments = list(segment_generator)

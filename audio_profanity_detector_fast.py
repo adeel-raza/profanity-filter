@@ -38,6 +38,10 @@ class AudioProfanityDetectorFast:
     _CUDA_COMPUTE_TYPES = ('int8', 'float32')
     _CPU_COMPUTE_TYPES = ('int8_float16', 'int8', 'float32')
 
+    # Whisper sometimes stretches one word across a long silence, especially on
+    # CPU without VAD. Cap single-word spans so clean dialogue is not removed.
+    _MAX_SINGLE_WORD_DURATION = 1.0
+
     def __init__(self,
                  model_size: str = 'base',
                  phrase_gap: float = 1.5,
@@ -232,9 +236,7 @@ class AudioProfanityDetectorFast:
             
             segments, info = self.whisper_model.transcribe(
                 str(audio_path),
-                beam_size=5,  # Full accuracy: matches non-optimized version (was 1 for speed)
-                word_timestamps=True,
-                language='en'
+                **self._transcribe_kwargs(word_timestamps=True),
             )
             
             # Convert generator to list and get all words
@@ -281,8 +283,7 @@ class AudioProfanityDetectorFast:
             for word_info in all_words:
                 word = word_info.word.strip().lower().rstrip('.,!?;:')
                 if word in self.PROFANITY_WORDS:
-                    start = word_info.start
-                    end = word_info.end
+                    start, end = self._clamp_word_span(word_info.start, word_info.end)
                     padding = 0.15  # Match parent app padding (0.15s to catch partial sounds)
                     profanity_segments.append((
                         max(0, start - padding),
@@ -400,6 +401,31 @@ class AudioProfanityDetectorFast:
             return self._MODEL_ORDER[idx + 1]
         return None
 
+    @classmethod
+    def _transcribe_kwargs(cls, word_timestamps: bool = True) -> dict:
+        """
+        Shared faster-whisper options.
+
+        vad_filter skips long silences before alignment. Without it, CPU runs in
+        particular can assign a single word a multi-second span across quiet gaps.
+        """
+        return {
+            'beam_size': 5,
+            'word_timestamps': word_timestamps,
+            'language': 'en',
+            'vad_filter': True,
+        }
+
+    @classmethod
+    def _clamp_word_span(cls, start: float, end: float) -> Tuple[float, float]:
+        """Keep the word end and pull an overstretched start forward."""
+        if end <= start:
+            return start, end
+        max_dur = cls._MAX_SINGLE_WORD_DURATION
+        if (end - start) > max_dur:
+            start = end - max_dur
+        return max(0.0, start), end
+
     def _retry_transcribe(self, audio_path: Path):
         """Retry transcription after model upgrade, re-running profanity detection pipeline."""
         import time
@@ -409,9 +435,7 @@ class AudioProfanityDetectorFast:
             start_time = time.time()
             segments, info = self.whisper_model.transcribe(
                 str(audio_path),
-                beam_size=5,  # Full accuracy: matches non-optimized version (was 1 for speed)
-                word_timestamps=True,
-                language='en'
+                **self._transcribe_kwargs(word_timestamps=True),
             )
             all_words = []
             for segment in segments:
@@ -435,8 +459,7 @@ class AudioProfanityDetectorFast:
             for word_info in all_words:
                 word = word_info.word.strip().lower().rstrip('.,!?;:')
                 if word in self.PROFANITY_WORDS:
-                    start = word_info.start
-                    end = word_info.end
+                    start, end = self._clamp_word_span(word_info.start, word_info.end)
                     padding = 0.15  # Match parent app padding (0.15s to catch partial sounds)
                     profanity_segments.append((
                         max(0, start - padding),

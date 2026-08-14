@@ -7,7 +7,7 @@ import tempfile
 from pathlib import Path
 from typing import List, Tuple
 
-from profanity_words import PROFANITY_WORDS
+from profanity_words import PROFANITY_WORDS, should_filter_word
 
 
 class AudioProfanityDetector:
@@ -133,37 +133,43 @@ class AudioProfanityDetector:
             
             print(f"  ✓ Transcription complete")
             
-            # Count total words first
-            total_words = 0
-            for segment in result.get('segments', []):
-                total_words += len(segment.get('words', []))
+            # Flatten words so ambiguous terms can inspect nearby dialogue.
+            all_word_infos = [
+                word_info
+                for segment in result.get('segments', [])
+                for word_info in segment.get('words', [])
+            ]
+            total_words = len(all_word_infos)
             
             # Find profanity words
             words_checked = 0
-            for segment in result.get('segments', []):
-                for word_info in segment.get('words', []):
-                    words_checked += 1
-                    word = word_info.get('word', '').strip().lower()
-                    # Remove punctuation from end
-                    word = word.rstrip('.,!?;:')
-                    
-                    # Check if word is profanity using EXACT match only (whole word)
-                    # This prevents false positives like "house" matching "whore"
-                    # or "hour" matching "whore"
-                    if word in self.PROFANITY_WORDS:
-                        start = word_info.get('start', 0)
-                        end = word_info.get('end', 0)
-                        # Add small padding around word (reduced for more accuracy)
-                        padding = 0.15  # Reduced from 0.3 to 0.15 for more precise cuts
-                        profanity_segments.append((
-                            max(0, start - padding),
-                            end + padding,
-                            word
-                        ))
-                    
-                    # Progress update every 1000 words
-                    if words_checked % 1000 == 0:
-                        print(f"    Checked {words_checked}/{total_words} words, found {len(profanity_segments)} profanity...", end='\r')
+            for word_index, word_info in enumerate(all_word_infos):
+                words_checked += 1
+                word = word_info.get('word', '').strip().lower()
+                word = word.rstrip('.,!?;:')
+                context_start = max(0, word_index - 5)
+                context_end = min(total_words, word_index + 6)
+                context = [
+                    value.get('word', '').strip().lower().rstrip('.,!?;:')
+                    for value in all_word_infos[context_start:context_end]
+                ]
+
+                # Exact matching prevents substrings such as "house" matching "whore".
+                if (
+                    word in self.PROFANITY_WORDS
+                    and should_filter_word(word, context)
+                ):
+                    start = word_info.get('start', 0)
+                    end = word_info.get('end', 0)
+                    padding = 0.15
+                    profanity_segments.append((
+                        max(0, start - padding),
+                        end + padding,
+                        word
+                    ))
+
+                if words_checked % 1000 == 0:
+                    print(f"    Checked {words_checked}/{total_words} words, found {len(profanity_segments)} profanity...", end='\r')
             
             print()  # New line after progress
             print(f"  ✓ Profanity search complete: {len(profanity_segments)} profanity word(s) found")

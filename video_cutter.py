@@ -1,28 +1,27 @@
 """
-Video Cutter - Cuts out segments from video using FFmpeg (Optimized for SPEED)
-Speed optimizations:
-- Veryfast preset (faster than 'fast' preset)
-- Higher CRF values (38/35/32/28/23 vs 35/32/28/23/18) = faster encoding
-- Use all CPU cores (-threads 0)
-- Sequential extraction (multiprocessing removed for stability)
-- Result: Faster encoding with acceptable quality
+Video Cutter - Cuts out segments from video using FFmpeg (quality-first)
+
+Quality goals:
+- Prefer a single encode pass (no double re-encode)
+- Use high-quality H.264 settings (CRF ~18, medium preset)
+- Preserve audio channels/sample rate/bitrate where possible
+- Mute-only mode keeps original video bitstream via stream copy
 """
 
 import subprocess
 import tempfile
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
-# Removed multiprocessing - using sequential extraction with optimized CRF values
 import os
 
 
 # Removed _extract_single_segment_worker - using sequential extraction instead
 
 class VideoCutter:
-    """Cuts out segments from video using FFmpeg with optimized CPU encoding"""
+    """Cuts out segments from video using FFmpeg with quality-preserving encoding"""
 
     def __init__(self):
-        pass
+        self._selected_video_encoder = None
     
     def cut_segments(self, input_path: Path, output_path: Path,
                      segments_to_remove: List[Tuple[float, float]],
@@ -343,171 +342,288 @@ class VideoCutter:
         
         return keep_segments
     
+    def _choose_crf(self, original_bitrate: Optional[int]) -> int:
+        """
+        Pick a quality-first CRF.
+        Lower CRF = higher quality. CRF 18 is near-transparent for most content.
+        """
+        if not original_bitrate:
+            return 18
+        # Very low-bitrate sources: avoid over-bloating while still looking clean.
+        if original_bitrate < 300000:
+            return 20
+        if original_bitrate < 1000000:
+            return 18
+        return 17
+
+    def _has_audio_stream(self, audio_info: Dict[str, Optional[object]]) -> bool:
+        codec = audio_info.get('codec_name')
+        channels = audio_info.get('channels')
+        if isinstance(codec, str) and codec.strip():
+            return True
+        return isinstance(channels, int) and channels > 0
+
+    @staticmethod
+    def _cpu_video_args(crf_value: int) -> List[str]:
+        """High-quality CPU fallback used only when no hardware encoder works."""
+        return [
+            '-c:v', 'libx264',
+            '-crf', str(crf_value),
+            '-preset', 'medium',
+            '-pix_fmt', 'yuv420p',
+            '-threads', '0',
+        ]
+
+    @staticmethod
+    def _hardware_encoder_candidates() -> List[Tuple[str, List[str]]]:
+        """
+        Hardware H.264 encoders ordered by common availability.
+
+        Each candidate is validated with a real one-frame encode before use;
+        FFmpeg builds often list encoders even when matching hardware/drivers
+        are unavailable.
+        """
+        return [
+            (
+                'NVIDIA NVENC',
+                [
+                    '-c:v', 'h264_nvenc',
+                    '-preset', 'p7',
+                    '-tune', 'hq',
+                    '-rc', 'vbr',
+                    '-cq', '18',
+                    '-b:v', '0',
+                    '-profile:v', 'high',
+                    '-pix_fmt', 'yuv420p',
+                ],
+            ),
+            (
+                'Intel Quick Sync',
+                [
+                    '-c:v', 'h264_qsv',
+                    '-preset', 'veryslow',
+                    '-global_quality', '16',
+                    '-pix_fmt', 'nv12',
+                ],
+            ),
+            (
+                'AMD AMF',
+                [
+                    '-c:v', 'h264_amf',
+                    '-quality', 'quality',
+                    '-rc', 'cqp',
+                    '-qp_i', '16',
+                    '-qp_p', '18',
+                    '-qp_b', '20',
+                    '-pix_fmt', 'yuv420p',
+                ],
+            ),
+            (
+                'Apple VideoToolbox',
+                [
+                    '-c:v', 'h264_videotoolbox',
+                    '-q:v', '80',
+                    '-pix_fmt', 'yuv420p',
+                ],
+            ),
+        ]
+
+    @staticmethod
+    def _encoder_probe_succeeds(video_args: List[str]) -> bool:
+        """Perform a real hardware encode probe instead of trusting FFmpeg's list."""
+        cmd = [
+            'ffmpeg',
+            '-hide_banner',
+            '-loglevel', 'error',
+            '-f', 'lavfi',
+            '-i', 'color=c=black:s=128x128:r=24',
+            '-frames:v', '1',
+            *video_args,
+            '-f', 'null',
+            '-',
+        ]
+        try:
+            result = subprocess.run(
+                cmd,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=20,
+                check=False,
+            )
+            return result.returncode == 0
+        except (OSError, subprocess.TimeoutExpired):
+            return False
+
+    def _select_video_encoder(self, crf_value: int) -> Tuple[str, List[str], bool]:
+        """
+        Select a working GPU encoder, with an explicit CPU-only override.
+
+        PROFANITY_FILTER_VIDEO_ENCODER=cpu disables hardware encoding.
+        """
+        if self._selected_video_encoder is not None:
+            name, args, hardware = self._selected_video_encoder
+            if hardware:
+                return name, list(args), hardware
+            return name, self._cpu_video_args(crf_value), hardware
+
+        forced = os.environ.get(
+            'PROFANITY_FILTER_VIDEO_ENCODER',
+            'auto',
+        ).strip().lower()
+
+        if forced != 'cpu':
+            for name, args in self._hardware_encoder_candidates():
+                encoder_name = args[1]
+                if forced not in ('', 'auto') and forced not in (
+                    encoder_name.lower(),
+                    name.lower(),
+                ):
+                    continue
+                if self._encoder_probe_succeeds(args):
+                    self._selected_video_encoder = (name, list(args), True)
+                    return name, list(args), True
+
+            if forced not in ('', 'auto'):
+                print(
+                    f"  ⚠ Requested video encoder '{forced}' is unavailable; "
+                    "falling back to CPU"
+                )
+
+        self._selected_video_encoder = ('CPU libx264', [], False)
+        return 'CPU libx264', self._cpu_video_args(crf_value), False
+
     def _apply_cuts(self, input_path: Path, output_path: Path,
                     keep_segments: List[Tuple[float, float]],
                     original_bitrate: int = None) -> bool:
-        """Apply cuts using FFmpeg with optimized CPU encoding"""
-        
-        # Match ORIGINAL INPUT video visual quality: Use lower CRF (higher quality)
-        # Speed comes from ultrafast preset and all CPU cores, not from lower quality
-        # Use CRF 23-25 to maintain visual quality similar to original input
-        if original_bitrate:
-            if original_bitrate < 200000:
-                crf_value = 23  # Higher quality to match original input visual quality (was 35 - too low)
-            elif original_bitrate < 500000:
-                crf_value = 23  # Higher quality
-            elif original_bitrate < 1000000:
-                crf_value = 23  # Higher quality
-            elif original_bitrate < 2000000:
-                crf_value = 20  # High quality
-            else:
-                crf_value = 18  # Very high quality
-            print(f"  Speed-optimized encoding (matching original INPUT visual quality): {original_bitrate//1000}kbps (CRF {crf_value})")
-        else:
-            crf_value = 23  # Default high quality
-            print(f"  Using default (high quality to match original input): CRF {crf_value}")
-        
-        try:
-            # Use filter_complex with concat for more reliable segment cutting
-            if len(keep_segments) == 1:
-                # Single segment - simple cut
-                start, end = keep_segments[0]
-                duration = end - start
-                
-                # Build FFmpeg command with optimizations
-                cmd = [
-                    'ffmpeg', '-i', str(input_path),
-                    '-ss', str(start),
-                    '-t', str(duration),
-                    '-c:v', 'libx264',
-                    '-crf', str(crf_value),
-                    '-preset', 'veryfast',  # Faster than fast, but better quality than ultrafast  # Aggressive: ultrafast preset (fastest possible)
-                    '-threads', '0',  # Use all CPU cores
-                    '-tune', 'fastdecode',  # Optimize for fast decoding
-                    '-x264-params', 'keyint=30:min-keyint=30:scenecut=0',  # Faster encoding
-                    '-c:a', 'aac',  # Re-encode audio (stream copy caused profanity detection issues)
-                    '-b:a', '96k',  # Speed-optimized: slightly lower audio bitrate (96k vs 128k)
-                    '-avoid_negative_ts', 'make_zero',
-                    '-y', str(output_path)
-                ]
-                print(f"  [SPEED-OPTIMIZED] Single-segment encode with veryfast preset + all CPU cores")
+        """Apply cuts with a single high-quality encode pass."""
+        if not keep_segments:
+            return False
 
-            else:
-                # Multiple segments - extract sequentially (no multiprocessing), then concat
-                import tempfile
-                temp_dir = Path(tempfile.mkdtemp())
-                segment_files = []
-                total_segments = len(keep_segments)
-                
-                print(f"  Extracting {total_segments} segments sequentially (speed-optimized: veryfast preset)...")
-                for i, (start, end) in enumerate(keep_segments, 1):
-                    duration = end - start
-                    segment_file = temp_dir / f'segment_{i:04d}.mp4'
-                    segment_files.append(segment_file)
-                    
-                    print(f"    Extracting segment {i}/{total_segments}: {start:.1f}s - {end:.1f}s ({duration:.1f}s)...", end='\r')
-                    
-                    # Sequential extraction with optimized CRF
-                    # Use CRF for all videos to maintain quality (bitrate targeting causes quality issues)
-                    extract_cmd = [
-                        'ffmpeg', '-i', str(input_path),
-                        '-ss', str(start),
-                        '-t', str(duration),
-                        '-c:v', 'libx264',
-                        '-crf', str(crf_value),  # Use CRF to maintain visual quality
-                        '-preset', 'veryfast',  # Faster than fast, but better quality than ultrafast
-                        '-threads', '0',
-                        '-c:a', 'aac',
-                        '-b:a', '128k',
-                        '-avoid_negative_ts', 'make_zero',
-                        '-loglevel', 'error',
-                        '-y', str(segment_file)
-                    ]
-                    result = subprocess.run(extract_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
-                    if result.returncode != 0:
-                        print(f"\n  ✗ Failed to extract segment {i}")
-                        # Cleanup temp directory if it exists
-                        import shutil
-                        if temp_dir.exists():
-                            try:
-                                shutil.rmtree(temp_dir)
-                            except (FileNotFoundError, OSError):
-                                pass  # Directory already deleted (e.g., by user clearing /tmp)
-                        return False
-                
-                print()  # New line after progress
-                print(f"  ✓ All {total_segments} segments extracted")
-                
-                # Create concat file
-                concat_file = temp_dir / 'concat.txt'
-                try:
-                    with open(concat_file, 'w') as f:
-                        for seg_file in segment_files:
-                            f.write(f"file '{seg_file.absolute()}'\n")
-                except (FileNotFoundError, OSError) as e:
-                    print(f"\n  ✗ Failed to create concat file: {e}")
-                    print(f"  ⚠️  Temp directory may have been deleted. If you cleared /tmp files, please avoid doing so during processing.")
-                    import shutil
-                    if temp_dir.exists():
-                        try:
-                            shutil.rmtree(temp_dir)
-                        except (FileNotFoundError, OSError):
-                            pass
-                    return False
-                
-                # Concatenate segments - use CRF to maintain quality
-                print(f"  Concatenating {total_segments} segments into final video...")
+        crf_value = self._choose_crf(original_bitrate)
+        audio_info = self._get_audio_stream_info(input_path)
+        has_audio = self._has_audio_stream(audio_info)
+        audio_encode_args = self._build_audio_encode_args(audio_info) if has_audio else []
+        encoder_name, video_args, hardware_encode = self._select_video_encoder(crf_value)
+        if hardware_encode:
+            print(
+                f"  ✓ GPU video encoding enabled: {encoder_name} "
+                "(quality-first settings, single pass)"
+            )
+        else:
+            source_rate = (
+                f", source ~{original_bitrate // 1000}kbps"
+                if original_bitrate
+                else ""
+            )
+            print(
+                f"  No compatible GPU video encoder found — using CPU libx264 "
+                f"(CRF {crf_value}, preset medium{source_rate}, single pass)"
+            )
+
+        try:
+            # Single keep-range: accurate trim + one encode (no concat).
+            if len(keep_segments) == 1:
+                start, end = keep_segments[0]
+                duration = max(0.0, end - start)
                 cmd = [
-                    'ffmpeg', '-fflags', '+genpts', '-f', 'concat',
-                    '-safe', '0',
-                    '-i', str(concat_file),
-                    '-c:v', 'libx264',
-                    '-crf', str(crf_value),  # Use CRF to maintain visual quality
-                    '-preset', 'veryfast',  # Faster than fast, but better quality than ultrafast
-                    '-threads', '0',
-                    '-c:a', 'aac',
-                    '-b:a', '128k',
-                    '-loglevel', 'error',
-                    '-y', str(output_path)
+                    'ffmpeg', '-hide_banner',
+                    '-i', str(input_path),
+                    '-ss', f'{start:.3f}',
+                    '-t', f'{duration:.3f}',
+                    *video_args,
                 ]
-            
-            result = subprocess.run(cmd, capture_output=True, text=True)
-            
-            # Cleanup temp directory after processing (whether success or failure)
-            if 'temp_dir' in locals() and temp_dir.exists():
-                import shutil
-                try:
-                    shutil.rmtree(temp_dir)
-                except (FileNotFoundError, OSError):
-                    pass  # Directory already deleted - that's okay
-            
-            if result.returncode == 0:
-                print(f"  ✓ Video cutting complete")
-                return True
+                if has_audio:
+                    cmd.extend(audio_encode_args)
+                else:
+                    cmd.extend(['-an'])
+                cmd.extend(['-avoid_negative_ts', 'make_zero', '-y', str(output_path)])
+                print(
+                    f"  [QUALITY] Single-segment high-quality encode via "
+                    f"{encoder_name}"
+                )
+                result = subprocess.run(cmd, capture_output=True, text=True)
             else:
-                print("  ✗ FFmpeg command failed. Return code:", result.returncode)
-                if result.stderr:
-                    err_lines = [l for l in result.stderr.splitlines() if l.strip()]
-                    print("    " + '\n    '.join(err_lines[:12]))
-                return False
-        
+                # Multi-segment: one filter_complex pass (avoid extract+concat double encode).
+                filter_parts = []
+                concat_labels = []
+                for i, (start, end) in enumerate(keep_segments):
+                    if has_audio:
+                        filter_parts.append(
+                            f"[0:v]trim=start={start:.3f}:end={end:.3f},setpts=PTS-STARTPTS[v{i}];"
+                            f"[0:a]atrim=start={start:.3f}:end={end:.3f},asetpts=PTS-STARTPTS[a{i}]"
+                        )
+                        concat_labels.append(f"[v{i}][a{i}]")
+                    else:
+                        filter_parts.append(
+                            f"[0:v]trim=start={start:.3f}:end={end:.3f},setpts=PTS-STARTPTS[v{i}]"
+                        )
+                        concat_labels.append(f"[v{i}]")
+
+                n = len(keep_segments)
+                if has_audio:
+                    filter_complex = (
+                        ";".join(filter_parts)
+                        + ";"
+                        + "".join(concat_labels)
+                        + f"concat=n={n}:v=1:a=1[outv][outa]"
+                    )
+                    map_args = ['-map', '[outv]', '-map', '[outa]', *video_args, *audio_encode_args]
+                else:
+                    filter_complex = (
+                        ";".join(filter_parts)
+                        + ";"
+                        + "".join(concat_labels)
+                        + f"concat=n={n}:v=1:a=0[outv]"
+                    )
+                    map_args = ['-map', '[outv]', *video_args, '-an']
+
+                cmd = [
+                    'ffmpeg', '-hide_banner',
+                    '-i', str(input_path),
+                    '-filter_complex', filter_complex,
+                    *map_args,
+                ]
+                cmd.extend(['-y', str(output_path)])
+                print(
+                    f"  [QUALITY] Multi-segment single-pass encode "
+                    f"({n} keep ranges, {encoder_name}, no double re-encode)"
+                )
+                result = subprocess.run(cmd, capture_output=True, text=True)
+
+            if result.returncode != 0 and hardware_encode:
+                print(
+                    f"  ⚠ {encoder_name} failed for this video; "
+                    "retrying safely with CPU libx264"
+                )
+                self._selected_video_encoder = ('CPU libx264', [], False)
+                return self._apply_cuts(
+                    input_path,
+                    output_path,
+                    keep_segments,
+                    original_bitrate,
+                )
+
+            if result.returncode == 0:
+                print("  ✓ Video cutting complete")
+                return True
+
+            print("  ✗ FFmpeg command failed. Return code:", result.returncode)
+            if result.stderr:
+                err_lines = [l for l in result.stderr.splitlines() if l.strip()]
+                print("    " + '\n    '.join(err_lines[:12]))
+            return False
+
         except subprocess.CalledProcessError as e:
             print("  Error: FFmpeg failed")
-            stderr = e.stderr if isinstance(e.stderr, str) else (e.stderr.decode('utf-8', errors='ignore') if e.stderr else '')
+            stderr = e.stderr if isinstance(e.stderr, str) else (
+                e.stderr.decode('utf-8', errors='ignore') if e.stderr else ''
+            )
             if stderr:
                 print("  " + "\n  ".join(stderr.splitlines()[:12]))
             return False
         except Exception as e:
             print(f"  Error: {e}")
-            # Cleanup temp directory if it exists
-            if 'temp_dir' in locals() and temp_dir.exists():
-                import shutil
-                try:
-                    shutil.rmtree(temp_dir)
-                except (FileNotFoundError, OSError):
-                    pass  # Directory already deleted - that's okay
             import traceback
             traceback.print_exc()
             return False
-    
-    
+

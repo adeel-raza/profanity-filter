@@ -76,6 +76,7 @@ def main():
         "video_cutter.py",
         "timestamp_merger.py",
         "profanity_words.py",
+        "profanity_words.csv",
     ]
     
     # Special handling for requirements.txt

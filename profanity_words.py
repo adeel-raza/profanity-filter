@@ -3,9 +3,13 @@ Shared profanity word list - curse, sexual, abusive, adultery, f-words, obscene 
 Used by both audio_profanity_detector.py and subtitle_processor.py
 """
 
+import csv
+from pathlib import Path
+
+
 # Comprehensive profanity list - curse, sexual, abusive, adultery, f-words, obscene language
 # Note: "damn" and variations are NOT included as they are not considered obscene
-PROFANITY_WORDS = {
+_BUILTIN_PROFANITY_WORDS = {
     # F-words and variations
     'fuck', 'fucking', 'fucked', 'fucker', 'fuckers', 'fuckin', 'fucka', 'fuckable', 'fuckass',
     'fuckbag', 'fuckbitch', 'fuckbook', 'fuckboy', 'fuckbrain', 'fuckbuddy', 'fuckbutt',
@@ -247,7 +251,7 @@ PROFANITY_WORDS = {
     'hobag',
     'ho', 'hoare', 'hoer', 'hoes', 'hoor', 'hoore', 'hore', 'h00r', 'h0ar', 'h0r', 'h0re',
     'jackass', 'jackhole', 'jackshit',
-    'jerk', 'jerries', 'jerry',
+    'jerk',
     'knob', 'knobbing', 'knobead', 'knobed', 'knobend', 'knobhead', 'knobjocky', 'knobjokey',
     'knobz',
     'lowlife',
@@ -287,6 +291,112 @@ PROFANITY_WORDS = {
     'weewee', 'weenie',
 }
 
+# Multi-word phrases used by audio and subtitle detection. These are included
+# in the editable CSV so users can remove them without changing Python.
+DEFAULT_PROFANITY_PHRASES = {
+    'fuck you', 'fuck off', 'fuck this', 'fuck that', 'fuck me', 'fuck her', 'fuck him',
+    'shit head', 'shit face', 'shit for brains', 'bull shit', 'bullshit',
+    'ass hole', 'asshole', 'dumb ass', 'dumbass', 'smart ass', 'smartass',
+    'son of a bitch', 'sonofabitch', 'mother fucker', 'motherfucker',
+    'piece of shit', 'dick head', 'dickhead', 'cock sucker', 'cocksucker',
+    'piss off', 'screw you', 'screw off',
+}
+
+DEFAULT_PROFANITY_WORDS = _BUILTIN_PROFANITY_WORDS | DEFAULT_PROFANITY_PHRASES
+PROFANITY_CSV_PATH = Path(__file__).with_name('profanity_words.csv')
+
+# These words are only inappropriate in specific contexts. Keeping the rules
+# small and explicit avoids applying uncertain AI classification to hard swear
+# words, which must always be filtered when enabled in the CSV.
+AMBIGUOUS_CONTEXT_TERMS = {
+    'swallow': {
+        'cum', 'cumming', 'semen', 'sperm', 'cock', 'cocks', 'dick', 'dicks',
+        'penis', 'oral', 'sex', 'sexual', 'blowjob', 'cocksucker', 'deepthroat',
+    },
+    'swallower': {
+        'cum', 'cumming', 'semen', 'sperm', 'cock', 'cocks', 'dick', 'dicks',
+        'penis', 'oral', 'sex', 'sexual', 'blowjob', 'cocksucker', 'deepthroat',
+    },
+    'swalow': {
+        'cum', 'cumming', 'semen', 'sperm', 'cock', 'cocks', 'dick', 'dicks',
+        'penis', 'oral', 'sex', 'sexual', 'blowjob', 'cocksucker', 'deepthroat',
+    },
+    'dirty': {
+        'sex', 'sexual', 'porn', 'naked', 'nude', 'fuck', 'fucking', 'bitch',
+        'whore', 'slut', 'talk', 'joke', 'jokes', 'mind', 'thought', 'thoughts',
+    },
+}
+
+AMBIGUOUS_CONTEXT_PHRASES = {
+    'dirty': {
+        'dirty talk', 'talk dirty', 'dirty joke', 'dirty jokes',
+        'dirty mind', 'dirty thoughts',
+    },
+}
+
+
+def _normalize_context_text(context) -> str:
+    if isinstance(context, str):
+        text = context
+    else:
+        text = ' '.join(str(value) for value in context)
+    return ' '.join(
+        token.strip(".,!?;:'\"()[]{}").lower()
+        for token in text.split()
+        if token.strip(".,!?;:'\"()[]{}")
+    )
+
+
+def should_filter_word(word: str, context) -> bool:
+    """
+    Return whether an enabled word should be filtered in the supplied context.
+
+    Non-ambiguous words always return True. Ambiguous words require an explicit
+    sexual/offensive context term or phrase.
+    """
+    normalized_word = word.strip().lower()
+    required_terms = AMBIGUOUS_CONTEXT_TERMS.get(normalized_word)
+    if required_terms is None:
+        return True
+
+    context_text = _normalize_context_text(context)
+    context_tokens = set(context_text.split())
+    if context_tokens & required_terms:
+        return True
+
+    return any(
+        phrase in context_text
+        for phrase in AMBIGUOUS_CONTEXT_PHRASES.get(normalized_word, set())
+    )
+
+
+def load_profanity_words(csv_path=None):
+    """
+    Load comma-separated words/phrases from the user-editable CSV.
+
+    An existing empty CSV intentionally enables no default words. If the file
+    is missing or unreadable, use the built-in defaults so installs do not fail.
+    """
+    path = Path(csv_path) if csv_path is not None else PROFANITY_CSV_PATH
+    if not path.exists():
+        return set(DEFAULT_PROFANITY_WORDS)
+
+    try:
+        words = set()
+        with path.open('r', encoding='utf-8-sig', newline='') as handle:
+            for row in csv.reader(handle):
+                for value in row:
+                    word = value.strip().lower()
+                    if word and not word.startswith('#'):
+                        words.add(word)
+        return words
+    except (OSError, csv.Error, UnicodeError):
+        return set(DEFAULT_PROFANITY_WORDS)
+
+
+# Backward compatibility for modules that import the set directly.
+PROFANITY_WORDS = load_profanity_words()
+
 # Optional religious/exclamatory terms. Disabled by default to avoid over-filtering
 # normal dialogue (e.g. "Oh my God" in non-offensive contexts).
 RELIGIOUS_PROFANITY_WORDS = {
@@ -300,7 +410,8 @@ RELIGIOUS_PROFANITY_WORDS = {
 
 def get_profanity_words(include_religious: bool = False):
     """Return the active profanity word set for detection/filtering."""
-    words = set(PROFANITY_WORDS)
+    # Reload for each new detector so long-running apps pick up CSV edits.
+    words = load_profanity_words()
     if include_religious:
         words |= RELIGIOUS_PROFANITY_WORDS
     return words

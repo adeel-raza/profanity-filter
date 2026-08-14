@@ -6,7 +6,11 @@ import re
 from pathlib import Path
 from typing import List, Tuple, Optional
 
-from profanity_words import PROFANITY_WORDS, get_profanity_words
+from profanity_words import (
+    PROFANITY_WORDS,
+    get_profanity_words,
+    should_filter_word,
+)
 
 
 class SubtitleProcessor:
@@ -194,7 +198,10 @@ class SubtitleProcessor:
                     # Use word boundary to match whole words only
                     pattern = r'\b' + re.escape(word) + r'\b'
                     if re.search(pattern, text, re.IGNORECASE):
-                        if word not in found_profanity:  # Avoid duplicates
+                        if (
+                            should_filter_word(word, text)
+                            and word not in found_profanity
+                        ):
                             found_profanity.append(word)
                 
                 if found_profanity:
@@ -290,6 +297,9 @@ class SubtitleProcessor:
         
         # Process each profanity word
         for profanity in sorted_profanity:
+            if not should_filter_word(profanity, text):
+                continue
+
             # Create regex pattern that matches the profanity word as a whole word
             # \b ensures word boundaries, so "class" won't match "ass"
             # Match word with optional punctuation after it

@@ -4,11 +4,11 @@ Generate accurate subtitles for a video using Whisper
 """
 
 import argparse
+import shutil
 import sys
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import List, Tuple
 
 
 def seconds_to_srt_time(seconds: float) -> str:
@@ -20,15 +20,13 @@ def seconds_to_srt_time(seconds: float) -> str:
     return f"{hours:02d}:{minutes:02d}:{secs:02d},{millis:03d}"
 
 
-def whisper_to_srt(transcription_result: dict, output_path: Path):
-    """Convert Whisper transcription result to SRT format"""
-    segments = transcription_result.get('segments', [])
-    
+def whisper_to_srt(segments, output_path: Path):
+    """Convert faster-whisper segment objects to SRT format."""
     with open(output_path, 'w', encoding='utf-8') as f:
         for i, segment in enumerate(segments, 1):
-            start_time = segment.get('start', 0)
-            end_time = segment.get('end', 0)
-            text = segment.get('text', '').strip()
+            start_time = getattr(segment, 'start', 0)
+            end_time = getattr(segment, 'end', 0)
+            text = getattr(segment, 'text', '').strip()
             
             # Skip empty segments
             if not text:
@@ -63,19 +61,26 @@ def generate_subtitles(video_path: Path, output_srt: Path, model_size: str = 'ba
         print(f"Error: Video file not found: {video_path}")
         return False
     
-    # Initialize Whisper
+    # Initialize the same faster-whisper engine used by profanity detection.
+    # This avoids requiring the separate openai-whisper/PyTorch stack.
     try:
-        import warnings
-        import whisper
-        warnings.filterwarnings('ignore', message='FP16 is not supported on CPU')
-        print(f"Loading Whisper model: {model_size}...")
-        model = whisper.load_model(model_size)
-        print(f"✓ Whisper model loaded")
+        from audio_profanity_detector_fast import AudioProfanityDetectorFast
+
+        print(f"Loading faster-whisper model: {model_size}...")
+        detector = AudioProfanityDetectorFast(
+            model_size=model_size,
+            auto_upgrade=False,
+        )
+        model = detector.whisper_model
+        print(
+            f"✓ faster-whisper loaded on {detector.device.upper()} "
+            f"(compute_type={detector.compute_type})"
+        )
     except ImportError:
-        print("Error: Whisper not installed. Install with: pip install openai-whisper")
+        print("Error: faster-whisper not installed. Run: python3 -m pip install -r requirements.txt")
         return False
     except Exception as e:
-        print(f"Error loading Whisper model: {e}")
+        print(f"Error loading faster-whisper model: {e}")
         return False
     
     # Get video duration
@@ -110,32 +115,34 @@ def generate_subtitles(video_path: Path, output_srt: Path, model_size: str = 'ba
         print(f"✓ Audio extracted")
     except Exception as e:
         print(f"Error extracting audio: {e}")
-        import shutil
         if temp_dir.exists():
             shutil.rmtree(temp_dir)
         return False
     
-    # Transcribe with Whisper
+    # Transcribe with faster-whisper.
     try:
-        print(f"Transcribing audio with Whisper...")
+        print(
+            f"Transcribing audio with faster-whisper "
+            f"({detector.device.upper()}, compute_type={detector.compute_type})..."
+        )
         if duration:
-            print(f"⏳ This may take {duration/60*2:.1f}-{duration/60*5:.1f} minutes for {duration/60:.1f} min video...")
+            print(f"⏳ Processing {duration/60:.1f} minutes of video...")
         else:
             print(f"⏳ This may take several minutes, please wait...")
-        
-        with warnings.catch_warnings():
-            warnings.filterwarnings('ignore', message='FP16 is not supported on CPU')
-            result = model.transcribe(
-                str(audio_path),
-                word_timestamps=False,  # Use segment-level timestamps for cleaner subtitles
-                language='en',
-                verbose=False
-            )
-        
+
+        segment_generator, _info = model.transcribe(
+            str(audio_path),
+            word_timestamps=False,
+            language='en',
+            beam_size=5,
+            vad_filter=True,
+        )
+        # Materialize before removing the temporary audio file.
+        segments = list(segment_generator)
+
         print(f"✓ Transcription complete")
     except Exception as e:
         print(f"Error during transcription: {e}")
-        import shutil
         if temp_dir.exists():
             shutil.rmtree(temp_dir)
         return False
@@ -143,22 +150,19 @@ def generate_subtitles(video_path: Path, output_srt: Path, model_size: str = 'ba
     # Convert to SRT
     try:
         print(f"Converting to SRT format...")
-        whisper_to_srt(result, output_srt)
+        whisper_to_srt(segments, output_srt)
         print(f"✓ Subtitles saved to: {output_srt}")
     except Exception as e:
         print(f"Error writing SRT file: {e}")
-        import shutil
         if temp_dir.exists():
             shutil.rmtree(temp_dir)
         return False
     
     # Clean up
-    import shutil
     if temp_dir.exists():
         shutil.rmtree(temp_dir)
     
     # Show summary
-    segments = result.get('segments', [])
     print()
     print("=" * 60)
     print("SUCCESS!")

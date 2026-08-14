@@ -43,6 +43,40 @@ Want to see how it works before installing? **Try the app instantly in your brow
 
 ---
 
+## Customize Filtered Words (CSV)
+
+Edit `profanity_words.csv` to control what the app filters—no Python changes
+are required.
+
+1. Open `profanity_words.csv` in any text editor or spreadsheet application.
+2. Words and phrases are separated by commas and may span multiple lines.
+3. Delete any word you never want filtered.
+4. Add any new words or phrases in lowercase, separated by commas.
+5. Save the file, then restart the app or run `clean.py` again.
+
+Example:
+
+```csv
+fuck,fucking,shit,bullshit
+pissed,crap,fuck you
+```
+
+Whitespace and duplicate entries are ignored. An existing empty CSV disables
+the default word list. If the CSV is missing or cannot be read, the app safely
+uses its built-in defaults. The optional `--include-religious` flag still adds
+the separate religious/exclamatory list.
+
+Hard profanity enabled in the CSV is always filtered. The ambiguous defaults
+`swallow`, `swallower`, `swalow`, and `dirty` use conservative nearby-word
+rules, so ordinary phrases such as `swallow these pills` and `dirty bomb` are
+not removed. They are filtered only when nearby dialogue supplies explicit
+sexual or offensive context. The person name `jerry` and plural `jerries` are
+not included in the defaults. These are explicit rules rather than a claim of
+complete language understanding; edit the CSV if you prefer stricter or looser
+filtering.
+
+---
+
 ## 💝 Support This Project
 
 **If you find this project helpful, please consider supporting it:**
@@ -53,6 +87,7 @@ Want to see how it works before installing? **Try the app instantly in your brow
 
 ## 📑 Table of Contents
 
+- [Customize Filtered Words (CSV)](#customize-filtered-words-csv)
 - [Installation - Easy Setup Guide](#installation-easy-setup-guide)
 - [Quick Start - Simple for Non-Technical Users](#quick-start-simple-for-non-technical-users)
 - [Why Choose This Free Profanity Filter?](#why-choose-this-free-profanity-filter)
@@ -77,10 +112,53 @@ Want to see how it works before installing? **Try the app instantly in your brow
 
 ## Installation - Easy Setup Guide
 
-### Prerequisites
-- **Python 3.8+** (free from python.org)
-- **FFmpeg** (free video processing tool)
-- **5-10 minutes** for setup (one-time only)
+### Prerequisites (install these first)
+
+The Python requirements file cannot install system programs such as FFmpeg. Before
+cloning the repository, install:
+
+- **Python 3.8+**, including `pip` and virtual-environment support
+- **FFmpeg and FFprobe** (FFprobe is normally included with FFmpeg)
+- **Git**
+- **An NVIDIA CUDA setup is optional**; the app automatically uses a CUDA GPU
+  when CTranslate2 can detect one and otherwise falls back to CPU
+
+#### Ubuntu / Debian
+
+```bash
+sudo apt update
+sudo apt install -y git python3 python3-pip python3-venv ffmpeg
+```
+
+#### Fedora
+
+```bash
+sudo dnf install -y git python3 python3-pip ffmpeg
+```
+
+#### macOS (Homebrew)
+
+```bash
+brew install git python ffmpeg
+```
+
+#### Windows
+
+1. Install [Python 3](https://www.python.org/downloads/) and enable
+   **Add Python to PATH** during setup.
+2. Install [Git for Windows](https://git-scm.com/download/win).
+3. Install FFmpeg with `winget install Gyan.FFmpeg`, or download it from
+   [ffmpeg.org](https://ffmpeg.org/download.html) and add its `bin` folder to
+   `PATH`.
+
+Verify the prerequisites before continuing:
+
+```bash
+python3 --version  # On Windows, use: python --version
+ffmpeg -version
+ffprobe -version
+git --version
+```
 
 ### Quick Setup (Copy & Paste)
 
@@ -94,8 +172,178 @@ python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Step 3: Install dependencies (takes 2-5 minutes)
-pip install -r requirements.txt
+python3 -m pip install --upgrade pip
+python3 -m pip install -r requirements.txt
+
+# Step 4: Confirm the command is ready
+python3 clean.py --help
 ```
+
+On Windows, activate with `venv\Scripts\activate` and replace `python3` with
+`python` in the commands above.
+
+> **Ubuntu/Debian shortcut:** `./install.sh` performs the system check, creates
+> the virtual environment, and installs the Python requirements. The manual
+> steps above are recommended on other operating systems.
+
+### Optional GPU acceleration
+
+The app automatically accelerates both major processing stages when compatible
+hardware is available:
+
+- **AI transcription:** NVIDIA CUDA through CTranslate2
+- **Video encoding:** NVIDIA NVENC, Intel Quick Sync, AMD AMF, or Apple
+  VideoToolbox through FFmpeg
+- If a compatible device, driver, runtime, or encoder is unavailable, that
+  stage safely falls back to CPU
+- Pascal GPUs such as the Quadro P2000 use `int8` (then `float32`) rather than
+  unsupported/slow `float16`
+
+**Recommendation:** Prefer a GPU machine when available. In our controlled
+side-by-side tests, GPU was better for:
+
+1. **Speed** — faster Whisper transcription and much faster video rebuild
+2. **Encode quality** — higher SSIM/PSNR vs the source after cutting
+
+CPU still works fully via automatic fallback. Before VAD tuning, one CPU test
+stretched a word across silence and over-cut clean audio. Current builds use a
+tuned VAD threshold and clamp overstretched single-word spans. In the current
+three-clip validation, CPU and GPU both detected and removed all three known
+profanities with closely matching boundaries. Do not interpret the small test
+set as proof that either device is always more accurate.
+
+Install a current NVIDIA driver and the CUDA/cuDNN runtime versions required by
+your installed CTranslate2 release. Then verify detection:
+
+```bash
+nvidia-smi
+python3 -c "import ctranslate2; print('CUDA devices:', ctranslate2.get_cuda_device_count())"
+```
+
+When processing starts, the log reports the selected device and compute type.
+It also reports the selected video encoder. For troubleshooting only, force
+CPU processing with:
+
+```bash
+PROFANITY_FILTER_DEVICE=cpu python3 clean.py input.mp4 output.mp4
+PROFANITY_FILTER_VIDEO_ENCODER=cpu python3 clean.py input.mp4 output.mp4
+```
+
+To request a specific FFmpeg hardware encoder:
+
+```bash
+PROFANITY_FILTER_VIDEO_ENCODER=h264_nvenc python3 clean.py input.mp4 output.mp4
+```
+
+Requested hardware still falls back safely to CPU if initialization or the
+actual movie encode fails.
+
+### Verified CPU vs GPU benchmark (same 12s clip)
+
+Measured with the **same source file** (12.012s, 1918x802, SHA-256
+`e0848fc3…`) on a CPU-only laptop vs a Quadro P2000 server.
+
+| Stage | Laptop (no NVIDIA GPU) | Home server (Quadro P2000) |
+|---|---|---|
+| Whisper device | CPU `int8` | CUDA `int8` |
+| Video encoder | CPU `libx264` | NVIDIA `h264_nvenc` |
+| Full `clean.py` wall clock | **16.14s** | **10.30s** (~1.6x faster) |
+| Transcription | 1.0s (12.6x realtime) | 0.5s (22.6x realtime) |
+| Identical cut encode (`2.15–5.37s` removed) | **8.97s** | **2.46s** (~3.6x faster) |
+| Quality vs source (SSIM All, first 2s keep) | **0.9948** | **0.9967** |
+| Quality vs source (PSNR avg, first 2s keep) | **52.1 dB** | **54.4 dB** |
+| Cleaned file size (identical cut) | 3.7 MB (~3.3 Mbps) | 6.3 MB (~5.8 Mbps) |
+| Peak NVENC utilization | n/a | **100%** |
+| Detected cut for `pissed` (before CPU VAD fix) | `2.15–5.37` (**3.22s**, over-cut) | `4.83–5.37` (**0.54s**, accurate) |
+
+Notes for users:
+
+- **GPU is the better path** when available for speed and encode fidelity.
+- The identical-cut encode row is the fair encoder comparison (same remove
+  timestamps on both machines).
+- CPU fallback remains supported. Newer builds add Whisper `vad_filter` plus a
+  1.0s single-word span clamp so CPU is less likely to stretch a word across
+  silence and delete clean audio.
+- Some CPU work remains even on GPU machines (audio + FFmpeg timeline filters).
+
+### Current three-clip validation after CPU VAD tuning
+
+Measured on commit `3742aec` with three distinct 12.012s clips containing known
+`shitty`, `shit`, and `fuck` dialogue. Source SHA-256 hashes were matched on
+both machines before testing.
+
+| Metric (mean of 3 clips) | Laptop CPU | Quadro P2000 GPU |
+|---|---:|---:|
+| Known profanity detected | **3/3** | **3/3** |
+| Target absent after cleaning | **3/3** | **3/3** |
+| Full `clean.py` wall clock | 20.47s | **8.51s** (~2.4x faster) |
+| Whisper transcription | 1.13s | **0.57s** (~2.0x faster) |
+| Video cutting/rebuild | 15.03s | **3.01s** (~5.0x faster) |
+| Quality vs source (SSIM, unaffected first 2s) | 0.9931 | **0.9979** |
+| Quality vs source (PSNR, unaffected first 2s) | 50.61 dB | **56.07 dB** |
+| Average cleaned file size | 10.6 MB | 14.3 MB |
+| Full output decoded without errors | **3/3** | **3/3** |
+
+Cut-boundary agreement was close: CPU vs GPU differed by an average of 0.077s
+at the start and 0.010s at the end (maximum start difference: 0.21s). Every cut
+fell inside its independently known subtitle caption. On these samples, both
+paths were accurate after tuning; GPU's measurable advantages were speed and
+visual fidelity, with about 34% larger output files.
+
+### Six-clip ambiguous-context validation
+
+The context rules were tested on the same six source clips on a CPU-only laptop
+and a Quadro P2000 server:
+
+- Neutral dialogue (`swallow these pills`, `dirty bomb`, and the name `Jerry`)
+  was transcribed on both machines and correctly left untouched: **3/3 on CPU
+  and 3/3 on GPU**.
+- Genuine profanity (`shitty`, `fuck up`, and `bullshit`) was detected and
+  removed: **3/3 on CPU and 3/3 on GPU**.
+- Re-transcribing all six profanity-cleaned outputs found none of the target
+  words. All 12 outputs decoded without errors.
+- Neutral outputs were byte-identical to their sources, confirming that the app
+  did not re-encode or otherwise alter them.
+- Total wall time for the six independent runs was 55.40s on CPU and 35.73s on
+  GPU. Each run loaded the model separately, so these figures include startup
+  overhead and should not be treated as a long-video benchmark.
+
+### Realistic CPU vs GPU comparison (after all tests)
+
+After the single-clip encode test, the three-clip VAD validation, and the
+six-clip context validation on the same laptop vs Quadro P2000 pair, this is the
+honest practical picture:
+
+| What users care about | CPU-only laptop | Quadro P2000 GPU | Realistic takeaway |
+|---|---|---|---|
+| Hard-profanity detection | Passed all known targets in the tuned tests | Passed all known targets | Both are usable for detection after VAD tuning |
+| Ambiguous false positives (`swallow these pills`, `dirty bomb`, name `Jerry`) | Correctly left alone | Correctly left alone | Context rules work the same on both devices |
+| Cut timing after VAD tuning | Matched known captions closely | Matched known captions closely | GPU is not clearly “more accurate” on the current samples |
+| Transcription speed | ~1.0–1.1s on 12s clips | ~0.5–0.6s on the same clips | GPU is about **2x** faster at Whisper |
+| Video rebuild after a cut | ~9–15s on short clips | ~2.5–3.0s on the same clips | GPU encoding is about **3.5–5x** faster |
+| Visual fidelity after cutting | SSIM ~0.993–0.995 / PSNR ~50–52 dB | SSIM ~0.997–0.998 / PSNR ~54–56 dB | GPU outputs measured closer to the source |
+| Output file size after cutting | Smaller | Larger (~30–70% in these tests) | GPU quality settings favor fidelity over size |
+| Full job with real cuts | Mean ~20.5s on three 12s clips | Mean ~8.5s on the same clips | GPU is about **2.4x** faster end-to-end |
+| Jobs with no cuts (copy-through) | Can finish sooner on short clips | May look slower because of CUDA startup | GPU advantage appears when the app actually re-encodes |
+
+**Bottom line for users:**
+
+1. Prefer a GPU machine when you have one. The realistic gains are **speed** and
+   **encode quality**, not a proven detection-accuracy monopoly.
+2. CPU remains a complete fallback. Current builds keep CPU cut timing much
+   closer to GPU by using Whisper VAD plus a 1.0s single-word span clamp.
+3. The biggest GPU win is the cut/rebuild stage (`h264_nvenc` vs `libx264`).
+   Transcription is faster too, but encoding usually dominates wall time.
+4. Short no-cut clips can hide the GPU advantage because each run still pays
+   model/device startup cost. Longer movies with real removals are where GPU
+   savings compound.
+5. Expect GPU cleaned files to be somewhat larger when quality settings are
+   held high. That is a fidelity tradeoff, not a failure.
+
+These conclusions come from controlled short clips with matched source hashes.
+Absolute times will change with movie length, resolution, bitrate, Whisper
+model size, and hardware, but the relative pattern above is what we repeatedly
+measured.
 
 ---
 
@@ -201,14 +449,18 @@ Unlike VidAngel and ClearPlay that only work with specific streaming services, t
 
 ## CPU-Intensive Task Warning
 
-**Important:** Video cleaning is a **CPU-intensive task**. On CPU-only systems like the **11th Gen Intel® Core™ i5-1135G7 ×8**:
+**Important:** Video cleaning is a **CPU-intensive task on CPU-only systems**.
+On systems like the **11th Gen Intel® Core™ i5-1135G7 ×8** without a working
+hardware encoder:
 
 - Processing a 2-hour movie can take **~6 hours**
 - **Do not run other heavy applications** (games, video editing, compiling) simultaneously
 - Video **encoding, decoding, and profanity removal** require sustained high CPU usage
 - Ensure enough **RAM and disk space** is available to avoid slowdowns or failures
 
-> Tip: For faster processing, consider a system with a GPU or using existing subtitle files (`--subs`) to reduce transcription time.
+> Tip: With a compatible GPU, the app automatically moves transcription and/or
+> video encoding to hardware. Existing subtitles (`--subs`) can also reduce
+> transcription work.
 
 ---
 
@@ -231,14 +483,19 @@ Unlike VidAngel and ClearPlay that only work with specific streaming services, t
 
 ### ⚠️ IMPORTANT: Resource Usage Warning
 
-**This application is CPU and memory intensive.** Video encoding/decoding requires substantial system resources:
+**On CPU-only systems, this application is CPU and memory intensive.**
+Hardware-enabled systems automatically use a validated GPU video encoder:
 
-- **CPU Usage**: Expect 80-100% CPU utilization during processing
+- **CPU Usage**: Expect 80-100% only when hardware acceleration is unavailable
 - **RAM Requirements**: 8GB minimum (16GB recommended for base model)
 - **Disk I/O**: Heavy read/write operations during video processing
 - **Processing Time**: 3-6 hours for a 2-hour movie on CPU (base model with dialog enhancement)
 
-**⚡ GPU Strongly Recommended**: If you have an NVIDIA GPU, this tool can leverage CUDA acceleration for **10-20x faster processing** with significantly lower CPU load. Without a GPU, expect very long processing times.
+**⚡ GPU Strongly Recommended**: NVIDIA CUDA accelerates transcription, while
+NVENC, Quick Sync, AMF, or VideoToolbox accelerates the quality video rebuild.
+Some CPU remains necessary for FFmpeg timeline filters, audio processing, and
+application coordination, but the expensive H.264 encoding is moved to
+hardware.
 
 **💡 Best Practice**: Run this tool overnight or when you don't need your computer. Close unnecessary applications before processing. Consider GPU rental services (AWS, Google Cloud) for batch processing.
 
@@ -258,9 +515,9 @@ Unlike VidAngel and ClearPlay that only work with specific streaming services, t
 - **Processing Time**: 2-hour movie takes ~20-40 minutes with GPU
 
 ### GPU Acceleration (Highly Recommended)
-With NVIDIA GPU and CUDA:
+With compatible transcription/video-encoding hardware:
 - **Processing Time**: 2-hour movie in ~5-10 minutes
-- **CPU Load**: Significantly reduced (30-40% vs 100%)
+- **CPU Load**: Significantly reduced; exact usage depends on FFmpeg filters
 - **System Usability**: Computer remains responsive during processing
 - **Cost**: Free to use, but requires compatible hardware
 
@@ -461,7 +718,9 @@ python3 clean.py sample/original_video.mp4 sample/original_video_cleaned.mp4 --s
 - **With NVIDIA GPU (recommended)**: 20-40 minutes processing
 
 ### System Resource Usage
-- **CPU**: 80-100% utilization during transcription
+- **CPU-only**: High utilization during transcription and H.264 encoding
+- **GPU-enabled**: GPU handles supported AI transcription and video encoding;
+  CPU still handles audio and timeline filters
 - **RAM**: 3-6GB depending on video length
 - **Disk I/O**: Moderate (reading/writing video files)
 - **Temp Storage**: Requires 2-3x the video file size temporarily
@@ -673,13 +932,25 @@ pip install faster-whisper
 
 ### "FFmpeg not found"
 Install FFmpeg:
-- Ubuntu/Debian: `sudo apt install ffmpeg`
+- Ubuntu/Debian: `sudo apt update && sudo apt install -y ffmpeg`
+- Fedora: `sudo dnf install -y ffmpeg`
 - macOS: `brew install ffmpeg`
-- Windows: Download from https://ffmpeg.org
+- Windows: `winget install Gyan.FFmpeg`
+
+Close and reopen the terminal after installation, then verify both binaries:
+
+```bash
+ffmpeg -version
+ffprobe -version
+```
 
 ### Slow transcription (6+ hours for movies)
 - **Expected**: Base model with dialog enhancement takes 3-6 hours per 2-hour movie on CPU
-- **GPU acceleration**: Install CUDA-enabled PyTorch for 10-20x speedup
+- **GPU acceleration**: Install compatible NVIDIA drivers plus the CUDA/cuDNN
+  runtime required by CTranslate2; the active faster-whisper path does not use
+  PyTorch
+- **Verify GPU detection**:
+  `python3 -c "import ctranslate2; print(ctranslate2.get_cuda_device_count())"`
 - **Cloud rental**: Use AWS/Google Cloud GPU instances for batch processing
 - **Alternative**: Use `--subs` with existing subtitle files (skips transcription, 20x faster)
 - **Not recommended**: `--model tiny` is much faster but misses profanity on complex audio

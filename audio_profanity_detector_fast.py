@@ -2,13 +2,19 @@
 Audio Profanity Detector (Faster-Whisper) - Detects profanity in audio using faster-whisper
 """
 
+import os
 import subprocess
 import tempfile
 import shutil
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
-from profanity_words import PROFANITY_WORDS, get_profanity_words
+from profanity_words import (
+    DEFAULT_PROFANITY_PHRASES,
+    PROFANITY_WORDS,
+    get_profanity_words,
+    should_filter_word,
+)
 
 
 class MissingBinaryError(RuntimeError):
@@ -21,16 +27,18 @@ class AudioProfanityDetectorFast:
     PROFANITY_WORDS = PROFANITY_WORDS
     
     # Common profanity phrases to detect as complete units
-    PROFANITY_PHRASES = {
-        'fuck you', 'fuck off', 'fuck this', 'fuck that', 'fuck me', 'fuck her', 'fuck him',
-        'shit head', 'shit face', 'shit for brains', 'bull shit', 'bullshit',
-        'ass hole', 'asshole', 'dumb ass', 'dumbass', 'smart ass', 'smartass',
-        'son of a bitch', 'sonofabitch', 'mother fucker', 'motherfucker',
-        'piece of shit', 'dick head', 'dickhead', 'cock sucker', 'cocksucker',
-        'piss off', 'piss off', 'screw you', 'screw off'
-    }
+    PROFANITY_PHRASES = DEFAULT_PROFANITY_PHRASES
 
     _MODEL_ORDER = ['tiny', 'base', 'small', 'medium', 'large']
+
+    # Pascal GPUs (e.g. Quadro P2000 / CC 6.1) lack useful FP16 Tensor Cores.
+    # Prefer int8/float32 on CUDA; never rely on float16 there.
+    _CUDA_COMPUTE_TYPES = ('int8', 'float32')
+    _CPU_COMPUTE_TYPES = ('int8_float16', 'int8', 'float32')
+
+    # Whisper sometimes stretches one word across a long silence, especially on
+    # CPU without VAD. Cap single-word spans so clean dialogue is not removed.
+    _MAX_SINGLE_WORD_DURATION = 1.0
 
     def __init__(self,
                  model_size: str = 'base',
@@ -50,34 +58,112 @@ class AudioProfanityDetectorFast:
         self.auto_upgrade = auto_upgrade
         self._upgraded_once = False
         self.whisper_model = None
+        self.device = 'cpu'
+        self.compute_type = None
         if profanity_words is not None:
             self.PROFANITY_WORDS = set(profanity_words)
         else:
             self.PROFANITY_WORDS = get_profanity_words(include_religious=include_religious)
         self._init_whisper()
-    
+
+    @staticmethod
+    def _cuda_available() -> bool:
+        """Return True only when CTranslate2 can see at least one CUDA device."""
+        try:
+            import ctranslate2
+            return int(ctranslate2.get_cuda_device_count()) > 0
+        except Exception:
+            return False
+
+    @staticmethod
+    def _forced_device() -> Optional[str]:
+        """
+        Optional override: PROFANITY_FILTER_DEVICE=cpu|cuda
+        Useful for debugging; invalid values are ignored.
+        """
+        forced = os.environ.get('PROFANITY_FILTER_DEVICE', '').strip().lower()
+        if forced in ('cpu', 'cuda'):
+            return forced
+        return None
+
+    def _devices_to_try(self) -> List[str]:
+        forced = self._forced_device()
+        if forced == 'cpu':
+            return ['cpu']
+        if forced == 'cuda':
+            # Still fall back to CPU if forced CUDA load fails.
+            return ['cuda', 'cpu']
+        if self._cuda_available():
+            return ['cuda', 'cpu']
+        return ['cpu']
+
+    @classmethod
+    def _compute_types_for(cls, device: str) -> Tuple[str, ...]:
+        if device == 'cuda':
+            return cls._CUDA_COMPUTE_TYPES
+        return cls._CPU_COMPUTE_TYPES
+
+    def _try_load_model(self, WhisperModel, device: str):
+        """Try compute types for a device. Returns (model, compute_type) or (None, None)."""
+        last_error = None
+        for compute_type in self._compute_types_for(device):
+            try:
+                model = WhisperModel(
+                    self.model_size,
+                    device=device,
+                    compute_type=compute_type,
+                )
+                return model, compute_type
+            except Exception as exc:
+                last_error = exc
+                print(f"  ⚠ {device}/{compute_type} unavailable: {exc}")
+                continue
+        if last_error is not None:
+            print(f"  ⚠ Could not initialize model on {device}: {last_error}")
+        return None, None
+
     def _init_whisper(self):
-        """Initialize faster-whisper model"""
+        """Initialize faster-whisper on GPU when available, otherwise CPU."""
         try:
             from faster_whisper import WhisperModel
-            
-            print(f"  Loading faster-whisper model: {self.model_size}...")
-            # Try different compute types for CPU (int8_float16 first for best speed/accuracy balance)
-            for compute_type in ['int8_float16', 'int8', 'float32']:
-                try:
-                    self.whisper_model = WhisperModel(self.model_size, device='cpu', compute_type=compute_type)
-                    print(f"  ✓ Faster-whisper model loaded (compute_type={compute_type})")
-                    break
-                except ValueError:
-                    continue
-            
-            if self.whisper_model is None:
-                raise RuntimeError("Could not initialize faster-whisper with any compute type")
-                
         except ImportError:
             raise ImportError(
                 "faster-whisper not installed. Install with: pip install faster-whisper"
             )
+
+        print(f"  Loading faster-whisper model: {self.model_size}...")
+
+        forced = self._forced_device()
+        if forced:
+            print(f"  Device override via PROFANITY_FILTER_DEVICE={forced}")
+
+        devices = self._devices_to_try()
+        if devices[0] == 'cuda':
+            print("  ✓ CUDA GPU detected — preferring GPU")
+        else:
+            print("  No CUDA GPU available — using CPU")
+
+        self.whisper_model = None
+        self.compute_type = None
+
+        for device in devices:
+            if device == 'cpu' and 'cuda' in devices:
+                print("  Falling back to CPU...")
+
+            model, compute_type = self._try_load_model(WhisperModel, device)
+            if model is not None:
+                self.whisper_model = model
+                self.device = device
+                self.compute_type = compute_type
+                print(
+                    f"  ✓ Faster-whisper model loaded on {device.upper()} "
+                    f"(compute_type={compute_type})"
+                )
+                return
+
+        raise RuntimeError(
+            "Could not initialize faster-whisper on CUDA or CPU with any supported compute type"
+        )
     
     def detect(self, video_path: Path) -> List[Tuple[float, float, str]]:
         """
@@ -133,9 +219,14 @@ class AudioProfanityDetectorFast:
             print(f"  ✓ Audio extracted")
             
             # Transcribe with faster-whisper
-            print(f"  Transcribing audio with faster-whisper ({self.model_size} model)...")
+            print(
+                f"  Transcribing audio with faster-whisper "
+                f"({self.model_size} on {self.device.upper()}, compute_type={self.compute_type})..."
+            )
             if duration:
-                est_time = duration / 10  # faster-whisper is roughly 10x real-time on CPU
+                # Rough real-time factors: GPU is typically much faster than CPU.
+                realtime_factor = 30.0 if self.device == 'cuda' else 10.0
+                est_time = duration / realtime_factor
                 print(f"  ⏳ Estimated time: ~{est_time:.1f} seconds for {duration/60:.1f} min video")
             
             import time
@@ -143,9 +234,7 @@ class AudioProfanityDetectorFast:
             
             segments, info = self.whisper_model.transcribe(
                 str(audio_path),
-                beam_size=5,  # Full accuracy: matches non-optimized version (was 1 for speed)
-                word_timestamps=True,
-                language='en'
+                **self._transcribe_kwargs(word_timestamps=True),
             )
             
             # Convert generator to list and get all words
@@ -189,11 +278,14 @@ class AudioProfanityDetectorFast:
             print(f"  Searching {len(all_words)} words for profanity...")
             
             # First pass: detect individual profanity words
-            for word_info in all_words:
+            for word_index, word_info in enumerate(all_words):
                 word = word_info.word.strip().lower().rstrip('.,!?;:')
-                if word in self.PROFANITY_WORDS:
-                    start = word_info.start
-                    end = word_info.end
+                context = self._word_context(all_words, word_index)
+                if (
+                    word in self.PROFANITY_WORDS
+                    and should_filter_word(word, context)
+                ):
+                    start, end = self._clamp_word_span(word_info.start, word_info.end)
                     padding = 0.15  # Match parent app padding (0.15s to catch partial sounds)
                     profanity_segments.append((
                         max(0, start - padding),
@@ -210,7 +302,7 @@ class AudioProfanityDetectorFast:
                 word2 = word2_info.word.strip().lower().rstrip('.,!?;:')
                 
                 phrase = f"{word1} {word2}"
-                if phrase in self.PROFANITY_PHRASES:
+                if phrase in self.PROFANITY_WORDS:
                     start = word1_info.start
                     end = word2_info.end
                     padding = 0.15  # Match parent app padding (0.15s to catch partial sounds)
@@ -248,6 +340,8 @@ class AudioProfanityDetectorFast:
                             if time_gap <= 0.5:
                                 # Found a phrase match - create segment covering both words
                                 phrase = f"{word} {next_word}"
+                                if phrase not in self.PROFANITY_WORDS:
+                                    continue
                                 start = word_info.start
                                 end = next_word_info.end
                                 padding = 0.15  # Match parent app padding (0.15s to catch partial sounds)
@@ -311,6 +405,46 @@ class AudioProfanityDetectorFast:
             return self._MODEL_ORDER[idx + 1]
         return None
 
+    @classmethod
+    def _transcribe_kwargs(cls, word_timestamps: bool = True) -> dict:
+        """
+        Shared faster-whisper options.
+
+        vad_filter skips long silences before alignment. Without it, CPU runs in
+        particular can assign a single word a multi-second span across quiet gaps.
+        The lower threshold keeps short/quiet words that the default 0.5 threshold
+        can suppress. It was validated on both CPU and CUDA profanity samples.
+        """
+        return {
+            'beam_size': 5,
+            'word_timestamps': word_timestamps,
+            'language': 'en',
+            'vad_filter': True,
+            'vad_parameters': {
+                'threshold': 0.30,
+            },
+        }
+
+    @classmethod
+    def _clamp_word_span(cls, start: float, end: float) -> Tuple[float, float]:
+        """Keep the word end and pull an overstretched start forward."""
+        if end <= start:
+            return start, end
+        max_dur = cls._MAX_SINGLE_WORD_DURATION
+        if (end - start) > max_dur:
+            start = end - max_dur
+        return max(0.0, start), end
+
+    @staticmethod
+    def _word_context(all_words, index: int, radius: int = 5) -> List[str]:
+        """Return nearby normalized transcript words for context-sensitive rules."""
+        start = max(0, index - radius)
+        end = min(len(all_words), index + radius + 1)
+        return [
+            word.word.strip().lower().rstrip('.,!?;:')
+            for word in all_words[start:end]
+        ]
+
     def _retry_transcribe(self, audio_path: Path):
         """Retry transcription after model upgrade, re-running profanity detection pipeline."""
         import time
@@ -320,9 +454,7 @@ class AudioProfanityDetectorFast:
             start_time = time.time()
             segments, info = self.whisper_model.transcribe(
                 str(audio_path),
-                beam_size=5,  # Full accuracy: matches non-optimized version (was 1 for speed)
-                word_timestamps=True,
-                language='en'
+                **self._transcribe_kwargs(word_timestamps=True),
             )
             all_words = []
             for segment in segments:
@@ -343,11 +475,14 @@ class AudioProfanityDetectorFast:
             print(f"  Searching {len(all_words)} words for profanity...")
             
             # First pass: detect individual profanity words
-            for word_info in all_words:
+            for word_index, word_info in enumerate(all_words):
                 word = word_info.word.strip().lower().rstrip('.,!?;:')
-                if word in self.PROFANITY_WORDS:
-                    start = word_info.start
-                    end = word_info.end
+                context = self._word_context(all_words, word_index)
+                if (
+                    word in self.PROFANITY_WORDS
+                    and should_filter_word(word, context)
+                ):
+                    start, end = self._clamp_word_span(word_info.start, word_info.end)
                     padding = 0.15  # Match parent app padding (0.15s to catch partial sounds)
                     profanity_segments.append((
                         max(0, start - padding),
@@ -364,7 +499,7 @@ class AudioProfanityDetectorFast:
                 word2 = word2_info.word.strip().lower().rstrip('.,!?;:')
                 
                 phrase = f"{word1} {word2}"
-                if phrase in self.PROFANITY_PHRASES:
+                if phrase in self.PROFANITY_WORDS:
                     start = word1_info.start
                     end = word2_info.end
                     padding = 0.15  # Match parent app padding (0.15s to catch partial sounds)
@@ -402,6 +537,8 @@ class AudioProfanityDetectorFast:
                             if time_gap <= 0.5:  # 0.5s max gap for adjacent phrase words
                                 # Found a phrase match - create segment covering both words
                                 phrase = f"{word} {next_word}"
+                                if phrase not in self.PROFANITY_WORDS:
+                                    continue
                                 start = word_info.start
                                 end = next_word_info.end
                                 padding = 0.15  # Match parent app padding (0.15s to catch partial sounds)

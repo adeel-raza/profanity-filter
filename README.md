@@ -164,6 +164,18 @@ hardware is available:
 - Pascal GPUs such as the Quadro P2000 use `int8` (then `float32`) rather than
   unsupported/slow `float16`
 
+**Recommendation:** Prefer a GPU machine when available. In our side-by-side
+tests on the same clip, GPU was better on all three practical outcomes:
+
+1. **Speed** — faster Whisper transcription and much faster video rebuild
+2. **Encode quality** — higher SSIM/PSNR vs the source after cutting
+3. **Cut accuracy** — tighter word timestamps around the profanity (CPU without
+   VAD stretched one word across a silence gap and over-cut clean audio)
+
+CPU still works fully via automatic fallback. Current builds also enable Whisper
+VAD filtering and clamp overstretched single-word spans so CPU cuts are less
+likely to over-remove clean dialogue.
+
 Install a current NVIDIA driver and the CUDA/cuDNN runtime versions required by
 your installed CTranslate2 release. Then verify detection:
 
@@ -192,8 +204,8 @@ actual movie encode fails.
 
 ### Verified CPU vs GPU benchmark (same 12s clip)
 
-Measured on commit `69d1359` with the **same source file** (12.012s, 1918x802,
-SHA-256 `e0848fc3…`).
+Measured with the **same source file** (12.012s, 1918x802, SHA-256
+`e0848fc3…`) on a CPU-only laptop vs a Quadro P2000 server.
 
 | Stage | Laptop (no NVIDIA GPU) | Home server (Quadro P2000) |
 |---|---|---|
@@ -206,16 +218,18 @@ SHA-256 `e0848fc3…`).
 | Quality vs source (PSNR avg, first 2s keep) | **52.1 dB** | **54.4 dB** |
 | Cleaned file size (identical cut) | 3.7 MB (~3.3 Mbps) | 6.3 MB (~5.8 Mbps) |
 | Peak NVENC utilization | n/a | **100%** |
+| Detected cut for `pissed` (before CPU VAD fix) | `2.15–5.37` (**3.22s**, over-cut) | `4.83–5.37` (**0.54s**, accurate) |
 
 Notes for users:
 
-- GPU is clearly faster on both transcription and the video rebuild.
-- Quality stayed high on both paths; NVENC was slightly closer to the source on
-  this clip and used a larger bitrate.
-- End-to-end `clean.py` times can vary a little because Whisper may mark
-  slightly different word boundaries even on the same clip. The identical-cut
-  encode row above is the fair encoder comparison.
-- Some CPU work remains on GPU machines (audio + FFmpeg timeline filters).
+- **GPU is the better path** when available: faster, slightly higher encode
+  fidelity, and more reliable word-boundary timing in our tests.
+- The identical-cut encode row is the fair encoder comparison (same remove
+  timestamps on both machines).
+- CPU fallback remains supported. Newer builds add Whisper `vad_filter` plus a
+  1.0s single-word span clamp so CPU is less likely to stretch a word across
+  silence and delete clean audio.
+- Some CPU work remains even on GPU machines (audio + FFmpeg timeline filters).
 
 ---
 

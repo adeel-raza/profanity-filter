@@ -43,6 +43,40 @@ Want to see how it works before installing? **Try the app instantly in your brow
 
 ---
 
+## Customize Filtered Words (CSV)
+
+Edit `profanity_words.csv` to control what the app filters—no Python changes
+are required.
+
+1. Open `profanity_words.csv` in any text editor or spreadsheet application.
+2. Words and phrases are separated by commas and may span multiple lines.
+3. Delete any word you never want filtered.
+4. Add any new words or phrases in lowercase, separated by commas.
+5. Save the file, then restart the app or run `clean.py` again.
+
+Example:
+
+```csv
+fuck,fucking,shit,bullshit
+pissed,crap,fuck you
+```
+
+Whitespace and duplicate entries are ignored. An existing empty CSV disables
+the default word list. If the CSV is missing or cannot be read, the app safely
+uses its built-in defaults. The optional `--include-religious` flag still adds
+the separate religious/exclamatory list.
+
+Hard profanity enabled in the CSV is always filtered. The ambiguous defaults
+`swallow`, `swallower`, `swalow`, and `dirty` use conservative nearby-word
+rules, so ordinary phrases such as `swallow these pills` and `dirty bomb` are
+not removed. They are filtered only when nearby dialogue supplies explicit
+sexual or offensive context. The person name `jerry` and plural `jerries` are
+not included in the defaults. These are explicit rules rather than a claim of
+complete language understanding; edit the CSV if you prefer stricter or looser
+filtering.
+
+---
+
 ## 💝 Support This Project
 
 **If you find this project helpful, please consider supporting it:**
@@ -53,6 +87,7 @@ Want to see how it works before installing? **Try the app instantly in your brow
 
 ## 📑 Table of Contents
 
+- [Customize Filtered Words (CSV)](#customize-filtered-words-csv)
 - [Installation - Easy Setup Guide](#installation-easy-setup-guide)
 - [Quick Start - Simple for Non-Technical Users](#quick-start-simple-for-non-technical-users)
 - [Why Choose This Free Profanity Filter?](#why-choose-this-free-profanity-filter)
@@ -254,6 +289,24 @@ at the start and 0.010s at the end (maximum start difference: 0.21s). Every cut
 fell inside its independently known subtitle caption. On these samples, both
 paths were accurate after tuning; GPU's measurable advantages were speed and
 visual fidelity, with about 34% larger output files.
+
+### Six-clip ambiguous-context validation
+
+The context rules were tested on the same six source clips on a CPU-only laptop
+and a Quadro P2000 server:
+
+- Neutral dialogue (`swallow these pills`, `dirty bomb`, and the name `Jerry`)
+  was transcribed on both machines and correctly left untouched: **3/3 on CPU
+  and 3/3 on GPU**.
+- Genuine profanity (`shitty`, `fuck up`, and `bullshit`) was detected and
+  removed: **3/3 on CPU and 3/3 on GPU**.
+- Re-transcribing all six profanity-cleaned outputs found none of the target
+  words. All 12 outputs decoded without errors.
+- Neutral outputs were byte-identical to their sources, confirming that the app
+  did not re-encode or otherwise alter them.
+- Total wall time for the six independent runs was 55.40s on CPU and 35.73s on
+  GPU. Each run loaded the model separately, so these figures include startup
+  overhead and should not be treated as a long-video benchmark.
 
 ---
 

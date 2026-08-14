@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import List, Optional, Set, Tuple
 
 from audio_profanity_detector_fast import AudioProfanityDetectorFast
+from profanity_words import should_filter_word
 from subtitle_processor import SubtitleProcessor
 from timestamp_merger import TimestampMerger
 
@@ -111,19 +112,21 @@ class HybridProfanityDetector:
 
             words = self.audio_detector.PROFANITY_WORDS
             hits: List[Tuple[float, float, str]] = []
+            all_words = []
             for segment in segments:
-                if not getattr(segment, 'words', None):
-                    continue
-                for word_info in segment.words:
-                    token = word_info.word.strip().lower().rstrip('.,!?;:')
-                    if token in words:
-                        rel_start, rel_end = self.audio_detector._clamp_word_span(
-                            float(word_info.start),
-                            float(word_info.end),
-                        )
-                        abs_start = start + max(0.0, rel_start - 0.15)
-                        abs_end = start + rel_end + 0.15
-                        hits.append((abs_start, abs_end, token))
+                all_words.extend(getattr(segment, 'words', None) or [])
+
+            for word_index, word_info in enumerate(all_words):
+                token = word_info.word.strip().lower().rstrip('.,!?;:')
+                context = self.audio_detector._word_context(all_words, word_index)
+                if token in words and should_filter_word(token, context):
+                    rel_start, rel_end = self.audio_detector._clamp_word_span(
+                        float(word_info.start),
+                        float(word_info.end),
+                    )
+                    abs_start = start + max(0.0, rel_start - 0.15)
+                    abs_end = start + rel_end + 0.15
+                    hits.append((abs_start, abs_end, token))
             return hits
         except Exception as e:
             print(f"    ⚠ Window refinement failed ({start:.2f}-{end:.2f}): {e}")

@@ -9,7 +9,12 @@ import shutil
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-from profanity_words import PROFANITY_WORDS, get_profanity_words
+from profanity_words import (
+    DEFAULT_PROFANITY_PHRASES,
+    PROFANITY_WORDS,
+    get_profanity_words,
+    should_filter_word,
+)
 
 
 class MissingBinaryError(RuntimeError):
@@ -22,14 +27,7 @@ class AudioProfanityDetectorFast:
     PROFANITY_WORDS = PROFANITY_WORDS
     
     # Common profanity phrases to detect as complete units
-    PROFANITY_PHRASES = {
-        'fuck you', 'fuck off', 'fuck this', 'fuck that', 'fuck me', 'fuck her', 'fuck him',
-        'shit head', 'shit face', 'shit for brains', 'bull shit', 'bullshit',
-        'ass hole', 'asshole', 'dumb ass', 'dumbass', 'smart ass', 'smartass',
-        'son of a bitch', 'sonofabitch', 'mother fucker', 'motherfucker',
-        'piece of shit', 'dick head', 'dickhead', 'cock sucker', 'cocksucker',
-        'piss off', 'piss off', 'screw you', 'screw off'
-    }
+    PROFANITY_PHRASES = DEFAULT_PROFANITY_PHRASES
 
     _MODEL_ORDER = ['tiny', 'base', 'small', 'medium', 'large']
 
@@ -280,9 +278,13 @@ class AudioProfanityDetectorFast:
             print(f"  Searching {len(all_words)} words for profanity...")
             
             # First pass: detect individual profanity words
-            for word_info in all_words:
+            for word_index, word_info in enumerate(all_words):
                 word = word_info.word.strip().lower().rstrip('.,!?;:')
-                if word in self.PROFANITY_WORDS:
+                context = self._word_context(all_words, word_index)
+                if (
+                    word in self.PROFANITY_WORDS
+                    and should_filter_word(word, context)
+                ):
                     start, end = self._clamp_word_span(word_info.start, word_info.end)
                     padding = 0.15  # Match parent app padding (0.15s to catch partial sounds)
                     profanity_segments.append((
@@ -300,7 +302,7 @@ class AudioProfanityDetectorFast:
                 word2 = word2_info.word.strip().lower().rstrip('.,!?;:')
                 
                 phrase = f"{word1} {word2}"
-                if phrase in self.PROFANITY_PHRASES:
+                if phrase in self.PROFANITY_WORDS:
                     start = word1_info.start
                     end = word2_info.end
                     padding = 0.15  # Match parent app padding (0.15s to catch partial sounds)
@@ -338,6 +340,8 @@ class AudioProfanityDetectorFast:
                             if time_gap <= 0.5:
                                 # Found a phrase match - create segment covering both words
                                 phrase = f"{word} {next_word}"
+                                if phrase not in self.PROFANITY_WORDS:
+                                    continue
                                 start = word_info.start
                                 end = next_word_info.end
                                 padding = 0.15  # Match parent app padding (0.15s to catch partial sounds)
@@ -431,6 +435,16 @@ class AudioProfanityDetectorFast:
             start = end - max_dur
         return max(0.0, start), end
 
+    @staticmethod
+    def _word_context(all_words, index: int, radius: int = 5) -> List[str]:
+        """Return nearby normalized transcript words for context-sensitive rules."""
+        start = max(0, index - radius)
+        end = min(len(all_words), index + radius + 1)
+        return [
+            word.word.strip().lower().rstrip('.,!?;:')
+            for word in all_words[start:end]
+        ]
+
     def _retry_transcribe(self, audio_path: Path):
         """Retry transcription after model upgrade, re-running profanity detection pipeline."""
         import time
@@ -461,9 +475,13 @@ class AudioProfanityDetectorFast:
             print(f"  Searching {len(all_words)} words for profanity...")
             
             # First pass: detect individual profanity words
-            for word_info in all_words:
+            for word_index, word_info in enumerate(all_words):
                 word = word_info.word.strip().lower().rstrip('.,!?;:')
-                if word in self.PROFANITY_WORDS:
+                context = self._word_context(all_words, word_index)
+                if (
+                    word in self.PROFANITY_WORDS
+                    and should_filter_word(word, context)
+                ):
                     start, end = self._clamp_word_span(word_info.start, word_info.end)
                     padding = 0.15  # Match parent app padding (0.15s to catch partial sounds)
                     profanity_segments.append((
@@ -481,7 +499,7 @@ class AudioProfanityDetectorFast:
                 word2 = word2_info.word.strip().lower().rstrip('.,!?;:')
                 
                 phrase = f"{word1} {word2}"
-                if phrase in self.PROFANITY_PHRASES:
+                if phrase in self.PROFANITY_WORDS:
                     start = word1_info.start
                     end = word2_info.end
                     padding = 0.15  # Match parent app padding (0.15s to catch partial sounds)
@@ -519,6 +537,8 @@ class AudioProfanityDetectorFast:
                             if time_gap <= 0.5:  # 0.5s max gap for adjacent phrase words
                                 # Found a phrase match - create segment covering both words
                                 phrase = f"{word} {next_word}"
+                                if phrase not in self.PROFANITY_WORDS:
+                                    continue
                                 start = word_info.start
                                 end = next_word_info.end
                                 padding = 0.15  # Match parent app padding (0.15s to catch partial sounds)

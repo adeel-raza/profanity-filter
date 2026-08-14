@@ -21,7 +21,7 @@ class VideoCutter:
     """Cuts out segments from video using FFmpeg with quality-preserving encoding"""
 
     def __init__(self):
-        pass
+        self._selected_video_encoder = None
     
     def cut_segments(self, input_path: Path, output_path: Path,
                      segments_to_remove: List[Tuple[float, float]],
@@ -363,8 +363,9 @@ class VideoCutter:
             return True
         return isinstance(channels, int) and channels > 0
 
-    def _build_quality_video_args(self, crf_value: int) -> List[str]:
-        """High-quality H.264 encode args (no speed hacks that hurt visuals)."""
+    @staticmethod
+    def _cpu_video_args(crf_value: int) -> List[str]:
+        """High-quality CPU fallback used only when no hardware encoder works."""
         return [
             '-c:v', 'libx264',
             '-crf', str(crf_value),
@@ -372,6 +373,124 @@ class VideoCutter:
             '-pix_fmt', 'yuv420p',
             '-threads', '0',
         ]
+
+    @staticmethod
+    def _hardware_encoder_candidates() -> List[Tuple[str, List[str]]]:
+        """
+        Hardware H.264 encoders ordered by common availability.
+
+        Each candidate is validated with a real one-frame encode before use;
+        FFmpeg builds often list encoders even when matching hardware/drivers
+        are unavailable.
+        """
+        return [
+            (
+                'NVIDIA NVENC',
+                [
+                    '-c:v', 'h264_nvenc',
+                    '-preset', 'p7',
+                    '-tune', 'hq',
+                    '-rc', 'vbr',
+                    '-cq', '18',
+                    '-b:v', '0',
+                    '-profile:v', 'high',
+                    '-pix_fmt', 'yuv420p',
+                ],
+            ),
+            (
+                'Intel Quick Sync',
+                [
+                    '-c:v', 'h264_qsv',
+                    '-preset', 'veryslow',
+                    '-global_quality', '16',
+                    '-pix_fmt', 'nv12',
+                ],
+            ),
+            (
+                'AMD AMF',
+                [
+                    '-c:v', 'h264_amf',
+                    '-quality', 'quality',
+                    '-rc', 'cqp',
+                    '-qp_i', '16',
+                    '-qp_p', '18',
+                    '-qp_b', '20',
+                    '-pix_fmt', 'yuv420p',
+                ],
+            ),
+            (
+                'Apple VideoToolbox',
+                [
+                    '-c:v', 'h264_videotoolbox',
+                    '-q:v', '80',
+                    '-pix_fmt', 'yuv420p',
+                ],
+            ),
+        ]
+
+    @staticmethod
+    def _encoder_probe_succeeds(video_args: List[str]) -> bool:
+        """Perform a real hardware encode probe instead of trusting FFmpeg's list."""
+        cmd = [
+            'ffmpeg',
+            '-hide_banner',
+            '-loglevel', 'error',
+            '-f', 'lavfi',
+            '-i', 'color=c=black:s=128x128:r=24',
+            '-frames:v', '1',
+            *video_args,
+            '-f', 'null',
+            '-',
+        ]
+        try:
+            result = subprocess.run(
+                cmd,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=20,
+                check=False,
+            )
+            return result.returncode == 0
+        except (OSError, subprocess.TimeoutExpired):
+            return False
+
+    def _select_video_encoder(self, crf_value: int) -> Tuple[str, List[str], bool]:
+        """
+        Select a working GPU encoder, with an explicit CPU-only override.
+
+        PROFANITY_FILTER_VIDEO_ENCODER=cpu disables hardware encoding.
+        """
+        if self._selected_video_encoder is not None:
+            name, args, hardware = self._selected_video_encoder
+            if hardware:
+                return name, list(args), hardware
+            return name, self._cpu_video_args(crf_value), hardware
+
+        forced = os.environ.get(
+            'PROFANITY_FILTER_VIDEO_ENCODER',
+            'auto',
+        ).strip().lower()
+
+        if forced != 'cpu':
+            for name, args in self._hardware_encoder_candidates():
+                encoder_name = args[1]
+                if forced not in ('', 'auto') and forced not in (
+                    encoder_name.lower(),
+                    name.lower(),
+                ):
+                    continue
+                if self._encoder_probe_succeeds(args):
+                    self._selected_video_encoder = (name, list(args), True)
+                    return name, list(args), True
+
+            if forced not in ('', 'auto'):
+                print(
+                    f"  ⚠ Requested video encoder '{forced}' is unavailable; "
+                    "falling back to CPU"
+                )
+
+        self._selected_video_encoder = ('CPU libx264', [], False)
+        return 'CPU libx264', self._cpu_video_args(crf_value), False
 
     def _apply_cuts(self, input_path: Path, output_path: Path,
                     keep_segments: List[Tuple[float, float]],
@@ -381,18 +500,25 @@ class VideoCutter:
             return False
 
         crf_value = self._choose_crf(original_bitrate)
-        if original_bitrate:
-            print(
-                f"  Quality-first encode: source ~{original_bitrate // 1000}kbps → "
-                f"CRF {crf_value}, preset medium (single pass)"
-            )
-        else:
-            print(f"  Quality-first encode: CRF {crf_value}, preset medium (single pass)")
-
         audio_info = self._get_audio_stream_info(input_path)
         has_audio = self._has_audio_stream(audio_info)
         audio_encode_args = self._build_audio_encode_args(audio_info) if has_audio else []
-        video_args = self._build_quality_video_args(crf_value)
+        encoder_name, video_args, hardware_encode = self._select_video_encoder(crf_value)
+        if hardware_encode:
+            print(
+                f"  ✓ GPU video encoding enabled: {encoder_name} "
+                "(quality-first settings, single pass)"
+            )
+        else:
+            source_rate = (
+                f", source ~{original_bitrate // 1000}kbps"
+                if original_bitrate
+                else ""
+            )
+            print(
+                f"  No compatible GPU video encoder found — using CPU libx264 "
+                f"(CRF {crf_value}, preset medium{source_rate}, single pass)"
+            )
 
         try:
             # Single keep-range: accurate trim + one encode (no concat).
@@ -410,10 +536,11 @@ class VideoCutter:
                     cmd.extend(audio_encode_args)
                 else:
                     cmd.extend(['-an'])
-                if output_path.suffix.lower() == '.mp4':
-                    cmd.extend(['-movflags', '+faststart'])
                 cmd.extend(['-avoid_negative_ts', 'make_zero', '-y', str(output_path)])
-                print("  [QUALITY] Single-segment high-quality encode")
+                print(
+                    f"  [QUALITY] Single-segment high-quality encode via "
+                    f"{encoder_name}"
+                )
                 result = subprocess.run(cmd, capture_output=True, text=True)
             else:
                 # Multi-segment: one filter_complex pass (avoid extract+concat double encode).
@@ -456,14 +583,25 @@ class VideoCutter:
                     '-filter_complex', filter_complex,
                     *map_args,
                 ]
-                if output_path.suffix.lower() == '.mp4':
-                    cmd.extend(['-movflags', '+faststart'])
                 cmd.extend(['-y', str(output_path)])
                 print(
                     f"  [QUALITY] Multi-segment single-pass encode "
-                    f"({n} keep ranges, no double re-encode)"
+                    f"({n} keep ranges, {encoder_name}, no double re-encode)"
                 )
                 result = subprocess.run(cmd, capture_output=True, text=True)
+
+            if result.returncode != 0 and hardware_encode:
+                print(
+                    f"  ⚠ {encoder_name} failed for this video; "
+                    "retrying safely with CPU libx264"
+                )
+                self._selected_video_encoder = ('CPU libx264', [], False)
+                return self._apply_cuts(
+                    input_path,
+                    output_path,
+                    keep_segments,
+                    original_bitrate,
+                )
 
             if result.returncode == 0:
                 print("  ✓ Video cutting complete")

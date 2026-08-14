@@ -151,12 +151,16 @@ On Windows, activate with `venv\Scripts\activate` and replace `python3` with
 > the virtual environment, and installs the Python requirements. The manual
 > steps above are recommended on other operating systems.
 
-### Optional NVIDIA GPU acceleration
+### Optional GPU acceleration
 
-The app does not require a GPU. It checks CUDA through CTranslate2 at startup:
+The app automatically accelerates both major processing stages when compatible
+hardware is available:
 
-- CUDA available: loads faster-whisper on the GPU
-- CUDA unavailable or incompatible: automatically falls back to CPU
+- **AI transcription:** NVIDIA CUDA through CTranslate2
+- **Video encoding:** NVIDIA NVENC, Intel Quick Sync, AMD AMF, or Apple
+  VideoToolbox through FFmpeg
+- If a compatible device, driver, runtime, or encoder is unavailable, that
+  stage safely falls back to CPU
 - Pascal GPUs such as the Quadro P2000 use `int8` (then `float32`) rather than
   unsupported/slow `float16`
 
@@ -169,14 +173,22 @@ python3 -c "import ctranslate2; print('CUDA devices:', ctranslate2.get_cuda_devi
 ```
 
 When processing starts, the log reports the selected device and compute type.
-For troubleshooting only, force a device with:
+It also reports the selected video encoder. For troubleshooting only, force
+CPU processing with:
 
 ```bash
 PROFANITY_FILTER_DEVICE=cpu python3 clean.py input.mp4 output.mp4
-PROFANITY_FILTER_DEVICE=cuda python3 clean.py input.mp4 output.mp4
+PROFANITY_FILTER_VIDEO_ENCODER=cpu python3 clean.py input.mp4 output.mp4
 ```
 
-Forced CUDA still falls back safely to CPU if model initialization fails.
+To request a specific FFmpeg hardware encoder:
+
+```bash
+PROFANITY_FILTER_VIDEO_ENCODER=h264_nvenc python3 clean.py input.mp4 output.mp4
+```
+
+Requested hardware still falls back safely to CPU if initialization or the
+actual movie encode fails.
 
 ---
 
@@ -282,14 +294,18 @@ Unlike VidAngel and ClearPlay that only work with specific streaming services, t
 
 ## CPU-Intensive Task Warning
 
-**Important:** Video cleaning is a **CPU-intensive task**. On CPU-only systems like the **11th Gen Intel® Core™ i5-1135G7 ×8**:
+**Important:** Video cleaning is a **CPU-intensive task on CPU-only systems**.
+On systems like the **11th Gen Intel® Core™ i5-1135G7 ×8** without a working
+hardware encoder:
 
 - Processing a 2-hour movie can take **~6 hours**
 - **Do not run other heavy applications** (games, video editing, compiling) simultaneously
 - Video **encoding, decoding, and profanity removal** require sustained high CPU usage
 - Ensure enough **RAM and disk space** is available to avoid slowdowns or failures
 
-> Tip: For faster processing, consider a system with a GPU or using existing subtitle files (`--subs`) to reduce transcription time.
+> Tip: With a compatible GPU, the app automatically moves transcription and/or
+> video encoding to hardware. Existing subtitles (`--subs`) can also reduce
+> transcription work.
 
 ---
 
@@ -312,14 +328,19 @@ Unlike VidAngel and ClearPlay that only work with specific streaming services, t
 
 ### ⚠️ IMPORTANT: Resource Usage Warning
 
-**This application is CPU and memory intensive.** Video encoding/decoding requires substantial system resources:
+**On CPU-only systems, this application is CPU and memory intensive.**
+Hardware-enabled systems automatically use a validated GPU video encoder:
 
-- **CPU Usage**: Expect 80-100% CPU utilization during processing
+- **CPU Usage**: Expect 80-100% only when hardware acceleration is unavailable
 - **RAM Requirements**: 8GB minimum (16GB recommended for base model)
 - **Disk I/O**: Heavy read/write operations during video processing
 - **Processing Time**: 3-6 hours for a 2-hour movie on CPU (base model with dialog enhancement)
 
-**⚡ GPU Strongly Recommended**: If you have an NVIDIA GPU, this tool can leverage CUDA acceleration for **10-20x faster processing** with significantly lower CPU load. Without a GPU, expect very long processing times.
+**⚡ GPU Strongly Recommended**: NVIDIA CUDA accelerates transcription, while
+NVENC, Quick Sync, AMF, or VideoToolbox accelerates the quality video rebuild.
+Some CPU remains necessary for FFmpeg timeline filters, audio processing, and
+application coordination, but the expensive H.264 encoding is moved to
+hardware.
 
 **💡 Best Practice**: Run this tool overnight or when you don't need your computer. Close unnecessary applications before processing. Consider GPU rental services (AWS, Google Cloud) for batch processing.
 
@@ -339,9 +360,9 @@ Unlike VidAngel and ClearPlay that only work with specific streaming services, t
 - **Processing Time**: 2-hour movie takes ~20-40 minutes with GPU
 
 ### GPU Acceleration (Highly Recommended)
-With NVIDIA GPU and CUDA:
+With compatible transcription/video-encoding hardware:
 - **Processing Time**: 2-hour movie in ~5-10 minutes
-- **CPU Load**: Significantly reduced (30-40% vs 100%)
+- **CPU Load**: Significantly reduced; exact usage depends on FFmpeg filters
 - **System Usability**: Computer remains responsive during processing
 - **Cost**: Free to use, but requires compatible hardware
 
@@ -542,7 +563,9 @@ python3 clean.py sample/original_video.mp4 sample/original_video_cleaned.mp4 --s
 - **With NVIDIA GPU (recommended)**: 20-40 minutes processing
 
 ### System Resource Usage
-- **CPU**: 80-100% utilization during transcription
+- **CPU-only**: High utilization during transcription and H.264 encoding
+- **GPU-enabled**: GPU handles supported AI transcription and video encoding;
+  CPU still handles audio and timeline filters
 - **RAM**: 3-6GB depending on video length
 - **Disk I/O**: Moderate (reading/writing video files)
 - **Temp Storage**: Requires 2-3x the video file size temporarily

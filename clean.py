@@ -331,8 +331,9 @@ def main():
         output_base = output_path.stem
         output_dir = output_path.parent
         
-        # Adjust subtitles based on removed segments
-        segments_for_subs = all_segments
+        # For mute-only, video timeline is unchanged, so only filter subtitle text.
+        # Timestamp shifting/clipping is only needed when segments are actually cut out.
+        segments_for_subs = [] if args.mute_only else all_segments
         
         if subtitle_input.suffix.lower() == '.srt':
             output_subtitle = output_dir / f"{output_base}.srt"

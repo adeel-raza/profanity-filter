@@ -455,86 +455,49 @@ class SubtitleProcessor:
     def _adjust_timestamps(self, entries: List[dict], 
                           removed_segments: List[Tuple[float, float]]) -> List[dict]:
         """
-        Adjust subtitle timestamps to match the cleaned video.
-        
-        This matches the video cutter's exact logic:
-        1. Video cutter keeps segments: (0, r1_start), (r1_end, r2_start), ..., (rN_end, video_end)
-        2. For each subtitle, find which keep segment it's in
-        3. Map to the corresponding position in the cleaned video
+        Adjust subtitle timestamps to match a cut video timeline.
+
+        For each original timestamp, subtract only removals that occur strictly
+        before it. Timestamps that land inside a removed interval are snapped to
+        the cleaned join point (where that cut is stitched).
         """
         if not removed_segments:
             return entries
         
-        # Calculate keep segments (same as video cutter)
         sorted_removed = sorted(removed_segments, key=lambda x: x[0])
-        keep_segments_original = []
-        current_time = 0.0
-        
-        for remove_start, remove_end in sorted_removed:
-            if current_time < remove_start:
-                keep_segments_original.append((current_time, remove_start))
-            current_time = max(current_time, remove_end)
-        # Add final segment (we use a large number, actual duration doesn't matter for mapping)
-        keep_segments_original.append((current_time, float('inf')))
         
         def map_timestamp(original_time: float) -> float:
-            """Map original timestamp to cleaned video timestamp"""
-            # Handle edge case: if timestamp is exactly at a removal boundary
-            # Check if it's at the start of a removal (map to end of previous keep segment)
-            # or at the end of a removal (map to start of next keep segment)
+            """Map original timestamp to cleaned video timestamp."""
+            time_removed_before = 0.0
             for remove_start, remove_end in sorted_removed:
-                if abs(original_time - remove_start) < 0.01:  # Within 10ms of removal start
-                    # Map to end of previous keep segment
-                    time_removed_before = sum(end - start for start, end in sorted_removed if end <= remove_start)
-                    return remove_start - time_removed_before
-                if abs(original_time - remove_end) < 0.01:  # Within 10ms of removal end
-                    # Map to start of next keep segment (same as removal end)
-                    time_removed_before = sum(end - start for start, end in sorted_removed if end <= remove_end)
-                    return remove_end - time_removed_before
-            
-            # Find which keep segment this timestamp is in
-            for keep_start, keep_end in keep_segments_original:
-                if keep_start <= original_time < keep_end:
-                    # Calculate position within this keep segment
-                    position_in_segment = original_time - keep_start
-                    
-                    # Calculate where this keep segment starts in cleaned video
-                    # Sum all removals that happened before this keep segment
-                    time_removed_before = 0.0
-                    for remove_start, remove_end in sorted_removed:
-                        if remove_end <= keep_start:
-                            time_removed_before += (remove_end - remove_start)
-                    
-                    # In cleaned video, this keep segment starts at (keep_start - time_removed_before)
-                    cleaned_start = keep_start - time_removed_before
-                    
-                    # Map the timestamp
-                    return cleaned_start + position_in_segment
-            
-            # If timestamp is at or after last keep segment, calculate total removed
-            total_removed = sum(end - start for start, end in sorted_removed)
-            return original_time - total_removed
+                if remove_end <= original_time:
+                    # Removal fully before this timestamp.
+                    time_removed_before += (remove_end - remove_start)
+                    continue
+                if remove_start <= original_time < remove_end:
+                    # Inside a removed interval: snap to the cut join point.
+                    return max(0.0, remove_start - time_removed_before)
+                # Later removals do not affect this timestamp.
+                break
+            return max(0.0, original_time - time_removed_before)
         
         adjusted = []
-        MIN_DURATION = 0.2  # Minimum duration for subtitle entry (reduced to preserve more subtitles)
         
         for entry in entries:
             orig_start = entry['start']
             orig_end = entry['end']
+            orig_duration = max(0.1, orig_end - orig_start)
             
-            # Map both start and end timestamps
             new_start = map_timestamp(orig_start)
             new_end = map_timestamp(orig_end)
             
-            # Ensure end is after start (with minimum duration)
+            # Keep a usable cue duration after mapping.
             if new_end <= new_start:
-                new_end = new_start + max(0.1, orig_end - orig_start)  # Preserve original duration if possible
+                new_end = new_start + orig_duration
             
-            # Filter out very short entries (likely artifacts from clipping)
-            # But be more lenient - only filter if truly too short (< 0.1s)
             duration = new_end - new_start
-            if duration < 0.1:  # Only filter truly tiny entries (< 0.1s)
-                continue  # Skip very short entries to avoid misalignment
+            if duration < 0.1:
+                continue
             
             adjusted.append({
                 'index': entry['index'],
@@ -543,7 +506,26 @@ class SubtitleProcessor:
                 'text': entry['text']
             })
         
-        return adjusted
+        # Ensure cues stay chronological and avoid pathological overlaps from snaps.
+        adjusted.sort(key=lambda e: (e['start'], e['end']))
+        cleaned = []
+        last_end = -1.0
+        for entry in adjusted:
+            start = entry['start']
+            end = entry['end']
+            if start < last_end:
+                start = last_end
+            if end <= start:
+                end = start + 0.1
+            cleaned.append({
+                'index': entry['index'],
+                'start': start,
+                'end': end,
+                'text': entry['text']
+            })
+            last_end = end
+        
+        return cleaned
     
     def _write_srt(self, output_path: Path, entries: List[dict]):
         """Write subtitle entries to SRT file"""

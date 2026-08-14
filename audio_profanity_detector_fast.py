@@ -408,12 +408,17 @@ class AudioProfanityDetectorFast:
 
         vad_filter skips long silences before alignment. Without it, CPU runs in
         particular can assign a single word a multi-second span across quiet gaps.
+        The lower threshold keeps short/quiet words that the default 0.5 threshold
+        can suppress. It was validated on both CPU and CUDA profanity samples.
         """
         return {
             'beam_size': 5,
             'word_timestamps': word_timestamps,
             'language': 'en',
             'vad_filter': True,
+            'vad_parameters': {
+                'threshold': 0.30,
+            },
         }
 
     @classmethod

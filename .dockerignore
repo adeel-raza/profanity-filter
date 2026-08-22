@@ -1,0 +1,51 @@
+# Keep Docker builds small and fast
+.git
+.github
+.venv
+venv
+__pycache__
+*.py[cod]
+*.egg-info
+.pytest_cache
+.mypy_cache
+.DS_Store
+
+# Local media / outputs
+*.mp4
+*.mkv
+*.avi
+*.mov
+*.wav
+*.mp3
+*.srt
+*.vtt
+sample/
+**/sample/
+
+# Docs and tooling not needed at runtime
+*.md
+!README.md
+ADD_TO_ALL_REPOS_GUIDE.md
+AUTO_DONATION_SETUP.md
+DEPLOY*.md
+OPTIMIZE_SPACE.md
+CHANGELOG*.md
+GITHUB_*.md
+GITHUB_*.txt
+
+# Editor / local junk
+.idea
+.vscode
+*.log
+monitor_progress.sh
+process_*.sh
+clean_movie.sh
+clean_movies_verbose.py
+process_both_movies.py
+calculate_remaining.py
+detailed_summary.py
+generate_summary.py
+login_hf.py
+deploy_to_hf.sh
+auto_deploy.py
+add_donation_to_all_repos.sh

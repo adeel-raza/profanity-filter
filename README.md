@@ -22,7 +22,7 @@ tags:
 
 # Try the Online Demo
 
-Want to see how it works before installing?**Try the app instantly in your browser:**
+Want to see how it works before installing? **Try the app instantly in your browser:**
 
 [![Hugging Face Spaces](https://img.shields.io/badge/Live%20Demo-Hugging%20Face-blue?logo=huggingface)](https://huggingface.co/spaces/adeel-raza/video-profanity-filter)
 
@@ -32,19 +32,21 @@ Want to see how it works before installing?**Try the app instantly in your brows
 
 **Created by [Adeel Raza](https://elearningevolve.com/about) · Contact: info@elearningevolve.com**
 
-This tool automatically finds and removes offensive spoken language from video
-files you already have. It transcribes the audio with AI (faster-whisper),
-matches the transcript against an editable word list, then either**cuts**or
-**mutes**those moments while keeping the rest of the video intact.
+This tool cleans **profanity and swear words** out of video files you already
+have. It finds spoken offensive language with AI, then either **cuts** those
+moments out or **mutes** them in place, and writes a cleaned video plus a
+cleaned subtitle file.
 
 **What it does**
 
-- Detects spoken offensive language with word-level timestamps
-- Removes or mutes only the matched segments (typically under two seconds each)
-- Works with local files such as MP4 and MKV (including downloads from YouTube
- or ripped discs)
+- Detects mainly profanity and swear words (editable word list; optional
+  stricter lists available)
+- Removes matched speech by **cutting** the timeline, or keeps the timeline and
+  **mutes** those intervals with `--mute-only`
+- Outputs a cleaned video and a cleaned `.srt` subtitle file
+- Works much faster when you provide (or auto-detect) an existing subtitle file
+  alongside the video
 - Runs entirely on your computer—no cloud upload and no account required
-- Lets you edit the word list in a simple CSV file
 - Supports optional GPU acceleration for much faster processing
 
 **Who it is for**
@@ -56,9 +58,7 @@ without a monthly subscription or streaming lock-in.
 
 ## Support This Project
 
-**If you find this project helpful, please consider supporting it:**
-
-[![Support via Stripe](https://img.shields.io/badge/Support%20via%20Stripe-635BFF?style=for-the-badge&logo=stripe&logoColor=white)](https://link.elearningevolve.com/self-pay)
+**If you find this project helpful, please consider supporting it:** [![Support via Stripe](https://img.shields.io/badge/Support%20via%20Stripe-635BFF?style=for-the-badge&logo=stripe&logoColor=white)](https://link.elearningevolve.com/self-pay)
 
 ---
 
@@ -114,37 +114,37 @@ you like.
 ## How It Works - The Technology Behind 95%+ Accuracy
 
 ### 1. Dialog Enhancement (Audio Preprocessing)
--**Vocal isolation**: High-pass (200Hz) and low-pass (3500Hz) filters remove music, effects, and noise
--**Dynamic normalization**: Balances quiet dialogue and loud scenes for consistent transcription
--**Result**: 4-5x more words transcribed in complex audio (music, action scenes, background noise)
--**Example**: Original tiny model caught 0 profanities in Argo → Enhanced base model caught 38 segments
+- **Vocal isolation**: High-pass (200Hz) and low-pass (3500Hz) filters remove music, effects, and noise
+- **Dynamic normalization**: Balances quiet dialogue and loud scenes for consistent transcription
+- **Result**: 4-5x more words transcribed in complex audio (music, action scenes, background noise)
+- **Example**: Original tiny model caught 0 profanities in Argo → Enhanced base model caught 38 segments
 
 ### 2. AI Audio Transcription (Word-Level Precision)
-- Uses**faster-whisper base model**(74M parameters) for superior accuracy on movies
--**Dialog-enhanced audio**helps model "hear" speech masked by soundtracks
-- Each word gets a**precise timestamp**(accurate to 0.1 seconds)
+- Uses **faster-whisper base model**(74M parameters) for superior accuracy on movies
+- **Dialog-enhanced audio**helps model "hear" speech masked by soundtracks
+- Each word gets a **precise timestamp**(accurate to 0.1 seconds)
 - Example: a flagged word at 79.76s-80.08s, the next word at 80.08s-80.88s
 - Unlike subtitle-based filters that cut entire sentences, this tool can cut only the matched words.
--**Tiny model**is available for faster processing, but is less accurate and may miss profanity, especially in movies with music or background noise.
+- **Tiny model**is available for faster processing, but is less accurate and may miss profanity, especially in movies with music or background noise.
 
 ### 3. Smart Multi-Word Detection (Phrase Recognition)
-- Automatically detects**1,000+**entries from the editable word list (including common variations)
--**Intelligent merging**: Combines split multi-word phrases into single cuts
--**Context-aware**: Uses a short time window to catch phrases spoken together
--**Whole-word matching**: Avoids matching clean words that only contain a partial letter pattern
--**Quality monitoring**: WPM (words per minute) diagnostic warns if transcription incomplete
+- Automatically detects **1,000+**entries from the editable word list (including common variations)
+- **Intelligent merging**: Combines split multi-word phrases into single cuts
+- **Context-aware**: Uses a short time window to catch phrases spoken together
+- **Whole-word matching**: Avoids matching clean words that only contain a partial letter pattern
+- **Quality monitoring**: WPM (words per minute) diagnostic warns if transcription incomplete
 
 ### 4. Frame-Accurate Video Cutting
--**FFmpeg-powered editing**: Industry-standard video processing tool
--**Surgical precision**: Removes only profanity segments (typically 0.3-2 seconds each)
--**Quality preservation**: Original video bitrate, resolution, and encoding maintained
--**Smooth transitions**: Seamless cuts without audio glitches or visual artifacts
+- **FFmpeg-powered editing**: Industry-standard video processing tool
+- **Surgical precision**: Removes only profanity segments (typically 0.3-2 seconds each)
+- **Quality preservation**: Original video bitrate, resolution, and encoding maintained
+- **Smooth transitions**: Seamless cuts without audio glitches or visual artifacts
 
 ### Result: 95%+ Profanity-Free Videos
--**38 segments detected**in Argo (129-minute movie with orchestral score)
--**0.46 minutes removed**(99.6% of content preserved)
--**Improvement**: Tiny model missed 100% of profanity → Enhanced base caught all instances
--**Manual review option**: Add timestamps with `--remove-timestamps` for any missed words
+- **38 segments detected**in Argo (129-minute movie with orchestral score)
+- **0.46 minutes removed**(99.6% of content preserved)
+- **Improvement**: Tiny model missed 100% of profanity → Enhanced base caught all instances
+- **Manual review option**: Add timestamps with `--remove-timestamps` for any missed words
 
 ---
 
@@ -155,10 +155,10 @@ you like.
 The Python requirements file cannot install system programs such as FFmpeg. Before
 cloning the repository, install:
 
--**Python 3.8+**, including `pip` and virtual-environment support
--**FFmpeg and FFprobe**(FFprobe is normally included with FFmpeg)
--**Git**
--**An NVIDIA CUDA setup is optional**; the app automatically uses a CUDA GPU
+- **Python 3.8+**, including `pip` and virtual-environment support
+- **FFmpeg and FFprobe**(FFprobe is normally included with FFmpeg)
+- **Git**
+- **An NVIDIA CUDA setup is optional**; the app automatically uses a CUDA GPU
  when CTranslate2 can detect one and otherwise falls back to CPU
 
 #### Ubuntu / Debian
@@ -220,13 +220,13 @@ python3 clean.py --help
 On Windows, activate with `venv\Scripts\activate` and replace `python3` with
 `python` in the commands above.
 
->**Ubuntu/Debian shortcut:**`./install.sh` performs the system check, creates
+> **Ubuntu/Debian shortcut:** `./install.sh` performs the system check, creates
 > the virtual environment, and installs the Python requirements. The manual
 > steps above are recommended on other operating systems.
 
 ### Docker (no local Python setup)
 
-One Dockerfile provides**two build targets**:
+One Dockerfile provides **two build targets**:
 
 | Target | When to use | Build |
 |---|---|---|
@@ -286,19 +286,19 @@ Notes:
 The app automatically accelerates both major processing stages when compatible
 hardware is available:
 
--**AI transcription:**NVIDIA CUDA through CTranslate2
--**Video encoding:**NVIDIA NVENC, Intel Quick Sync, AMD AMF, or Apple
+- **AI transcription:** NVIDIA CUDA through CTranslate2
+- **Video encoding:** NVIDIA NVENC, Intel Quick Sync, AMD AMF, or Apple
  VideoToolbox through FFmpeg
 - If a compatible device, driver, runtime, or encoder is unavailable, that
  stage safely falls back to CPU
 - Pascal GPUs such as the Quadro P2000 use `int8` (then `float32`) rather than
  unsupported/slow `float16`
 
-**Recommendation:**Prefer a GPU machine when available. In our controlled
+**Recommendation:** Prefer a GPU machine when available. In our controlled
 side-by-side tests, GPU was better for:
 
-1.**Speed**— faster Whisper transcription and much faster video rebuild
-2.**Encode quality**— higher SSIM/PSNR vs the source after cutting
+1. **Speed**— faster Whisper transcription and much faster video rebuild
+2. **Encode quality**— higher SSIM/PSNR vs the source after cutting
 
 CPU still works fully via automatic fallback. Before VAD tuning, one CPU test
 stretched a word across silence and over-cut clean audio. Current builds use a
@@ -335,7 +335,7 @@ actual movie encode fails.
 
 ### Verified CPU vs GPU benchmark (same 12s clip)
 
-Measured with the**same source file**(12.012s, 1918x802, SHA-256
+Measured with the **same source file**(12.012s, 1918x802, SHA-256
 `e0848fc3…`) on a CPU-only laptop vs a Quadro P2000 server.
 
 | Stage | Laptop (no NVIDIA GPU) | Home server (Quadro P2000) |
@@ -353,7 +353,7 @@ Measured with the**same source file**(12.012s, 1918x802, SHA-256
 
 Notes for users:
 
--**GPU is the better path**when available for speed and encode fidelity.
+- **GPU is the better path**when available for speed and encode fidelity.
 - The identical-cut encode row is the fair encoder comparison (same remove
  timestamps on both machines).
 - CPU fallback remains supported. Newer builds add Whisper `vad_filter` plus a
@@ -392,7 +392,7 @@ and a Quadro P2000 server:
 
 - Neutral dialogue (ordinary phrases and a common name)
  was transcribed on both machines and correctly left untouched:**3/3 on CPU
- and 3/3 on GPU**.
+ and 3/3 on GPU **.
 - Genuine swear words from the test clips were detected and
  removed:**3/3 on CPU and 3/3 on GPU**.
 - Re-transcribing all six profanity-cleaned outputs found none of the target
@@ -414,16 +414,16 @@ honest practical picture:
 | Hard-profanity detection | Passed all known targets in the tuned tests | Passed all known targets | Both are usable for detection after VAD tuning |
 | Ambiguous false positives (ordinary phrases / common name) | Correctly left alone | Correctly left alone | Context rules work the same on both devices |
 | Cut timing after VAD tuning | Matched known captions closely | Matched known captions closely | GPU is not clearly “more accurate” on the current samples |
-| Transcription speed | ~1.0–1.1s on 12s clips | ~0.5–0.6s on the same clips | GPU is about**2x**faster at Whisper |
-| Video rebuild after a cut | ~9–15s on short clips | ~2.5–3.0s on the same clips | GPU encoding is about**3.5–5x**faster |
+| Transcription speed | ~1.0–1.1s on 12s clips | ~0.5–0.6s on the same clips | GPU is about **2x**faster at Whisper |
+| Video rebuild after a cut | ~9–15s on short clips | ~2.5–3.0s on the same clips | GPU encoding is about **3.5–5x**faster |
 | Visual fidelity after cutting | SSIM ~0.993–0.995 / PSNR ~50–52 dB | SSIM ~0.997–0.998 / PSNR ~54–56 dB | GPU outputs measured closer to the source |
 | Output file size after cutting | Smaller | Larger (~30–70% in these tests) | GPU quality settings favor fidelity over size |
-| Full job with real cuts | Mean ~20.5s on three 12s clips | Mean ~8.5s on the same clips | GPU is about**2.4x**faster end-to-end |
+| Full job with real cuts | Mean ~20.5s on three 12s clips | Mean ~8.5s on the same clips | GPU is about **2.4x**faster end-to-end |
 | Jobs with no cuts (copy-through) | Can finish sooner on short clips | May look slower because of CUDA startup | GPU advantage appears when the app actually re-encodes |
 
 **Bottom line for users:**
 
-1. Prefer a GPU machine when you have one. The realistic gains are**speed**and
+1. Prefer a GPU machine when you have one. The realistic gains are**speed** and
 **encode quality**, not a proven detection-accuracy monopoly.
 2. CPU remains a complete fallback. Current builds keep CPU cut timing much
  closer to GPU by using Whisper VAD plus a 1.0s single-word span clamp.
@@ -444,18 +444,25 @@ measured.
 
 ## Quick Start - Simple for Non-Technical Users
 
+Tip: providing a subtitle file (or placing `movie.srt` next to `movie.mp4`) makes cleaning much faster because less audio transcription is needed.
+
 ### Clean a Video
 ```bash
 python3 clean.py YourMovie.mp4 YourMovie_cleaned.mp4
-# Output: YourMovie_cleaned.mp4
+# Output: YourMovie_cleaned.mp4 and YourMovie_cleaned.srt
 ```
 
 ### Use Subtitle Files for Faster Processing
+
+If a matching `.srt` / `.vtt` sits next to the video (same filename), it is
+auto-detected. Passing subtitles skips or reduces transcription work and is
+usually much faster than audio-only cleaning.
+
 ```bash
 python3 clean.py YourMovie.mp4 YourMovie_cleaned.mp4 --subs YourMovie.srt
 ```
 
-**Note:**If your subtitle file has the same name as your video (e.g. `movie.mp4` and `movie.srt`) and is in the same directory, it will be auto-detected. You do not need to specify `--subs` in this case.
+**Note:** If your subtitle file has the same name as your video (e.g. `movie.mp4` and `movie.srt`) and is in the same directory, it will be auto-detected. You do not need to specify `--subs` in this case.
 
 ### Download & Clean YouTube Video
 ```bash
@@ -485,14 +492,14 @@ python3 clean.py input.mp4 output.mp4 --remove-timestamps "10-15,30-35"
 
 ## CPU-Intensive Task Warning
 
-**Important:**Video cleaning is a**CPU-intensive task on CPU-only systems**.
-On systems like the**11th Gen Intel® Core™ i5-1135G7 ×8**without a working
+**Important:** Video cleaning is a**CPU-intensive task on CPU-only systems**.
+On systems like the **11th Gen Intel® Core™ i5-1135G7 ×8**without a working
 hardware encoder:
 
-- Processing a 2-hour movie can take**~6 hours**
--**Do not run other heavy applications**(games, video editing, compiling) simultaneously
-- Video**encoding, decoding, and profanity removal**require sustained high CPU usage
-- Ensure enough**RAM and disk space**is available to avoid slowdowns or failures
+- Processing a 2-hour movie can take **~6 hours**
+- **Do not run other heavy applications**(games, video editing, compiling) simultaneously
+- Video **encoding, decoding, and profanity removal**require sustained high CPU usage
+- Ensure enough **RAM and disk space**is available to avoid slowdowns or failures
 
 > Tip: With a compatible GPU, the app automatically moves transcription and/or
 > video encoding to hardware. Existing subtitles (`--subs`) can also reduce
@@ -502,16 +509,16 @@ hardware encoder:
 
 ## Key Features
 
--**No Monthly Subscription**- Free to use for personal projects
--**Works Offline**- No internet required after initial setup
--**Any Video Source**- Not limited to Netflix or specific streaming services
--**Fast AI Transcription**- Uses faster-whisper (CTranslate2) for 4-10x speed improvement
--**Smart Language Filtering**- Matches speech against an editable 1,000+ word list
--**Precise Editing**- Word-level timestamps remove only profanity, keeps dialogue intact
--**Family Safe**- Create clean versions for kids and family movie nights
--**YouTube Compatible**- Download and clean YouTube videos
--**Quality Preserved**- Maintains original video quality and encoding
--**Open Source**- Free forever, community-driven improvements
+- **No Monthly Subscription**- Free to use for personal projects
+- **Works Offline**- No internet required after initial setup
+- **Any Video Source**- Not limited to Netflix or specific streaming services
+- **Fast AI Transcription**- Uses faster-whisper (CTranslate2) for 4-10x speed improvement
+- **Smart Language Filtering**- Matches speech against an editable 1,000+ word list
+- **Precise Editing**- Word-level timestamps remove only profanity, keeps dialogue intact
+- **Family Safe**- Create clean versions for kids and family movie nights
+- **YouTube Compatible**- Download and clean YouTube videos
+- **Quality Preserved**- Maintains original video quality and encoding
+- **Open Source**- Free forever, community-driven improvements
 
 ---
 
@@ -522,10 +529,10 @@ hardware encoder:
 **On CPU-only systems, this application is CPU and memory intensive.**
 Hardware-enabled systems automatically use a validated GPU video encoder:
 
--**CPU Usage**: Expect 80-100% only when hardware acceleration is unavailable
--**RAM Requirements**: 8GB minimum (16GB recommended for base model)
--**Disk I/O**: Heavy read/write operations during video processing
--**Processing Time**: 3-6 hours for a 2-hour movie on CPU (base model with dialog enhancement)
+- **CPU Usage**: Expect 80-100% only when hardware acceleration is unavailable
+- **RAM Requirements**: 8GB minimum (16GB recommended for base model)
+- **Disk I/O**: Heavy read/write operations during video processing
+- **Processing Time**: 3-6 hours for a 2-hour movie on CPU (base model with dialog enhancement)
 
 **GPU Strongly Recommended**: NVIDIA CUDA accelerates transcription, while
 NVENC, Quick Sync, AMF, or VideoToolbox accelerates the quality video rebuild.
@@ -536,26 +543,26 @@ hardware.
 **Best Practice**: Run this tool overnight or when you don't need your computer. Close unnecessary applications before processing. Consider GPU rental services (AWS, Google Cloud) for batch processing.
 
 ### Minimum Specs (Budget PCs)
--**CPU**: Quad-core processor (Intel i5, AMD Ryzen 5, or better)
--**RAM**: 8GB minimum (base model)
--**Storage**: 5GB free space + 2x video file size
--**OS**: Windows 10/11, macOS 10.15+, or Linux
--**Processing Time**: 2-hour movie takes ~6 hours on CPU
+- **CPU**: Quad-core processor (Intel i5, AMD Ryzen 5, or better)
+- **RAM**: 8GB minimum (base model)
+- **Storage**: 5GB free space + 2x video file size
+- **OS**: Windows 10/11, macOS 10.15+, or Linux
+- **Processing Time**: 2-hour movie takes ~6 hours on CPU
 - **Warning:** Expect very long processing times without GPU
 
 ### Recommended Specs (Production Use)
--**CPU**: Multi-core processor (Intel i7/i9, AMD Ryzen 7/9)
--**RAM**: 16GB or more
--**GPU**: NVIDIA GPU with CUDA support (GTX 1060 or better)
--**Storage**: 10GB+ free space
--**Processing Time**: 2-hour movie takes ~20-40 minutes with GPU
+- **CPU**: Multi-core processor (Intel i7/i9, AMD Ryzen 7/9)
+- **RAM**: 16GB or more
+- **GPU**: NVIDIA GPU with CUDA support (GTX 1060 or better)
+- **Storage**: 10GB+ free space
+- **Processing Time**: 2-hour movie takes ~20-40 minutes with GPU
 
 ### GPU Acceleration (Highly Recommended)
 With compatible transcription/video-encoding hardware:
--**Processing Time**: 2-hour movie in ~5-10 minutes
--**CPU Load**: Significantly reduced; exact usage depends on FFmpeg filters
--**System Usability**: Computer remains responsive during processing
--**Cost**: Free to use, but requires compatible hardware
+- **Processing Time**: 2-hour movie in ~5-10 minutes
+- **CPU Load**: Significantly reduced; exact usage depends on FFmpeg filters
+- **System Usability**: Computer remains responsive during processing
+- **Cost**: Free to use, but requires compatible hardware
 
 **Note**: This tool processes videos locally, so runtime depends on your hardware. Process a file once, then watch the cleaned copy as often as you like.
 
@@ -571,10 +578,10 @@ python3 clean.py input_video.mp4 output_cleaned.mp4
 ```
 
 That's it! The tool now uses optimal settings by default:
--**Base model**(better accuracy than tiny)
--**Dialog enhancement**(isolates speech from music/noise)
--**Auto-upgrade**(switches to larger model if needed)
--**Quality monitoring**(warns if transcription incomplete)
+- **Base model**(better accuracy than tiny)
+- **Dialog enhancement**(isolates speech from music/noise)
+- **Auto-upgrade**(switches to larger model if needed)
+- **Quality monitoring**(warns if transcription incomplete)
 
 ### Advanced Options
 
@@ -598,28 +605,30 @@ python3 clean.py input.mp4 output.mp4 --remove-timestamps "45.2-47.8,120-125"
 ### What Changed (v2.0 - Enhanced Detection)
 
 **Old defaults (missed profanity):**
+
 - Tiny model (39M parameters)
 - No audio preprocessing
 - Failed on movies with soundtracks
 
 **New defaults (much stronger detection):**
+
 - Base model (74M parameters) - 2x more accurate
 - Dialog enhancement enabled - isolates speech
 - Auto-upgrade if WPM low - catches edge cases
 - 1,000+ entries in the default word list
 
-**Result:**0% → 95%+ detection on complex audio
+**Result:** 0% → 95%+ detection on complex audio
 
 ---
 
 ## Why faster-whisper?
 
-This tool uses**faster-whisper**instead of standard OpenAI Whisper for significant performance improvements:
+This tool uses **faster-whisper**instead of standard OpenAI Whisper for significant performance improvements:
 
--**4-10x faster transcription**: 15 seconds vs 25 seconds for a 3-minute video
--**Same accuracy**: CTranslate2 backend provides identical transcription quality
--**Lower memory usage**: Optimized int8 quantization for efficient CPU processing
--**Word-level timestamps**: Precise profanity detection and removal
+- **4-10x faster transcription**: 15 seconds vs 25 seconds for a 3-minute video
+- **Same accuracy**: CTranslate2 backend provides identical transcription quality
+- **Lower memory usage**: Optimized int8 quantization for efficient CPU processing
+- **Word-level timestamps**: Precise profanity detection and removal
 
 **Example performance**(3-minute video, CPU):
 - Transcription: ~15 seconds (12.3x real-time)
@@ -629,13 +638,13 @@ This tool uses**faster-whisper**instead of standard OpenAI Whisper for significa
 
 ## Before/After Example
 
-See the tool in action with our sample video:
+See the tool in action with our sample video.
 
-**Sample Video Results:**
--**Original Video**: 3.1 minutes, 6.3 MB
--**Cleaned Video**: 2.9 minutes, 9.5 MB (profanity segments removed)
--**Profanity Removed**: 19 segments totaling 13.5 seconds
--**Processing Time**: ~2 minutes (with subtitles)
+### Sample Video Results
+- **Original Video**: 3.1 minutes, 6.3 MB
+- **Cleaned Video**: 2.9 minutes, 9.5 MB (profanity segments removed)
+- **Profanity Removed**: 19 segments totaling 13.5 seconds
+- **Processing Time**: ~2 minutes (with subtitles)
 
 The cleaned video maintains perfect audio-video sync and subtitle alignment. All profanity words were precisely detected and removed while preserving the natural flow of the content.
 
@@ -666,58 +675,59 @@ python3 clean.py sample/original_video.mp4 sample/original_video_cleaned.mp4 --s
 ### The 4-Step Profanity Removal Process
 
 #### Step 1: AI Audio Transcription with Dialog Enhancement
--**Technology**: faster-whisper (OpenAI Whisper optimized with CTranslate2)
--**Dialog Enhancement**: FFmpeg audio filtering isolates speech (200-3500Hz vocal range, removes music/effects)
--**Process**: Converts speech to text with**word-level timestamps**(±0.1s accuracy)
--**Quality Monitoring**: Calculates Words Per Minute (WPM); warns if <50 (indicates under-transcription)
--**Auto-Upgrade**: Automatically retries with larger model if transcription quality too low
--**Example Output**:
+- **Technology**: faster-whisper (OpenAI Whisper optimized with CTranslate2)
+- **Dialog Enhancement**: FFmpeg audio filtering isolates speech (200-3500Hz vocal range, removes music/effects)
+- **Process**: Converts speech to text with **word-level timestamps**(±0.1s accuracy)
+- **Quality Monitoring**: Calculates Words Per Minute (WPM); warns if <50 (indicates under-transcription)
+- **Auto-Upgrade**: Automatically retries with larger model if transcription quality too low
+- **Example Output**:
  ```
  [79.76s-80.08s] "<flagged-word>"
  [80.08s-80.88s] "<next-word>"
  [82.15s-82.67s] "<flagged-word>"
  ```
--**Why accurate**: Trained on 680,000 hours of multilingual speech data
--**Speed**: Processes at 10-12x real-time speed on modern CPUs
+- **Why accurate**: Trained on 680,000 hours of multilingual speech data
+- **Speed**: Processes at 10-12x real-time speed on modern CPUs
 
 #### Step 2: Word-List Matching
--**Database**: Editable CSV with 1,000+ default entries (plus optional soft list)
--**Matching**: Whole-word exact matching (helps prevent false positives)
--**Scope**: Filters**spoken**words/phrases that appear in the transcript and
+- **Database**: Editable CSV with 1,000+ default entries (plus optional soft list)
+- **Matching**: Whole-word exact matching (helps prevent false positives)
+- **Scope**: Filters **spoken**words/phrases that appear in the transcript and
  match the word list—not separate audio-event / sound classification
 
 #### Step 3: Intelligent Phrase Merging
--**Problem**: AI sometimes splits a multi-word phrase across separate detections
--**Solution**: Automatically merges nearby detections into a single cut
--**Result**: More natural speech flow, fewer awkward gaps
+- **Problem**: AI sometimes splits a multi-word phrase across separate detections
+- **Solution**: Automatically merges nearby detections into a single cut
+- **Result**: More natural speech flow, fewer awkward gaps
 
 #### Step 4: Frame-Accurate Video Cutting
--**Tool**: FFmpeg (Hollywood-grade video processing)
--**Precision**: Cuts at exact keyframes (±0.1 second accuracy)
--**Method**:
+- **Tool**: FFmpeg (Hollywood-grade video processing)
+- **Precision**: Cuts at exact keyframes (±0.1 second accuracy)
+- **Method**:
  1. Extract clean segments between profanity
  2. Concatenate segments seamlessly
  3. Re-encode with original quality settings
--**Smart encoding**: Matches original bitrate, resolution, codec automatically
+- **Smart encoding**: Matches original bitrate, resolution, codec automatically
 
 #### Step 5: Subtitle Synchronization
--**Automatic adjustment**: Shifts all subtitle timestamps after each cut
--**Text cleaning**: Removes profanity from subtitle text
--**Format support**: SRT and VTT formats
--**Sync accuracy**: ±0.1 second perfect lip-sync maintained
+- **Automatic adjustment**: Shifts all subtitle timestamps after each cut
+- **Text cleaning**: Removes profanity from subtitle text
+- **Format support**: SRT and VTT formats
+- **Sync accuracy**: ±0.1 second perfect lip-sync maintained
 
 ### Why 95%+ Accuracy?
 
--**Dialog enhancement**(isolates speech from music/effects)
--**Base model default**(74M parameters, 2x more accurate than tiny)
--**Auto-upgrade mechanism**(switches to larger model if WPM low)
--**Word-level timestamps**(not sentence-level like competitors)
--**1,000+ word database**(editable CSV; optional soft list available)
--**Intelligent phrase merging**(catches split expressions)
--**Context-aware detection**(whole-word matching)
--**Frame-accurate cutting**(surgical precision)
+- **Dialog enhancement**(isolates speech from music/effects)
+- **Base model default**(74M parameters, 2x more accurate than tiny)
+- **Auto-upgrade mechanism**(switches to larger model if WPM low)
+- **Word-level timestamps**(not sentence-level like competitors)
+- **1,000+ word database**(editable CSV; optional soft list available)
+- **Intelligent phrase merging**(catches split expressions)
+- **Context-aware detection**(whole-word matching)
+- **Frame-accurate cutting**(surgical precision)
 
 **Real-world example (Argo 2012 film):**
+
 - Old version (tiny model, no enhancement): 0 detections (missed 100%)
 - New version (base + dialog enhancement): 38 segments detected, 0.46 min removed
 
@@ -726,7 +736,7 @@ python3 clean.py sample/original_video.mp4 sample/original_video_cleaned.mp4 --s
 - Creative slang or new profanity not in database
 - Background noise masking quiet curse words
 - Non-verbal sounds are not detected—only spoken words that appear in the transcript
--**Solution**: Use `--remove-timestamps` to manually add missed segments; edit `profanity_words.csv` for custom spoken terms
+- **Solution**: Use `--remove-timestamps` to manually add missed segments; edit `profanity_words.csv` for custom spoken terms
 
 ---
 
@@ -735,28 +745,28 @@ python3 clean.py sample/original_video.mp4 sample/original_video_cleaned.mp4 --s
 ### Expected Processing Times
 
 #### Short Videos (5-15 minutes)
--**Budget CPU**: 2-5 minutes processing
--**Modern CPU**: 1-3 minutes processing
--**With GPU**: 30-60 seconds processing
--**RAM Usage**: 2-3GB during processing
+- **Budget CPU**: 2-5 minutes processing
+- **Modern CPU**: 1-3 minutes processing
+- **With GPU**: 30-60 seconds processing
+- **RAM Usage**: 2-3GB during processing
 
 #### Full Movies (90-120 minutes)
--**CPU (base model + dialog enhancement)**: 3-5 hours processing
--**With NVIDIA GPU (recommended)**: 15-30 minutes processing
--**RAM Usage**: 8GB minimum (16GB recommended)
--**Disk Space**: Temporary files need ~2x video size
+- **CPU (base model + dialog enhancement)**: 3-5 hours processing
+- **With NVIDIA GPU (recommended)**: 15-30 minutes processing
+- **RAM Usage**: 8GB minimum (16GB recommended)
+- **Disk Space**: Temporary files need ~2x video size
 
 #### Long Movies/Content (2-3 hours)
--**CPU (base model + dialog enhancement)**: 6-10 hours processing
--**With NVIDIA GPU (recommended)**: 20-40 minutes processing
+- **CPU (base model + dialog enhancement)**: 6-10 hours processing
+- **With NVIDIA GPU (recommended)**: 20-40 minutes processing
 
 ### System Resource Usage
--**CPU-only**: High utilization during transcription and H.264 encoding
--**GPU-enabled**: GPU handles supported AI transcription and video encoding;
+- **CPU-only**: High utilization during transcription and H.264 encoding
+- **GPU-enabled**: GPU handles supported AI transcription and video encoding;
  CPU still handles audio and timeline filters
--**RAM**: 3-6GB depending on video length
--**Disk I/O**: Moderate (reading/writing video files)
--**Temp Storage**: Requires 2-3x the video file size temporarily
+- **RAM**: 3-6GB depending on video length
+- **Disk I/O**: Moderate (reading/writing video files)
+- **Temp Storage**: Requires 2-3x the video file size temporarily
 
 ### Compared with subscription filters
 
@@ -769,7 +779,7 @@ Trade-off: you spend processing time once up front, then keep an offline copy
 with no ongoing fee.
 
 ### Tips for Faster Processing
-1.**GPU acceleration**(10-20x faster) - rent AWS/Google Cloud GPU instance for batch jobs
+1. **GPU acceleration**(10-20x faster) - rent AWS/Google Cloud GPU instance for batch jobs
 2. Use `--subs` flag if you have accurate subtitle files (skips transcription, 20x faster)
 3. Close other heavy applications during processing
 4. Consider `--model tiny` for speed (but may miss profanity on complex audio)
@@ -854,8 +864,8 @@ python3 clean.py movie.mp4 movie_cleaned.mp4 --model tiny --no-dialog-enhance
 
 ## Output Files
 
--**Cleaned Video**: `[input]_cleaned.mp4` - Video with profanity segments removed
--**Cleaned Subtitles**: `[input]_cleaned.srt` - Subtitles with profanity filtered and timestamps adjusted
+- **Cleaned Video**: `[input]_cleaned.mp4` - Video with profanity segments removed
+- **Cleaned Subtitles**: `[input]_cleaned.srt` - Subtitles with profanity filtered and timestamps adjusted
 
 ---
 
@@ -905,7 +915,7 @@ a separate opt-in file:
 
 `profanity_words_optional_soft.csv`
 
-They are**not**loaded by default. For stricter scene or romance filtering,
+They are **not**loaded by default. For stricter scene or romance filtering,
 merge that file into `profanity_words.csv` (or append its entries).
 
 ## Frequently Asked Questions
@@ -971,20 +981,20 @@ Unlike simple subtitle text replacements, this app uses AI transcription with
 dialog enhancement and an editable word list (**1,000+**default entries):
 
 ### What Gets Filtered
--**Offensive spoken language**that matches your word list
--**Multi-word phrases**when nearby detections are merged into one cut
--**Spoken content only**: speech transcription (faster-whisper) + text matching.
- Non-verbal sounds without spoken words are**not**classified.
--**Custom terms**you add to `profanity_words.csv`
+- **Offensive spoken language**that matches your word list
+- **Multi-word phrases**when nearby detections are merged into one cut
+- **Spoken content only**: speech transcription (faster-whisper) + text matching.
+ Non-verbal sounds without spoken words are **not**classified.
+- **Custom terms**you add to `profanity_words.csv`
 
 ### Smart Detection Features
--**Dialog Enhancement**: Isolates speech from music/effects using audio filtering (200-3500Hz vocal range)
--**Base Model Default**: 74M parameters (2x more accurate than tiny model)
--**Auto-Upgrade**: Automatically retries with larger model if transcription quality low
--**Word-Level Precision**: Only removes profanity, keeps clean dialogue
--**Context Aware**: Whole-word matching prevents false positives
--**Auto-Merging**: Combines split phrases for natural removal
--**Subtitle Sync**: Automatically adjusts subtitles after cleaning
+- **Dialog Enhancement**: Isolates speech from music/effects using audio filtering (200-3500Hz vocal range)
+- **Base Model Default**: 74M parameters (2x more accurate than tiny model)
+- **Auto-Upgrade**: Automatically retries with larger model if transcription quality low
+- **Word-Level Precision**: Only removes profanity, keeps clean dialogue
+- **Context Aware**: Whole-word matching prevents false positives
+- **Auto-Merging**: Combines split phrases for natural removal
+- **Subtitle Sync**: Automatically adjusts subtitles after cleaning
 
 ### Family-Friendly Content Creation
 Perfect for creating clean versions to watch with:
@@ -1000,15 +1010,15 @@ You keep local control over what gets filtered.
 
 ## Technical Details
 
--**Video Processing**: FFmpeg with frame-accurate cutting and quality matching
--**Audio Transcription**: faster-whisper (CTranslate2) with word-level timestamps for precise detection
--**Dialog Enhancement**: FFmpeg audio filtering (highpass 200Hz, lowpass 3500Hz, dynamic normalization, volume 1.3x)
--**Word list**: Editable CSV (1,000+ defaults) with multi-word phrase merging
--**Quality Monitoring**: WPM calculation warns if transcription incomplete (threshold: 50 WPM)
--**Auto-Upgrade**: Automatically retries with next larger model if WPM below threshold
--**Subtitle Formats**: SRT and VTT fully supported
--**Encoding**: Smart quality matching preserves original video bitrate and settings
--**AI Model**: Uses faster-whisper 'base' model by default (74M params, int8 quantized for CPU efficiency)
+- **Video Processing**: FFmpeg with frame-accurate cutting and quality matching
+- **Audio Transcription**: faster-whisper (CTranslate2) with word-level timestamps for precise detection
+- **Dialog Enhancement**: FFmpeg audio filtering (highpass 200Hz, lowpass 3500Hz, dynamic normalization, volume 1.3x)
+- **Word list**: Editable CSV (1,000+ defaults) with multi-word phrase merging
+- **Quality Monitoring**: WPM calculation warns if transcription incomplete (threshold: 50 WPM)
+- **Auto-Upgrade**: Automatically retries with next larger model if WPM below threshold
+- **Subtitle Formats**: SRT and VTT fully supported
+- **Encoding**: Smart quality matching preserves original video bitrate and settings
+- **AI Model**: Uses faster-whisper 'base' model by default (74M params, int8 quantized for CPU efficiency)
 
 ---
 
@@ -1034,15 +1044,15 @@ ffprobe -version
 ```
 
 ### Slow transcription (6+ hours for movies)
--**Expected**: Base model with dialog enhancement takes 3-6 hours per 2-hour movie on CPU
--**GPU acceleration**: Install compatible NVIDIA drivers plus the CUDA/cuDNN
+- **Expected**: Base model with dialog enhancement takes 3-6 hours per 2-hour movie on CPU
+- **GPU acceleration**: Install compatible NVIDIA drivers plus the CUDA/cuDNN
  runtime required by CTranslate2; the active faster-whisper path does not use
  PyTorch
--**Verify GPU detection**:
+- **Verify GPU detection**:
  `python3 -c "import ctranslate2; print(ctranslate2.get_cuda_device_count())"`
--**Cloud rental**: Use AWS/Google Cloud GPU instances for batch processing
--**Alternative**: Use `--subs` with existing subtitle files (skips transcription, 20x faster)
--**Not recommended**: `--model tiny` is much faster but misses profanity on complex audio
+- **Cloud rental**: Use AWS/Google Cloud GPU instances for batch processing
+- **Alternative**: Use `--subs` with existing subtitle files (skips transcription, 20x faster)
+- **Not recommended**: `--model tiny` is much faster but misses profanity on complex audio
 
 ### Detection seems incomplete
 - Check transcript: `--dump-transcript words.txt` to see what was transcribed
@@ -1072,10 +1082,10 @@ specific apps or catalogs. This project is a local, file-based alternative:
 
 ## Support & Community
 
--**GitHub Issues**: Report bugs and request features
--**Discussions**: Share tips and ask questions
--**Contributions**: Pull requests welcome!
--**Star this repo**: Helps others find the project
+- **GitHub Issues**: Report bugs and request features
+- **Discussions**: Share tips and ask questions
+- **Contributions**: Pull requests welcome!
+- **Star this repo**: Helps others find the project
 
 ---
 

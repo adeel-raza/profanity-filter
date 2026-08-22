@@ -1,5 +1,5 @@
 ---
-title: Free Profanity Filter for Movies & Videos - VidAngel & ClearPlay Alternative
+title: Free Profanity Filter for Movies & Videos
 emoji: 🎬
 colorFrom: blue
 colorTo: purple
@@ -14,8 +14,6 @@ tags:
   - movie-cleaner
   - content-filter
   - parental-controls
-  - vidangel-alternative
-  - clearplay-alternative
   - netflix-filter
   - open-source
   - local-processing
@@ -30,69 +28,29 @@ Want to see how it works before installing? **Try the app instantly in your brow
 
 ---
 
-# Free Profanity Filter for Movies & Videos - VidAngel & ClearPlay Alternative
+# Free Profanity Filter for Movies & Videos
 
-**Created by [Adeel Raza](https://elearningevolve.com/about) Contact: info@elearningevolve.com**
+**Created by [Adeel Raza](https://elearningevolve.com/about) · Contact: info@elearningevolve.com**
 
-**Watch movies YOUR way – completely FREE!** Remove profanity, curse words, and offensive language from ANY video automatically. Unlike VidAngel or ClearPlay, no subscription or Netflix account is required. Works with local video files, YouTube downloads, and any MP4/MKV content.
+This tool automatically finds and removes offensive spoken language from video
+files you already have. It transcribes the audio with AI (faster-whisper),
+matches the transcript against an editable word list, then either **cuts** or
+**mutes** those moments while keeping the rest of the video intact.
 
-**Perfect for families who want to enjoy movies together without inappropriate language**  
-**100% FREE alternative to VidAngel ($9.99/month) and ClearPlay ($7.99/month)**  
-**Privacy-focused: Everything runs locally on your computer**  
-**AI-powered with enhanced dialogue detection using faster-whisper**
+**What it does**
 
----
+- Detects spoken offensive language with word-level timestamps
+- Removes or mutes only the matched segments (typically under two seconds each)
+- Works with local files such as MP4 and MKV (including downloads from YouTube
+  or ripped discs)
+- Runs entirely on your computer—no cloud upload and no account required
+- Lets you edit the word list in a simple CSV file
+- Supports optional GPU acceleration for much faster processing
 
-## Customize Filtered Words (CSV)
+**Who it is for**
 
-**Custom word lists already work today.** Edit `profanity_words.csv` to control
-what the app filters—no Python changes are required. The detector reloads the
-CSV at runtime, so your edits take effect the next time you run `clean.py` or
-restart the app.
-
-1. Open `profanity_words.csv` in any text editor or spreadsheet application.
-2. Words and phrases are separated by commas and may span multiple lines.
-3. Delete any word you never want filtered.
-4. Add any new words or phrases in lowercase, separated by commas.
-5. Prefix a token with `#` to treat it as a comment (that entry is ignored).
-6. Save the file, then run `clean.py` again (or restart the Gradio app).
-
-Example:
-
-```csv
-word-one,word-two,phrase one
-another-term
-# notes-or-disabled-entry
-```
-
-Whitespace and duplicate entries are ignored. An existing empty CSV disables
-the default word list. If the CSV is missing or cannot be read, the app safely
-uses its built-in defaults.
-
-**Religious / exclamatory terms** are **off by default**. Pass
-`--include-religious` when you want that separate list included as well:
-
-```bash
-python3 clean.py input.mp4 output.mp4 --include-religious
-```
-
-Clear matches from your word list are always filtered. A small set of
-context-sensitive words uses nearby-dialogue rules so ordinary, non-offensive
-phrases are less likely to be muted. Edit the CSV if you prefer stricter or
-looser filtering.
-
-### Optional soft / romance vocabulary
-
-The default `profanity_words.csv` focuses on clearly offensive language, so
-ordinary dialogue is less likely to be muted.
-
-Softer / common-dialogue words that often appear in ordinary conversation live
-in a separate opt-in file:
-
-`profanity_words_optional_soft.csv`
-
-They are **not** loaded by default. If you want stricter scene/romance
-filtering, merge that file into `profanity_words.csv` (or append its entries).
+Families, educators, and anyone who wants a cleaner cut of movies or clips
+without a monthly subscription or streaming lock-in.
 
 ---
 
@@ -104,22 +62,26 @@ filtering, merge that file into `profanity_words.csv` (or append its entries).
 
 ---
 
-## 📑 Table of Contents
+## Table of Contents
 
-- [Customize Filtered Words (CSV)](#customize-filtered-words-csv)
-- [Installation - Easy Setup Guide](#installation-easy-setup-guide)
-- [Docker (no local Python setup)](#docker-no-local-python-setup)
-- [Quick Start - Simple for Non-Technical Users](#quick-start-simple-for-non-technical-users)
 - [Why Choose This Free Profanity Filter?](#why-choose-this-free-profanity-filter)
 - [How It Works - The Technology Behind 95%+ Accuracy](#how-it-works-the-technology-behind-95-accuracy)
+- [Installation - Easy Setup Guide](#installation-easy-setup-guide)
+- [Quick Start - Simple for Non-Technical Users](#quick-start-simple-for-non-technical-users)
+- [CPU-Intensive Task Warning](#cpu-intensive-task-warning)
+- [Key Features](#key-features)
 - [System Requirements](#system-requirements)
 - [Usage - Simple Command Line](#usage-simple-command-line)
+- [Why faster-whisper?](#why-faster-whisper)
+- [Before/After Example](#beforeafter-example)
+- [How It Works - Technical Deep Dive](#how-it-works-technical-deep-dive)
+- [Processing Time & Resource Usage](#processing-time-resource-usage)
 - [Command Line Options](#command-line-options)
 - [Examples](#examples)
 - [Output Files](#output-files)
-- [Processing Time & Resource Usage](#processing-time-resource-usage)
+- [Customize Filtered Words (CSV)](#customize-filtered-words-csv)
 - [Frequently Asked Questions](#frequently-asked-questions)
-- [Use Cases - Enjoy Movies Your Way](#use-cases-enjoy-movies-your-way)
+- [Use Cases](#use-cases)
 - [How Filtering Works](#how-filtering-works)
 - [Technical Details](#technical-details)
 - [Troubleshooting](#troubleshooting)
@@ -127,6 +89,62 @@ filtering, merge that file into `profanity_words.csv` (or append its entries).
 - [Support & Community](#support-community)
 - [License](#license)
 - [Contributing](#contributing)
+
+---
+
+## Why Choose This Free Profanity Filter?
+
+### Free and open source
+No subscription. Process your own files once and watch them offline as often as
+you like.
+
+### Works with your files
+- Local video files (MP4, MKV, AVI, and similar)
+- YouTube downloads (via yt-dlp)
+- DVDs and Blu-rays ripped to digital files
+- Any source you can save as a normal video file
+
+### Privacy and control
+- Everything runs on your computer
+- No cloud upload required for filtering
+- You choose the word list and how aggressively to filter
+
+---
+
+## How It Works - The Technology Behind 95%+ Accuracy
+
+### 1. Dialog Enhancement (Audio Preprocessing) 🆕
+- **Vocal isolation**: High-pass (200Hz) and low-pass (3500Hz) filters remove music, effects, and noise
+- **Dynamic normalization**: Balances quiet dialogue and loud scenes for consistent transcription
+- **Result**: 4-5x more words transcribed in complex audio (music, action scenes, background noise)
+- **Example**: Original tiny model caught 0 profanities in Argo → Enhanced base model caught 38 segments
+
+### 2. AI Audio Transcription (Word-Level Precision)
+- Uses **faster-whisper base model** (74M parameters) for superior accuracy on movies
+- **Dialog-enhanced audio** helps model "hear" speech masked by soundtracks
+- Each word gets a **precise timestamp** (accurate to 0.1 seconds)
+- Example: a flagged word at 79.76s-80.08s, the next word at 80.08s-80.88s
+- Unlike subtitle-based filters that cut entire sentences, this tool can cut only the matched words.
+- **Tiny model** is available for faster processing, but is less accurate and may miss profanity, especially in movies with music or background noise.
+
+### 3. Smart Multi-Word Detection (Phrase Recognition)
+- Automatically detects **1,000+** entries from the editable word list (including common variations)
+- **Intelligent merging**: Combines split multi-word phrases into single cuts
+- **Context-aware**: Uses a short time window to catch phrases spoken together
+- **Whole-word matching**: Avoids matching clean words that only contain a partial letter pattern
+- **Quality monitoring**: WPM (words per minute) diagnostic warns if transcription incomplete
+
+### 4. Frame-Accurate Video Cutting
+- **FFmpeg-powered editing**: Industry-standard video processing tool
+- **Surgical precision**: Removes only profanity segments (typically 0.3-2 seconds each)
+- **Quality preservation**: Original video bitrate, resolution, and encoding maintained
+- **Smooth transitions**: Seamless cuts without audio glitches or visual artifacts
+
+### Result: 95%+ Profanity-Free Videos
+- **38 segments detected** in Argo (129-minute movie with orchestral score)
+- **0.46 minutes removed** (99.6% of content preserved)
+- **Improvement**: Tiny model missed 100% of profanity → Enhanced base caught all instances
+- **Manual review option**: Add timestamps with `--remove-timestamps` for any missed words
 
 ---
 
@@ -346,7 +364,7 @@ Notes for users:
 ### Current three-clip validation after CPU VAD tuning
 
 Measured on commit `3742aec` with three distinct 12.012s clips containing known
-known swear-word dialogue. Source SHA-256 hashes were matched on
+swear-word dialogue. Source SHA-256 hashes were matched on
 both machines before testing.
 
 | Metric (mean of 3 clips) | Laptop CPU | Quadro P2000 GPU |
@@ -375,7 +393,7 @@ and a Quadro P2000 server:
 - Neutral dialogue (ordinary phrases and a common name)
   was transcribed on both machines and correctly left untouched: **3/3 on CPU
   and 3/3 on GPU**.
-- Genuine swear words from the test clips was detected and
+- Genuine swear words from the test clips were detected and
   removed: **3/3 on CPU and 3/3 on GPU**.
 - Re-transcribing all six profanity-cleaned outputs found none of the target
   words. All 12 outputs decoded without errors.
@@ -465,65 +483,6 @@ python3 clean.py input.mp4 output.mp4 --remove-timestamps "10-15,30-35"
 
 ---
 
-## Why Choose This Free Profanity Filter?
-
-### Save Money - No Subscriptions
-- **VidAngel**: $9.99/month + requires Netflix/Amazon Prime
-- **ClearPlay**: $7.99/month + requires compatible devices
-- **This App**: **100% FREE** - works with any video file
-
-### Watch Movies Your Way
-Unlike VidAngel and ClearPlay that only work with specific streaming services, this tool works with:
-- Local video files (MP4, MKV, AVI, etc.)
-- YouTube downloads (via yt-dlp)
-- DVDs and Blu-rays (ripped to digital)
-- ANY video source - no restrictions
-
-### Privacy & Control
-- Everything runs on **YOUR computer**
-- **No cloud uploads** or streaming required
-- Your videos stay private
-- Complete control over content filtering
-
----
-
-## How It Works - The Technology Behind 95%+ Accuracy
-
-### 1. Dialog Enhancement (Audio Preprocessing) 🆕
-- **Vocal isolation**: High-pass (200Hz) and low-pass (3500Hz) filters remove music, effects, and noise
-- **Dynamic normalization**: Balances quiet dialogue and loud scenes for consistent transcription
-- **Result**: 4-5x more words transcribed in complex audio (music, action scenes, background noise)
-- **Example**: Original tiny model caught 0 profanities in Argo → Enhanced base model caught 38 segments
-
-### 2. AI Audio Transcription (Word-Level Precision)
-- Uses **faster-whisper base model** (74M parameters) for superior accuracy on movies
-- **Dialog-enhanced audio** helps model "hear" speech masked by soundtracks
-- Each word gets a **precise timestamp** (accurate to 0.1 seconds)
-- Example: a flagged word at 79.76s-80.08s, the next word at 80.08s-80.88s
-- Unlike subtitle-based filters that cut entire sentences, we cut only the bad words!
-- **Tiny model** is available for faster processing, but is less accurate and may miss profanity, especially in movies with music or background noise.
-
-### 3. Smart Multi-Word Detection (Phrase Recognition)
-- Automatically detects **1,000+** entries from the editable word list (including common variations)
-- **Intelligent merging**: Combines split multi-word phrases into single cuts
-- **Context-aware**: Uses a short time window to catch phrases spoken together
-- **Whole-word matching**: Avoids matching clean words that only contain a partial letter pattern
-- **Quality monitoring**: WPM (words per minute) diagnostic warns if transcription incomplete
-
-### 4. Frame-Accurate Video Cutting
-- **FFmpeg-powered editing**: Industry-standard video processing tool
-- **Surgical precision**: Removes only profanity segments (typically 0.3-2 seconds each)
-- **Quality preservation**: Original video bitrate, resolution, and encoding maintained
-- **Smooth transitions**: Seamless cuts without audio glitches or visual artifacts
-
-### Result: 95%+ Profanity-Free Videos
-- **38 segments detected** in Argo (129-minute movie with orchestral score)
-- **0.46 minutes removed** (99.6% of content preserved)
-- **Improvement**: Tiny model missed 100% of profanity → Enhanced base caught all instances
-- **Manual review option**: Add timestamps with `--remove-timestamps` flag for missed words
-
----
-
 ## CPU-Intensive Task Warning
 
 **Important:** Video cleaning is a **CPU-intensive task on CPU-only systems**.
@@ -541,9 +500,9 @@ hardware encoder:
 
 ---
 
-## Key Features - VidAngel & ClearPlay Alternative
+## Key Features
 
-- **No Monthly Subscription** - Save $96-120/year compared to VidAngel or ClearPlay
+- **No Monthly Subscription** - Free to use for personal projects
 - **Works Offline** - No internet required after initial setup
 - **Any Video Source** - Not limited to Netflix or specific streaming services
 - **Fast AI Transcription** - Uses faster-whisper (CTranslate2) for 4-10x speed improvement
@@ -598,7 +557,7 @@ With compatible transcription/video-encoding hardware:
 - **System Usability**: Computer remains responsive during processing
 - **Cost**: Free to use, but requires compatible hardware
 
-**Note**: Unlike streaming-based filters (VidAngel, ClearPlay), this tool processes videos locally, so processing time varies by system specs. You only process once, then enjoy unlimited viewing!
+**Note**: This tool processes videos locally, so runtime depends on your hardware. Process a file once, then watch the cleaned copy as often as you like.
 
 ---
 
@@ -643,7 +602,7 @@ python3 clean.py input.mp4 output.mp4 --remove-timestamps "45.2-47.8,120-125"
 - No audio preprocessing
 - Failed on movies with soundtracks
 
-**New defaults (catches everything):**
+**New defaults (much stronger detection):**
 - Base model (74M parameters) - 2x more accurate
 - Dialog enhancement enabled - isolates speech
 - Auto-upgrade if WPM low - catches edge cases
@@ -799,15 +758,15 @@ python3 clean.py sample/original_video.mp4 sample/original_video_cleaned.mp4 --s
 - **Disk I/O**: Moderate (reading/writing video files)
 - **Temp Storage**: Requires 2-3x the video file size temporarily
 
-### Comparison to Paid Services
+### Compared with subscription filters
 
-| Service | Cost | Processing | Streaming | Video Source |
-|---------|------|------------|-----------|--------------|
-| **This Tool** | **FREE** | **15-45 min one-time** | **Offline anytime** | **Any video file** |
-| VidAngel | $9.99/mo | Instant streaming | Requires internet | Netflix/Prime only |
-| ClearPlay | $7.99/mo | Instant streaming | Requires internet | Select services |
+| Approach | Cost model | Where it runs | Video source |
+|----------|------------|---------------|--------------|
+| **This tool** | Free, one-time processing | Offline on your computer | Any local video file |
+| Streaming filter services | Monthly subscription | Online / service-tied | Often limited to specific apps or catalogs |
 
-**Trade-off**: One-time processing vs. ongoing subscription costs. Process once, watch unlimited times offline!
+Trade-off: you spend processing time once up front, then keep an offline copy
+with no ongoing fee.
 
 ### Tips for Faster Processing
 1. **GPU acceleration** (10-20x faster) - rent AWS/Google Cloud GPU instance for batch jobs
@@ -900,25 +859,74 @@ python3 clean.py movie.mp4 movie_cleaned.mp4 --model tiny --no-dialog-enhance
 
 ---
 
+## Customize Filtered Words (CSV)
+
+Edit `profanity_words.csv` to add or remove words the tool should filter.
+Open it in any text editor or spreadsheet, save your changes, and they take
+effect the next time you run `clean.py` or restart the Gradio app.
+
+1. Open `profanity_words.csv`.
+2. Words and phrases are separated by commas and may span multiple lines.
+3. Delete any word you never want filtered.
+4. Add new words or phrases in lowercase, separated by commas.
+5. Prefix a token with `#` to treat it as a comment (that entry is ignored).
+6. Save the file, then run `clean.py` again (or restart the Gradio app).
+
+Example:
+
+```csv
+word-one,word-two,phrase one
+another-term
+# notes-or-disabled-entry
+```
+
+Whitespace and duplicate entries are ignored. An empty CSV disables the default
+word list. If the CSV is missing or cannot be read, the app falls back to its
+built-in defaults.
+
+**Religious / exclamatory terms** are off by default. Include them with:
+
+```bash
+python3 clean.py input.mp4 output.mp4 --include-religious
+```
+
+Clear matches from your word list are always filtered. A small set of
+context-sensitive words uses nearby-dialogue rules so ordinary, non-offensive
+phrases are less likely to be muted. Edit the CSV if you prefer stricter or
+looser filtering.
+
+### Optional soft / romance vocabulary
+
+The default `profanity_words.csv` focuses on clearly offensive language, so
+ordinary dialogue is less likely to be muted.
+
+Softer, common-dialogue words that often appear in normal conversation live in
+a separate opt-in file:
+
+`profanity_words_optional_soft.csv`
+
+They are **not** loaded by default. For stricter scene or romance filtering,
+merge that file into `profanity_words.csv` (or append its entries).
+
 ## Frequently Asked Questions
 
 ### Is this really free?
-**Yes!** 100% free, open-source, and no hidden costs. Unlike VidAngel ($9.99/month) or ClearPlay ($7.99/month), you'll never pay a subscription.
+**Yes.** It is free and open source, with no subscription required.
 
 ### Do I need Netflix or Amazon Prime?
-**No!** This works with ANY video file - local files, YouTube downloads, DVDs, Blu-rays. Not limited to specific streaming services.
+**No.** It works with any video file you can save locally—downloads, rips, or files you already have.
 
 ### How long does processing take?
-A 2-hour movie takes 6-10 hours on CPU (base model with dialog enhancement) or 20-40 minutes with GPU. Process once, watch unlimited times. No ongoing streaming required like VidAngel. GPU rental recommended for batch processing.
+A 2-hour movie typically takes about 6–10 hours on CPU (base model with dialog enhancement) or about 20–40 minutes with a compatible GPU. Process once, then watch offline as often as you like. GPU rental can help for batch jobs.
 
 ### Will it work on my computer?
-If you can run Python, yes! Works on Windows, Mac, and Linux. Minimum: 4GB RAM and dual-core CPU.
+If you can run Python, yes. It works on Windows, macOS, and Linux. Minimum: 4GB RAM and a dual-core CPU.
 
 ### Is my privacy protected?
-Absolutely! Everything runs locally on your computer. No cloud uploads, no tracking, no data collection.
+Yes. Everything runs locally on your computer—no cloud uploads, tracking, or data collection.
 
 ### Can I use this for YouTube videos?
-Yes! Download with yt-dlp, then clean the video. Perfect for creating family-friendly content.
+Yes. Download with yt-dlp, then clean the video.
 
 ### Does it remove all profanity?
 It matches transcribed speech against an editable word list (1,000+ default
@@ -927,18 +935,18 @@ dialogue; some edge cases may still need manual review.
 
 ### Can I customize what gets filtered?
 Yes. Edit `profanity_words.csv` to add, remove, or comment out words (prefix a
-token with `#` to ignore it). Changes apply on the next run—no code changes
-needed. Use `--include-religious` for the optional religious/exclamatory list.
-For stricter romance/scene filtering, merge entries from
-`profanity_words_optional_soft.csv` into your CSV. See
+token with `#` to ignore it). Changes apply on the next run. Use
+`--include-religious` for the optional religious/exclamatory list. For
+stricter romance/scene filtering, merge entries from
+`profanity_words_optional_soft.csv`. See
 [Customize Filtered Words (CSV)](#customize-filtered-words-csv).
 
 ---
 
-## Use Cases - Enjoy Movies Your Way
+## Use Cases
 
 ### Family Movie Nights
-Create clean versions of popular movies for kids without paying VidAngel subscription fees.
+Create cleaner versions of movies for kids and family viewing.
 
 ### Religious Communities
 Share edited content for church events and religious education without offensive language.
@@ -953,7 +961,7 @@ Use movie clips in classrooms and workshops with appropriate content filtering.
 Clean source material for family-friendly YouTube channels and social media.
 
 ### Personal Preference
-Some people just prefer watching movies without constant cursing - and that's okay!
+Some people simply prefer movies with less offensive language.
 
 ---
 
@@ -986,7 +994,7 @@ Perfect for creating clean versions to watch with:
 - Educational settings and classrooms
 - Anyone who wants to enjoy movies without offensive language
 
-**Enjoy movies YOUR way without the monthly subscription costs of VidAngel or ClearPlay!**
+You keep local control over what gets filtered.
 
 ---
 
@@ -1051,20 +1059,14 @@ ffprobe -version
 
 ## Related Comparisons
 
-### VidAngel vs This Tool
-- **VidAngel**: $9.99/month, requires Netflix/Prime, streaming only
-- **This Tool**: Free, works with any video, offline viewing
+Paid streaming filter services usually charge a monthly fee and only work with
+specific apps or catalogs. This project is a local, file-based alternative:
 
-### ClearPlay vs This Tool
-- **ClearPlay**: $7.99/month, requires compatible devices, limited content
-- **This Tool**: Free, works on any computer, unlimited content
-
-### Why Choose Free Over Paid?
-- **Save $96-120 per year** compared to subscriptions
-- **No streaming limitations** - watch offline anytime
-- **Complete privacy** - no account required
-- **Any video source** - not locked to specific services
-- **One-time processing** - watch unlimited times
+- Free and open source
+- Works with video files you already have
+- Offline viewing after processing
+- Editable word list and cut-or-mute control
+- No account required
 
 ---
 
@@ -1073,19 +1075,13 @@ ffprobe -version
 - **GitHub Issues**: Report bugs and request features
 - **Discussions**: Share tips and ask questions
 - **Contributions**: Pull requests welcome!
-- **Star this repo**: Help others discover this free alternative to VidAngel and ClearPlay
+- **Star this repo**: Helps others find the project
 
 ---
 
 ## License
 
 Open source and free to use. See LICENSE file for details.
-
----
-
-**Tired of paying $10/month for VidAngel or ClearPlay?** This free, open-source profanity filter gives you complete control over your family's viewing experience without the subscription costs. Download once, use forever!
-
-**#ProfanityFilter #FamilyFriendly #VidAngelAlternative #ClearPlayAlternative #FreeMovieFilter #EnjoyMoviesYourWay**
 
 ---
 

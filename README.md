@@ -45,35 +45,54 @@ Want to see how it works before installing? **Try the app instantly in your brow
 
 ## Customize Filtered Words (CSV)
 
-Edit `profanity_words.csv` to control what the app filters—no Python changes
-are required.
+**Custom word lists already work today.** Edit `profanity_words.csv` to control
+what the app filters—no Python changes are required. The detector reloads the
+CSV at runtime, so your edits take effect the next time you run `clean.py` or
+restart the app.
 
 1. Open `profanity_words.csv` in any text editor or spreadsheet application.
 2. Words and phrases are separated by commas and may span multiple lines.
 3. Delete any word you never want filtered.
 4. Add any new words or phrases in lowercase, separated by commas.
-5. Save the file, then restart the app or run `clean.py` again.
+5. Prefix a token with `#` to treat it as a comment (that entry is ignored).
+6. Save the file, then run `clean.py` again (or restart the Gradio app).
 
 Example:
 
 ```csv
-fuck,fucking,shit,bullshit
-pissed,crap,fuck you
+word-one,word-two,phrase one
+another-term
+# notes-or-disabled-entry
 ```
 
 Whitespace and duplicate entries are ignored. An existing empty CSV disables
 the default word list. If the CSV is missing or cannot be read, the app safely
-uses its built-in defaults. The optional `--include-religious` flag still adds
-the separate religious/exclamatory list.
+uses its built-in defaults.
 
-Hard profanity enabled in the CSV is always filtered. The ambiguous defaults
-`swallow`, `swallower`, `swalow`, and `dirty` use conservative nearby-word
-rules, so ordinary phrases such as `swallow these pills` and `dirty bomb` are
-not removed. They are filtered only when nearby dialogue supplies explicit
-sexual or offensive context. The person name `jerry` and plural `jerries` are
-not included in the defaults. These are explicit rules rather than a claim of
-complete language understanding; edit the CSV if you prefer stricter or looser
-filtering.
+**Religious / exclamatory terms** are **off by default**. Pass
+`--include-religious` when you want that separate list included as well:
+
+```bash
+python3 clean.py input.mp4 output.mp4 --include-religious
+```
+
+Clear matches from your word list are always filtered. A small set of
+context-sensitive words uses nearby-dialogue rules so ordinary, non-offensive
+phrases are less likely to be muted. Edit the CSV if you prefer stricter or
+looser filtering.
+
+### Optional soft / romance vocabulary
+
+The default `profanity_words.csv` focuses on clearly offensive language, so
+ordinary dialogue is less likely to be muted.
+
+Softer / common-dialogue words that often appear in ordinary conversation live
+in a separate opt-in file:
+
+`profanity_words_optional_soft.csv`
+
+They are **not** loaded by default. If you want stricter scene/romance
+filtering, merge that file into `profanity_words.csv` (or append its entries).
 
 ---
 
@@ -89,6 +108,7 @@ filtering.
 
 - [Customize Filtered Words (CSV)](#customize-filtered-words-csv)
 - [Installation - Easy Setup Guide](#installation-easy-setup-guide)
+- [Docker (no local Python setup)](#docker-no-local-python-setup)
 - [Quick Start - Simple for Non-Technical Users](#quick-start-simple-for-non-technical-users)
 - [Why Choose This Free Profanity Filter?](#why-choose-this-free-profanity-filter)
 - [How It Works - The Technology Behind 95%+ Accuracy](#how-it-works-the-technology-behind-95-accuracy)
@@ -100,7 +120,7 @@ filtering.
 - [Processing Time & Resource Usage](#processing-time-resource-usage)
 - [Frequently Asked Questions](#frequently-asked-questions)
 - [Use Cases - Enjoy Movies Your Way](#use-cases-enjoy-movies-your-way)
-- [Comprehensive Profanity Detection](#comprehensive-profanity-detection)
+- [How Filtering Works](#how-filtering-works)
 - [Technical Details](#technical-details)
 - [Troubleshooting](#troubleshooting)
 - [Related Comparisons](#related-comparisons)
@@ -186,6 +206,63 @@ On Windows, activate with `venv\Scripts\activate` and replace `python3` with
 > the virtual environment, and installs the Python requirements. The manual
 > steps above are recommended on other operating systems.
 
+### Docker (no local Python setup)
+
+One Dockerfile provides **two build targets**:
+
+| Target | When to use | Build |
+|---|---|---|
+| `cpu` (default) | Most users / no NVIDIA GPU | `docker build -t profanity-filter:cpu --target cpu .` |
+| `gpu` | NVIDIA GPU + [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) | `docker build -t profanity-filter:gpu --target gpu .` |
+
+**Clean a video (CPU):**
+
+```bash
+docker build -t profanity-filter:cpu --target cpu .
+docker run --rm \
+  -v "$PWD":/data \
+  -v profanity-hf-cache:/cache \
+  profanity-filter:cpu \
+  /app/clean.py /data/input.mp4 /data/output.mp4
+```
+
+**Clean a video (GPU):**
+
+```bash
+docker build -t profanity-filter:gpu --target gpu .
+docker run --rm --gpus all \
+  -v "$PWD":/data \
+  -v profanity-hf-cache:/cache \
+  profanity-filter:gpu \
+  /app/clean.py /data/input.mp4 /data/output.mp4
+```
+
+**Optional Gradio web UI** (http://localhost:7860):
+
+```bash
+# CPU
+docker run --rm -p 7860:7860 -v "$PWD":/data -v profanity-hf-cache:/cache \
+  profanity-filter:cpu /app/app.py
+
+# GPU
+docker run --rm --gpus all -p 7860:7860 -v "$PWD":/data -v profanity-hf-cache:/cache \
+  profanity-filter:gpu /app/app.py
+```
+
+Or with Compose:
+
+```bash
+docker compose up --build web          # CPU UI
+docker compose --profile gpu up --build web-gpu   # GPU UI
+```
+
+Notes:
+
+- Mount your videos into `/data` (container working directory).
+- The `/cache` volume stores downloaded Whisper models so they are not re-fetched every run.
+- Force CPU inside any image with `-e PROFANITY_FILTER_DEVICE=cpu`.
+- The GPU image still falls back to CPU if no GPU is available at runtime.
+
 ### Optional GPU acceleration
 
 The app automatically accelerates both major processing stages when compatible
@@ -254,7 +331,7 @@ Measured with the **same source file** (12.012s, 1918x802, SHA-256
 | Quality vs source (PSNR avg, first 2s keep) | **52.1 dB** | **54.4 dB** |
 | Cleaned file size (identical cut) | 3.7 MB (~3.3 Mbps) | 6.3 MB (~5.8 Mbps) |
 | Peak NVENC utilization | n/a | **100%** |
-| Detected cut for `pissed` (before CPU VAD fix) | `2.15–5.37` (**3.22s**, over-cut) | `4.83–5.37` (**0.54s**, accurate) |
+| Detected cut for a single swear word (before CPU VAD fix) | `2.15–5.37` (**3.22s**, over-cut) | `4.83–5.37` (**0.54s**, accurate) |
 
 Notes for users:
 
@@ -269,7 +346,7 @@ Notes for users:
 ### Current three-clip validation after CPU VAD tuning
 
 Measured on commit `3742aec` with three distinct 12.012s clips containing known
-`shitty`, `shit`, and `fuck` dialogue. Source SHA-256 hashes were matched on
+known swear-word dialogue. Source SHA-256 hashes were matched on
 both machines before testing.
 
 | Metric (mean of 3 clips) | Laptop CPU | Quadro P2000 GPU |
@@ -295,10 +372,10 @@ visual fidelity, with about 34% larger output files.
 The context rules were tested on the same six source clips on a CPU-only laptop
 and a Quadro P2000 server:
 
-- Neutral dialogue (`swallow these pills`, `dirty bomb`, and the name `Jerry`)
+- Neutral dialogue (ordinary phrases and a common name)
   was transcribed on both machines and correctly left untouched: **3/3 on CPU
   and 3/3 on GPU**.
-- Genuine profanity (`shitty`, `fuck up`, and `bullshit`) was detected and
+- Genuine swear words from the test clips was detected and
   removed: **3/3 on CPU and 3/3 on GPU**.
 - Re-transcribing all six profanity-cleaned outputs found none of the target
   words. All 12 outputs decoded without errors.
@@ -317,7 +394,7 @@ honest practical picture:
 | What users care about | CPU-only laptop | Quadro P2000 GPU | Realistic takeaway |
 |---|---|---|---|
 | Hard-profanity detection | Passed all known targets in the tuned tests | Passed all known targets | Both are usable for detection after VAD tuning |
-| Ambiguous false positives (`swallow these pills`, `dirty bomb`, name `Jerry`) | Correctly left alone | Correctly left alone | Context rules work the same on both devices |
+| Ambiguous false positives (ordinary phrases / common name) | Correctly left alone | Correctly left alone | Context rules work the same on both devices |
 | Cut timing after VAD tuning | Matched known captions closely | Matched known captions closely | GPU is not clearly “more accurate” on the current samples |
 | Transcription speed | ~1.0–1.1s on 12s clips | ~0.5–0.6s on the same clips | GPU is about **2x** faster at Whisper |
 | Video rebuild after a cut | ~9–15s on short clips | ~2.5–3.0s on the same clips | GPU encoding is about **3.5–5x** faster |
@@ -422,15 +499,15 @@ Unlike VidAngel and ClearPlay that only work with specific streaming services, t
 - Uses **faster-whisper base model** (74M parameters) for superior accuracy on movies
 - **Dialog-enhanced audio** helps model "hear" speech masked by soundtracks
 - Each word gets a **precise timestamp** (accurate to 0.1 seconds)
-- Example: "fuck" detected at 79.76s-80.08s, "you" at 80.08s-80.88s
+- Example: a flagged word at 79.76s-80.08s, the next word at 80.08s-80.88s
 - Unlike subtitle-based filters that cut entire sentences, we cut only the bad words!
 - **Tiny model** is available for faster processing, but is less accurate and may miss profanity, especially in movies with music or background noise.
 
 ### 3. Smart Multi-Word Detection (Phrase Recognition)
-- Automatically detects **1,192+ profanity words** including variations and sexual content
-- **Intelligent merging**: Combines split phrases like "fuck you", "bull shit" into single cuts
-- **Context-aware**: Uses 1.5-second window to catch phrases spoken together
-- **Zero false positives**: Whole-word matching prevents "class" from triggering "ass"
+- Automatically detects **1,000+** entries from the editable word list (including common variations)
+- **Intelligent merging**: Combines split multi-word phrases into single cuts
+- **Context-aware**: Uses a short time window to catch phrases spoken together
+- **Whole-word matching**: Avoids matching clean words that only contain a partial letter pattern
 - **Quality monitoring**: WPM (words per minute) diagnostic warns if transcription incomplete
 
 ### 4. Frame-Accurate Video Cutting
@@ -470,7 +547,7 @@ hardware encoder:
 - **Works Offline** - No internet required after initial setup
 - **Any Video Source** - Not limited to Netflix or specific streaming services
 - **Fast AI Transcription** - Uses faster-whisper (CTranslate2) for 4-10x speed improvement
-- **Smart Profanity Detection** - Identifies 1,192+ curse words and offensive phrases
+- **Smart Language Filtering** - Matches speech against an editable 1,000+ word list
 - **Precise Editing** - Word-level timestamps remove only profanity, keeps dialogue intact
 - **Family Safe** - Create clean versions for kids and family movie nights
 - **YouTube Compatible** - Download and clean YouTube videos
@@ -570,7 +647,7 @@ python3 clean.py input.mp4 output.mp4 --remove-timestamps "45.2-47.8,120-125"
 - Base model (74M parameters) - 2x more accurate
 - Dialog enhancement enabled - isolates speech
 - Auto-upgrade if WPM low - catches edge cases
-- 1,192 profanity words (was 1,000+)
+- 1,000+ entries in the default word list
 
 **Result:** 0% → 95%+ detection on complex audio
 
@@ -637,27 +714,23 @@ python3 clean.py sample/original_video.mp4 sample/original_video_cleaned.mp4 --s
 - **Auto-Upgrade**: Automatically retries with larger model if transcription quality too low
 - **Example Output**:
   ```
-  [79.76s-80.08s] "fuck"
-  [80.08s-80.88s] "you"
-  [82.15s-82.67s] "shit"
+  [79.76s-80.08s] "<flagged-word>"
+  [80.08s-80.88s] "<next-word>"
+  [82.15s-82.67s] "<flagged-word>"
   ```
 - **Why accurate**: Trained on 680,000 hours of multilingual speech data
 - **Speed**: Processes at 10-12x real-time speed on modern CPUs
 
-#### Step 2: Profanity Detection
-- **Database**: 1,192 profanity words including variations, slang, and explicit sexual content
-- **Matching**: Whole-word exact matching (prevents false positives)
-- **Categories**: F-words, sexual terms, abusive language, religious profanity, anatomical terms, intimate actions
-- **Recent additions**: Screaming, intimate acts, body parts, arousal terms, explicit content markers
+#### Step 2: Word-List Matching
+- **Database**: Editable CSV with 1,000+ default entries (plus optional soft list)
+- **Matching**: Whole-word exact matching (helps prevent false positives)
+- **Scope**: Filters **spoken** words/phrases that appear in the transcript and
+  match the word list—not separate audio-event / sound classification
 
 #### Step 3: Intelligent Phrase Merging
-- **Problem**: AI sometimes splits phrases ("fuck" + "you" = 2 separate detections)
-- **Solution**: Automatically merges words within 1.5 seconds into single cuts
-- **Examples caught**:
-  - "fuck you" → Merged into one segment
-  - "bull shit" → Combined removal
-  - "ass hole" → Single cut
-- **Result**: Natural speech flow maintained, no awkward gaps
+- **Problem**: AI sometimes splits a multi-word phrase across separate detections
+- **Solution**: Automatically merges nearby detections into a single cut
+- **Result**: More natural speech flow, fewer awkward gaps
 
 #### Step 4: Frame-Accurate Video Cutting
 - **Tool**: FFmpeg (Hollywood-grade video processing)
@@ -680,7 +753,7 @@ python3 clean.py sample/original_video.mp4 sample/original_video_cleaned.mp4 --s
 - **Base model default** (74M parameters, 2x more accurate than tiny)
 - **Auto-upgrade mechanism** (switches to larger model if WPM low)
 - **Word-level timestamps** (not sentence-level like competitors)
-- **1,192 word database** (comprehensive coverage including sexual content)
+- **1,000+ word database** (editable CSV; optional soft list available)
 - **Intelligent phrase merging** (catches split expressions)
 - **Context-aware detection** (whole-word matching)
 - **Frame-accurate cutting** (surgical precision)
@@ -693,7 +766,8 @@ python3 clean.py sample/original_video.mp4 sample/original_video_cleaned.mp4 --s
 - Heavy accents or unclear audio may be misheard by AI
 - Creative slang or new profanity not in database
 - Background noise masking quiet curse words
-- **Solution**: Use `--remove-timestamps "10-15"` to manually add missed segments
+- Non-verbal sounds are not detected—only spoken words that appear in the transcript
+- **Solution**: Use `--remove-timestamps` to manually add missed segments; edit `profanity_words.csv` for custom spoken terms
 
 ---
 
@@ -765,7 +839,7 @@ Options:
   --phrase-gap FLOAT      Max gap to merge consecutive profanity words into phrase segments.
   --remove-timestamps     Manually add timestamps: "start-end,start-end".
   --mute-only             Mute profanity intervals instead of cutting video timeline.
-  --include-religious     Also filter religious/exclamatory terms (god, jesus, damn, hell).
+  --include-religious     Also filter religious/exclamatory terms (off by default).
   --dump-transcript FILE  Save raw transcript words with timestamps.
   --dialog-enhance        Enable dialog enhancement (default: enabled).
   --no-dialog-enhance     Disable dialog enhancement.
@@ -847,10 +921,17 @@ Absolutely! Everything runs locally on your computer. No cloud uploads, no track
 Yes! Download with yt-dlp, then clean the video. Perfect for creating family-friendly content.
 
 ### Does it remove all profanity?
-It detects 1,192 profanity words (including sexual content) with 95%+ accuracy using base model + dialog enhancement. Some edge cases may require manual review.
+It matches transcribed speech against an editable word list (1,000+ default
+entries) using the base model + dialog enhancement. Accuracy is high on clear
+dialogue; some edge cases may still need manual review.
 
 ### Can I customize what gets filtered?
-Currently uses a comprehensive profanity database. Custom word lists coming in future updates!
+Yes. Edit `profanity_words.csv` to add, remove, or comment out words (prefix a
+token with `#` to ignore it). Changes apply on the next run—no code changes
+needed. Use `--include-religious` for the optional religious/exclamatory list.
+For stricter romance/scene filtering, merge entries from
+`profanity_words_optional_soft.csv` into your CSV. See
+[Customize Filtered Words (CSV)](#customize-filtered-words-csv).
 
 ---
 
@@ -876,17 +957,17 @@ Some people just prefer watching movies without constant cursing - and that's ok
 
 ---
 
-## Comprehensive Profanity Detection
+## How Filtering Works
 
-Unlike simple word filters, this profanity filter uses AI-powered transcription with dialog enhancement and a comprehensive database of **1,192 profanity words and phrases**:
+Unlike simple subtitle text replacements, this app uses AI transcription with
+dialog enhancement and an editable word list (**1,000+** default entries):
 
 ### What Gets Filtered
-- **Curse Words**: F-words, S-words, and all common profanity
-- **Sexual Content**: Explicit anatomical terms, intimate acts, positions, arousal terms
-- **Abusive Language**: Offensive and derogatory terms
-- **Multi-Word Phrases**: Intelligently detects "fuck you", "bull shit", etc.
-- **Audio Cues**: Screaming (in sexual context), moaning, intimate sounds
-- **Variations**: Catches misspellings and creative variations
+- **Offensive spoken language** that matches your word list
+- **Multi-word phrases** when nearby detections are merged into one cut
+- **Spoken content only**: speech transcription (faster-whisper) + text matching.
+  Non-verbal sounds without spoken words are **not** classified.
+- **Custom terms** you add to `profanity_words.csv`
 
 ### Smart Detection Features
 - **Dialog Enhancement**: Isolates speech from music/effects using audio filtering (200-3500Hz vocal range)
@@ -914,7 +995,7 @@ Perfect for creating clean versions to watch with:
 - **Video Processing**: FFmpeg with frame-accurate cutting and quality matching
 - **Audio Transcription**: faster-whisper (CTranslate2) with word-level timestamps for precise detection
 - **Dialog Enhancement**: FFmpeg audio filtering (highpass 200Hz, lowpass 3500Hz, dynamic normalization, volume 1.3x)
-- **Profanity Database**: 1,192 words with intelligent multi-word phrase merging (1.5s threshold)
+- **Word list**: Editable CSV (1,000+ defaults) with multi-word phrase merging
 - **Quality Monitoring**: WPM calculation warns if transcription incomplete (threshold: 50 WPM)
 - **Auto-Upgrade**: Automatically retries with next larger model if WPM below threshold
 - **Subtitle Formats**: SRT and VTT fully supported

@@ -1,0 +1,56 @@
+# Optional helpers for local Docker usage.
+# Build CPU (default):  docker compose build
+# Build GPU:            docker compose --profile gpu build
+
+services:
+  # CLI one-shot example:
+  #   docker compose run --rm cli /app/clean.py /data/input.mp4 /data/output.mp4
+  cli:
+    build:
+      context: .
+      target: cpu
+    image: profanity-filter:cpu
+    working_dir: /data
+    volumes:
+      - ./:/data
+      - hf-cache:/cache
+    environment:
+      PROFANITY_FILTER_DEVICE: cpu
+      HF_HOME: /cache/huggingface
+    profiles: ["cli"]
+
+  # Web UI (Gradio) on http://localhost:7860
+  web:
+    build:
+      context: .
+      target: cpu
+    image: profanity-filter:cpu
+    ports:
+      - "7860:7860"
+    volumes:
+      - ./:/data
+      - hf-cache:/cache
+    environment:
+      PROFANITY_FILTER_DEVICE: cpu
+      HF_HOME: /cache/huggingface
+    command: ["/app/app.py"]
+
+  # GPU web UI — requires NVIDIA Container Toolkit
+  web-gpu:
+    build:
+      context: .
+      target: gpu
+    image: profanity-filter:gpu
+    ports:
+      - "7860:7860"
+    volumes:
+      - ./:/data
+      - hf-cache:/cache
+    environment:
+      HF_HOME: /cache/huggingface
+    command: ["/app/app.py"]
+    gpus: all
+    profiles: ["gpu"]
+
+volumes:
+  hf-cache:

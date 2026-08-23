@@ -1,7 +1,7 @@
 # GitHub Repository Description & Tags
 
-## Short Description (160 characters for GitHub)
-Free profanity filter for movies & videos - VidAngel & ClearPlay alternative. No subscription! Remove curse words from any video using AI. Family-friendly content.
+## Short Description (GitHub About field)
+Video & movie profanity filter — remove curse words, swear words & offensive language from MP4/MKV with AI transcription. Cut or mute audio, clean subtitles. Free, open-source, local & private. Family-friendly movie cleaner.
 
 ## Full Description (for About section)
 100% FREE alternative to VidAngel ($9.99/mo) and ClearPlay ($7.99/mo). Remove profanity, curse words, and offensive language from ANY video using AI-powered transcription. Works with local files, YouTube downloads, DVDs - not limited to Netflix or streaming services. Create family-friendly versions of movies for kids and family movie nights. Completely private - runs on your computer. No subscription, no account required. Save $96-120/year!

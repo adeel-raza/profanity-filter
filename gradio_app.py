@@ -185,7 +185,7 @@ def create_interface():
         gr.Markdown("""
 # Free Profanity Filter for Movies & Videos - VidAngel & ClearPlay Alternative
 
-**Created by [Adeel Raza](https://elearningevolve.com/about) - Contact: info@elearningevolve.com**
+**Created by [Adeel Raza](https://elearningevolve.com/) - Contact: info@elearningevolve.com**
 
 **Watch movies YOUR way - completely FREE!** Remove profanity, curse words, and offensive language from ANY video automatically. No subscription or Netflix account required. Works with local video files, YouTube downloads, and any MP4/MKV content.
 
@@ -309,7 +309,7 @@ Upload your video -> AI transcribes audio -> Detects profanity -> Removes offens
         gr.Markdown("""
 # Free Profanity Filter for Movies & Videos - VidAngel & ClearPlay Alternative
 
-**Created by [Adeel Raza](https://elearningevolve.com/about) - Contact: info@elearningevolve.com**
+**Created by [Adeel Raza](https://elearningevolve.com/) - Contact: info@elearningevolve.com**
 
 ### Processing Time & System Requirements
 

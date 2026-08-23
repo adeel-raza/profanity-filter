@@ -18,6 +18,7 @@ tags:
  - open-source
  - local-processing
  - privacy
+license: mit
 ---
 
 # Try the Online Demo
@@ -30,7 +31,7 @@ Want to see how it works before installing? **Try the app instantly in your brow
 
 # Free Profanity Filter for Movies & Videos
 
-**Created by [Adeel Raza](https://elearningevolve.com/about) · Contact: info@elearningevolve.com**
+**Created by [Adeel Raza](https://elearningevolve.com/) · Contact: info@elearningevolve.com**
 
 This tool cleans **profanity and swear words** out of video files you already
 have. It finds spoken offensive language with AI, then either **cuts** those
@@ -82,6 +83,7 @@ without a monthly subscription or streaming lock-in.
 - [Frequently Asked Questions](#frequently-asked-questions)
 - [Troubleshooting](#troubleshooting)
 - [Support & Community](#support-community)
+- [Credits](#credits)
 - [License](#license)
 - [Contributing](#contributing)
 
@@ -893,9 +895,21 @@ ffprobe -version
 
 ---
 
+## Credits
+
+Created and maintained by **[Adeel Raza](https://elearningevolve.com/)**.
+
+Original repository:
+https://github.com/adeel-raza/profanity-filter
+
+Copyright © 2026 Adeel Raza.
+
+---
+
 ## License
 
-Open source and free to use. See LICENSE file for details.
+This project is licensed under the [MIT License](LICENSE). You may use, modify,
+integrate, and commercially use this software under the terms of that license.
 
 ---
 

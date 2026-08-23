@@ -1,6 +1,6 @@
 ---
 title: Free Profanity Filter for Movies & Videos
-emoji: ""
+emoji: "🎬"
 colorFrom: blue
 colorTo: purple
 sdk: gradio
@@ -42,7 +42,8 @@ cleaned subtitle file.
 - Detects mainly profanity and swear words (editable word list; optional
   stricter lists available)
 - Removes matched speech by **cutting** the timeline, or keeps the timeline and
-  **mutes** those intervals with `--mute-only`
+  **mutes** those intervals with `--mute-only` (typically ~2× faster video
+  processing because the video stream is copied instead of re-encoded)
 - Outputs a cleaned video and a cleaned `.srt` subtitle file
 - Works much faster when you provide (or auto-detect) an existing subtitle file
   alongside the video
@@ -561,7 +562,17 @@ This tool uses **faster-whisper** instead of standard OpenAI Whisper for signifi
 
 ## Before/After Example
 
-See the tool in action with our sample video.
+See the tool in action on a real clip and on the bundled sample video.
+
+### Real-World Clip
+
+**Before** (original):
+
+<video src="https://github.com/user-attachments/assets/b8cf7c0a-8968-4c9e-9760-85b1d184de0f" controls="controls" width="600"></video>
+
+**After** (cleaned with profanity filter):
+
+<video src="https://github.com/user-attachments/assets/bf9e976a-a7c1-4b17-bf71-9a0d0cc62bb8" controls="controls" width="600"></video>
 
 ### Sample Video Results
 - **Original Video**: 3.1 minutes, 6.3 MB
@@ -694,9 +705,13 @@ python3 clean.py sample/original_video.mp4 sample/original_video_cleaned.mp4 --s
 ### Tips for Faster Processing
 1. **GPU acceleration** (10-20x faster) - rent AWS/Google Cloud GPU instance for batch jobs
 2. Use `--subs` flag if you have accurate subtitle files (skips transcription, 20x faster)
-3. Close other heavy applications during processing
-4. Consider `--model tiny` for speed (but may miss profanity on complex audio)
-5. Run overnight or during off-hours - quality over speed recommended
+3. **`--mute-only`** for faster Step 3 on long files: copies the video stream and
+   only re-encodes audio (no timeline cuts). On a ~53-minute GPU run this was
+   **~167 s mute vs ~347 s cut** (~2× faster for the video step). Runtime length
+   stays the same; detected swears become silent gaps instead of removed segments.
+4. Close other heavy applications during processing
+5. Consider `--model tiny` for speed (but may miss profanity on complex audio)
+6. Run overnight or during off-hours - quality over speed recommended
 
 ---
 
@@ -720,7 +735,7 @@ Options:
  --use-subs-detection Use subtitles for detection instead of audio (advanced).
  --phrase-gap FLOAT Max gap to merge consecutive profanity words into phrase segments.
  --remove-timestamps Manually add timestamps: "start-end,start-end".
- --mute-only Mute profanity intervals instead of cutting video timeline.
+ --mute-only Mute profanity intervals instead of cutting (faster: video copy + audio re-encode).
  --include-religious Also filter religious/exclamatory terms (off by default).
  --dump-transcript FILE Save raw transcript words with timestamps.
  --dialog-enhance Enable dialog enhancement (default: enabled).

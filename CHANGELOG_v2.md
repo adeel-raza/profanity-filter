@@ -1,5 +1,8 @@
 # Version 2.0 - Simplified & Faster
 
+> Current package release: **1.2.0** (2026-08-25). See `CHANGELOG.md` for the
+> full history, including mute/subtitle sync fixes and earlier 1.x / 2.x notes.
+
 ## Major Changes
 
 ### 🚀 Performance & Simplicity

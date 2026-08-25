@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2026-08-25
+
+### Fixed
+- **Mute-only subtitle mismatch**: Preserve embedded subtitle streams when muting
+  (previously only video+audio were mapped, so players fell back to the wrong
+  external SRT).
+- **Mute-only A/V skew on MKV**: Use FLAC for mute remux on MKV/WebM so dialogue
+  stays locked to the stream-copied video timeline (AAC priming no longer adds
+  ~20ms drift). MP4 mute remains AAC stream-copy, which was already correct.
+- **Generated subtitles without `--subs`**: Build cleaned SRT cues from the
+  original Step 1 word-level transcript and shift them only in cut mode. Do not
+  re-transcribe the cleaned file (that path produced misplaced/missing cues on
+  mute and cut outputs).
+
+### Changed
+- README documents `--mute-only` speed (~2× faster Step 3 vs full cut on GPU).
+- MIT license / Credits: copyright 2026 Adeel Raza, repository URL, and site link
+  to https://elearningevolve.com/.
+- Hugging Face Space README frontmatter: restore non-empty `emoji` (empty value
+  was rejecting Space sync pushes).
+- Moved issue #1 before/after demo clips into the README and closed the issue.
+- GitHub repository description updated for clearer SEO keywords.
+
+### Verification
+- Validated mute A/V lock, embedded-sub retention, and no-`--subs` SRT alignment
+  on 10 lengthy synthetic samples (~4 minutes each, plus one ~8 minute cut run).
+
 ## [2.1.0] - 2025-11-30
 
 ### Fixed
@@ -51,7 +78,7 @@ All notable changes to this project will be documented in this file.
 - Switched from AudioProfanityDetector to AudioProfanityDetectorFast
 - Added dialog enhancement, auto-upgrade, and quality checking features
 
-## [1.2.0] - 2025-11-30
+## [1.1.0] - 2025-11-30
 
 ### Fixed
 - **False positive word matching**: Changed from substring matching to exact whole-word matching
@@ -83,4 +110,3 @@ All notable changes to this project will be documented in this file.
 - Automatic subtitle timestamp adjustment after video cuts
 - Manual timestamp removal option
 - Multiple Whisper model size options
-

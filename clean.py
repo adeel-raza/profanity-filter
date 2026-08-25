@@ -18,7 +18,46 @@ from audio_profanity_detector_fast import AudioProfanityDetectorFast, MissingBin
 from video_cutter import VideoCutter
 from timestamp_merger import TimestampMerger
 from subtitle_processor import SubtitleProcessor
-from generate_subtitles import generate_subtitles
+from generate_subtitles import generate_subtitles, write_srt_from_words
+
+
+def _write_subs_from_original_timeline(
+    output_path: Path,
+    include_religious: bool,
+    mute_only: bool,
+    cut_segments,
+    transcript_words,
+    input_path: Path,
+    model_size: str,
+):
+    """
+    Build cleaned subtitles on the original video clock, then shift only if
+    the video was cut. Never re-transcribe the cleaned file (that misaligns cues).
+    """
+    output_subtitle = output_path.parent / f"{output_path.stem}.srt"
+    processor = SubtitleProcessor(include_religious=include_religious)
+    segments_for_subs = [] if mute_only else list(cut_segments or [])
+    source_srt = None
+
+    if transcript_words:
+        source_srt = output_path.parent / f"{output_path.stem}.from_transcript.srt"
+        count = write_srt_from_words(transcript_words, source_srt)
+        print(f"  Built {count} subtitle cue(s) from the original audio transcript")
+    else:
+        print("  No stored transcript; transcribing the original video for subtitles...")
+        source_srt = output_path.parent / f"{output_path.stem}.from_original.srt"
+        if not generate_subtitles(input_path, source_srt, model_size):
+            return None
+
+    ok = processor.process_srt(source_srt, output_subtitle, segments_for_subs)
+    try:
+        if source_srt.exists() and source_srt != output_subtitle:
+            source_srt.unlink()
+    except OSError:
+        pass
+    if not ok:
+        return None
+    return output_subtitle
 
 
 def main():
@@ -117,6 +156,7 @@ def main():
     # Step 1: Detect profanity using AI transcription (faster-whisper)
     # Uses word-level timestamps for precise, accurate profanity removal
     audio_segments = []
+    transcript_words = []
     
     # Hybrid detection: subtitles first, then audio for suspicious segments
     if args.hybrid and subtitle_input:
@@ -182,6 +222,7 @@ def main():
                     include_religious=args.include_religious,
                 )
                 audio_segments = audio_detector.detect(input_path)
+                transcript_words = list(getattr(audio_detector, 'last_transcript_words', []) or [])
                 print("-" * 60)
                 print(f"Step 1 Summary: Found {len(audio_segments)} profanity segment(s) in audio")
                 if audio_segments:
@@ -267,10 +308,10 @@ def main():
         shutil.copy2(input_path, output_path)
         print(f"Output saved to: {output_path}")
         
-        # Process subtitles to remove profanity words even if no video cuts needed
+        # Process subtitles even if no video cuts needed
+        output_base = output_path.stem
+        output_dir = output_path.parent
         if subtitle_input:
-            output_base = output_path.stem
-            output_dir = output_path.parent
             if subtitle_input.suffix.lower() == '.srt':
                 output_subtitle = output_dir / f"{output_base}.srt"
             elif subtitle_input.suffix.lower() == '.vtt':
@@ -278,7 +319,6 @@ def main():
             else:
                 output_subtitle = output_dir / f"{output_base}{subtitle_input.suffix}"
             
-            # Process subtitles to filter profanity words
             subtitle_processor = SubtitleProcessor(include_religious=args.include_religious)
             if subtitle_input.suffix.lower() == '.srt':
                 subtitle_processor.process_srt(subtitle_input, output_subtitle, [])
@@ -287,6 +327,14 @@ def main():
             else:
                 subtitle_processor.process_srt(subtitle_input, output_subtitle, [])
             print(f"Cleaned subtitles saved to: {output_subtitle}")
+        elif transcript_words:
+            print("Step 4: Writing subtitles from original transcript...")
+            output_subtitle = _write_subs_from_original_timeline(
+                output_path, args.include_religious, True, [],
+                transcript_words, input_path, args.model,
+            )
+            if output_subtitle:
+                print(f"Cleaned subtitles saved to: {output_subtitle}")
         
         return
     
@@ -353,18 +401,23 @@ def main():
             output_subtitle = None
         print()
     else:
-        # No subtitle provided: generate subtitles for the cleaned video and attach
+        # No original subtitle file: reuse Step 1 word timestamps (original timeline),
+        # then shift only if the video was cut. Do not re-transcribe the cleaned file.
         try:
-            print("Step 4: Generating subtitles for cleaned video...")
-            output_dir = output_path.parent
-            output_base = output_path.stem
-            output_subtitle = output_dir / f"{output_base}.srt"
-            ok = generate_subtitles(output_path, output_subtitle, args.model)
-            if ok:
-                print(f"  ✓ Subtitles generated and saved to: {output_subtitle}")
+            print("Step 4: Building subtitles from original audio transcript...")
+            output_subtitle = _write_subs_from_original_timeline(
+                output_path,
+                args.include_religious,
+                args.mute_only,
+                all_segments,
+                transcript_words,
+                input_path,
+                args.model,
+            )
+            if output_subtitle:
+                print(f"  ✓ Cleaned subtitles saved to: {output_subtitle}")
             else:
-                print("  ⚠ Warning: Failed to generate subtitles for cleaned video")
-                output_subtitle = None
+                print("  ⚠ Warning: Failed to generate aligned subtitles")
         except Exception as e:
             print(f"  ⚠ Warning: Subtitle generation error: {e}")
             output_subtitle = None

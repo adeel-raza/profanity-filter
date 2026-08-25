@@ -20,6 +20,58 @@ def seconds_to_srt_time(seconds: float) -> str:
     return f"{hours:02d}:{minutes:02d}:{secs:02d},{millis:03d}"
 
 
+def write_srt_from_words(words, output_path: Path, max_cue_seconds: float = 6.0,
+                         max_gap: float = 0.75, max_words: int = 14) -> int:
+    """
+    Build an SRT on the original video timeline from word-level timestamps.
+
+    Grouping follows natural pauses so cues stay readable and stay aligned with
+    speech. This is used when the user did not provide an original subtitle file.
+    """
+    cues = []
+    current = []
+
+    def flush():
+        if not current:
+            return
+        start = float(current[0].start)
+        end = float(current[-1].end)
+        if end <= start:
+            end = start + 0.2
+        text = ' '.join(w.word.strip() for w in current if getattr(w, 'word', '').strip()).strip()
+        if text:
+            cues.append((start, end, text))
+        current.clear()
+
+    for word in words:
+        token = getattr(word, 'word', '').strip()
+        if not token:
+            continue
+        if not current:
+            current.append(word)
+            continue
+        gap = float(word.start) - float(current[-1].end)
+        span = float(word.end) - float(current[0].start)
+        prev_text = current[-1].word.strip()
+        should_break = (
+            gap > max_gap
+            or span > max_cue_seconds
+            or len(current) >= max_words
+            or (len(current) >= 4 and prev_text[-1:] in '.!?')
+        )
+        if should_break:
+            flush()
+        current.append(word)
+    flush()
+
+    with open(output_path, 'w', encoding='utf-8') as f:
+        for i, (start, end, text) in enumerate(cues, 1):
+            f.write(f"{i}\n")
+            f.write(f"{seconds_to_srt_time(start)} --> {seconds_to_srt_time(end)}\n")
+            f.write(f"{text}\n\n")
+    return len(cues)
+
+
 def whisper_to_srt(segments, output_path: Path):
     """Convert faster-whisper segment objects to SRT format."""
     with open(output_path, 'w', encoding='utf-8') as f:

@@ -60,6 +60,8 @@ class AudioProfanityDetectorFast:
         self.whisper_model = None
         self.device = 'cpu'
         self.compute_type = None
+        # Word-level transcript from the last detect() call (original video timeline).
+        self.last_transcript_words = []
         if profanity_words is not None:
             self.PROFANITY_WORDS = set(profanity_words)
         else:
@@ -180,6 +182,7 @@ class AudioProfanityDetectorFast:
 
         # Fail fast with a clear, actionable message instead of silently returning no detections.
         self._ensure_media_binaries()
+        self.last_transcript_words = []
         
         temp_dir = Path(tempfile.mkdtemp())
         profanity_segments = []
@@ -242,6 +245,7 @@ class AudioProfanityDetectorFast:
             for segment in segments:
                 for word in segment.words:
                     all_words.append(word)
+            self.last_transcript_words = all_words
             
             elapsed = time.time() - start_time
             print(f"  ✓ Transcription complete in {elapsed:.1f}s ({info.duration/elapsed:.1f}x real-time)")
@@ -460,6 +464,7 @@ class AudioProfanityDetectorFast:
             for segment in segments:
                 for word in segment.words:
                     all_words.append(word)
+            self.last_transcript_words = all_words
             elapsed = time.time() - start_time
             print(f"  ✓ Upgrade transcription complete in {elapsed:.1f}s ({info.duration/elapsed:.1f}x real-time)")
             wpm = len(all_words) / (info.duration / 60.0) if info.duration else 0

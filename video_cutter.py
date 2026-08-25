@@ -126,7 +126,9 @@ class VideoCutter:
 
         # Portable across modern FFmpeg: avoid non-portable -filter_script:a.
         audio_filter = f"volume=0:enable='{enable_expr}'"
-        audio_encode_args = self._build_audio_encode_args(audio_info)
+        audio_encode_args = self._build_mute_audio_encode_args(
+            audio_info, output_path.suffix.lower()
+        )
 
         channels = audio_info.get('channels')
         layout = audio_info.get('channel_layout') or 'unknown'
@@ -137,6 +139,11 @@ class VideoCutter:
             f"layout={layout}, "
             f"bitrate={bitrate // 1000 if isinstance(bitrate, int) else 'unknown'}k"
         )
+        print(
+            "  Mute encode: "
+            f"{' '.join(audio_encode_args[:2])} "
+            "(keeps video copy + subtitle streams; timeline unchanged)"
+        )
 
         try:
             if len(audio_filter) <= 6000:
@@ -144,18 +151,37 @@ class VideoCutter:
                     'ffmpeg', '-i', str(input_path),
                     '-map', '0:v:0?',
                     '-map', '0:a:0?',
+                    # Keep embedded subs. Dropping them forces players onto an
+                    # external SRT and often looks like a mute-mode "desync".
+                    '-map', '0:s?',
                     '-c:v', 'copy',
+                    '-c:s', 'copy',
                     '-af', audio_filter,
                     *audio_encode_args,
+                    *self._mute_container_args(output_path),
                     '-loglevel', 'error',
                     '-y', str(output_path)
                 ]
-                if output_path.suffix.lower() == '.mp4':
-                    # Insert before loglevel for MP4 streaming-friendly output.
-                    cmd[cmd.index('-loglevel'):cmd.index('-loglevel')] = ['-movflags', '+faststart']
                 result = subprocess.run(cmd, capture_output=True, text=True)
                 if result.returncode == 0:
                     print("  ✓ Audio muting complete")
+                    return True
+                # Retry without subtitle mapping if the source has no/ incompatible subs.
+                print("  ⚠ Mute with subtitle copy failed; retrying without subtitle streams...")
+                cmd_no_subs = [
+                    'ffmpeg', '-i', str(input_path),
+                    '-map', '0:v:0?',
+                    '-map', '0:a:0?',
+                    '-c:v', 'copy',
+                    '-af', audio_filter,
+                    *audio_encode_args,
+                    *self._mute_container_args(output_path),
+                    '-loglevel', 'error',
+                    '-y', str(output_path)
+                ]
+                result = subprocess.run(cmd_no_subs, capture_output=True, text=True)
+                if result.returncode == 0:
+                    print("  ✓ Audio muting complete (subtitle streams not copied)")
                     return True
                 print("  ✗ FFmpeg mute command failed. Return code:", result.returncode)
                 if result.stderr:
@@ -192,16 +218,33 @@ class VideoCutter:
                 '-filter_complex_script', filter_script_path,
                 '-map', '0:v:0?',
                 '-map', '[aout]',
+                '-map', '0:s?',
                 '-c:v', 'copy',
+                '-c:s', 'copy',
                 *audio_encode_args,
+                *self._mute_container_args(output_path),
                 '-loglevel', 'error',
                 '-y', str(output_path)
             ]
-            if output_path.suffix.lower() == '.mp4':
-                cmd[cmd.index('-loglevel'):cmd.index('-loglevel')] = ['-movflags', '+faststart']
             result = subprocess.run(cmd, capture_output=True, text=True)
             if result.returncode == 0:
                 print("  ✓ Audio muting complete")
+                return True
+
+            cmd_no_subs = [
+                'ffmpeg', '-i', str(input_path),
+                '-filter_complex_script', filter_script_path,
+                '-map', '0:v:0?',
+                '-map', '[aout]',
+                '-c:v', 'copy',
+                *audio_encode_args,
+                *self._mute_container_args(output_path),
+                '-loglevel', 'error',
+                '-y', str(output_path)
+            ]
+            result = subprocess.run(cmd_no_subs, capture_output=True, text=True)
+            if result.returncode == 0:
+                print("  ✓ Audio muting complete (subtitle streams not copied)")
                 return True
 
             print("  ✗ FFmpeg mute command failed. Return code:", result.returncode)
@@ -224,6 +267,38 @@ class VideoCutter:
                 continue
             parts.append(f"between(t,{start:.3f},{end:.3f})")
         return "+".join(parts)
+
+    def _mute_container_args(self, output_path: Path) -> List[str]:
+        """Container-specific mux flags for mute-only output."""
+        if output_path.suffix.lower() == '.mp4':
+            return ['-movflags', '+faststart']
+        return []
+
+    def _build_mute_audio_encode_args(
+        self,
+        audio_info: Dict[str, Optional[object]],
+        container_suffix: str,
+    ) -> List[str]:
+        """
+        Choose mute audio codec for A/V lock with stream-copied video.
+
+        MP4: AAC (edit lists keep sync; matches prior behavior).
+        MKV/WebM: FLAC (lossless, no AAC priming skew; verified vs tone timing).
+        """
+        suffix = (container_suffix or '').lower()
+        channels = audio_info.get('channels')
+        sample_rate = audio_info.get('sample_rate')
+
+        if suffix in {'.mkv', '.webm'}:
+            args = ['-c:a', 'flac']
+            if isinstance(channels, int) and channels > 0:
+                args.extend(['-ac', str(channels)])
+            if isinstance(sample_rate, int) and sample_rate > 0:
+                args.extend(['-ar', str(sample_rate)])
+            return args
+
+        # Default / MP4 / MOV: AAC
+        return self._build_audio_encode_args(audio_info)
 
     def _get_audio_stream_info(self, video_path: Path) -> Dict[str, Optional[object]]:
         """Inspect primary audio stream so mute re-encode preserves quality."""

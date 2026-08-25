@@ -1,5 +1,9 @@
 # Changelog: Optimized Version
 
+> Package release **1.2.0** (2026-08-25) and the full project history live in
+> `CHANGELOG.md`. This file remains the historical record of the earlier
+> optimized-vs-non-optimized split.
+
 ## Overview
 This changelog documents all changes made to transform the non-optimized version into the optimized version.
 

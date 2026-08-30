@@ -14,6 +14,9 @@ import threading
 import time
 from datetime import datetime
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -91,11 +94,12 @@ def process_video(video_path, output_path, session_id, whisper_model='tiny'):
                 'video_path': None,
                 'subtitle_path': None
             }
-    except Exception as e:
+    except Exception:
+        logger.exception('Video processing failed for session %s', session_id)
         processing_status[session_id] = {
             'status': 'error',
             'progress': 0,
-            'message': f'Error: {str(e)}',
+            'message': 'Video processing failed. Check server logs for details.',
             'video_path': None,
             'subtitle_path': None
         }
@@ -196,10 +200,14 @@ def cleanup(session_id):
             # Remove status
             del processing_status[session_id]
         return jsonify({'success': True})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    except Exception:
+        logger.exception('Cleanup failed for session %s', session_id)
+        return jsonify({'error': 'Cleanup failed'}), 500
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    debug = os.environ.get('FLASK_DEBUG', '').lower() in ('1', 'true', 'yes')
+    host = os.environ.get('FLASK_HOST', '127.0.0.1')
+    port = int(os.environ.get('FLASK_PORT', '5000'))
+    app.run(debug=debug, host=host, port=port)
 

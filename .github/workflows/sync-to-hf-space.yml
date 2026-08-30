@@ -1,5 +1,8 @@
 name: Sync to Hugging Face Space
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [main]

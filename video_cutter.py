@@ -1,18 +1,19 @@
 """
-Video Cutter - Cuts out segments from video using FFmpeg (quality-first)
+Video Cutter - Cuts out segments from video using FFmpeg
 
-Quality goals:
+Goals:
 - Prefer a single encode pass (no double re-encode)
-- Use high-quality H.264 settings (CRF ~18, medium preset)
+- Keep cleaned file size near the source (source-aware bitrate / milder CRF)
 - Preserve audio channels/sample rate/bitrate where possible
 - Mute-only mode keeps original video bitstream via stream copy
 """
 
+import json
+import os
 import subprocess
 import tempfile
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
-import os
 
 
 # Removed _extract_single_segment_worker - using sequential extraction instead
@@ -490,24 +491,66 @@ class VideoCutter:
         except Exception:
             return None
     
-    def _get_video_bitrate(self, video_path: Path) -> int:
-        """Get video stream bitrate in bps"""
+    def _get_video_bitrate(self, video_path: Path) -> Optional[int]:
+        """Best-effort video bitrate in bps (stream, then format fallback)."""
+        def _parse_bps(raw: str) -> Optional[int]:
+            value = (raw or '').strip()
+            if not value or value.upper() == 'N/A':
+                return None
+            try:
+                bps = int(float(value))
+            except ValueError:
+                return None
+            return bps if bps > 0 else None
+
         try:
             cmd = [
                 'ffprobe', '-v', 'error',
                 '-select_streams', 'v:0',
                 '-show_entries', 'stream=bit_rate',
                 '-of', 'default=noprint_wrappers=1:nokey=1',
-                str(video_path)
+                str(video_path),
             ]
             result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-            bitrate = result.stdout.strip()
-            if bitrate and bitrate != 'N/A':
-                return int(float(bitrate))
+            stream_bps = _parse_bps(result.stdout)
+            if stream_bps:
+                return stream_bps
+        except Exception:
+            pass
+
+        # Many MP4/MKV files omit per-stream bit_rate; estimate from container.
+        try:
+            cmd = [
+                'ffprobe', '-v', 'error',
+                '-show_entries', 'format=bit_rate:stream=bit_rate,codec_type',
+                '-of', 'json',
+                str(video_path),
+            ]
+            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            payload = json.loads(result.stdout or '{}')
+            format_bps = _parse_bps(str((payload.get('format') or {}).get('bit_rate') or ''))
+            audio_bps = 0
+            for stream in payload.get('streams') or []:
+                if stream.get('codec_type') == 'audio':
+                    abps = _parse_bps(str(stream.get('bit_rate') or ''))
+                    if abps:
+                        audio_bps += abps
+            if format_bps:
+                estimated = format_bps - audio_bps
+                if estimated > 100000:
+                    return estimated
+                return format_bps
         except Exception:
             pass
         return None
-    
+
+    def _target_video_bitrate(self, original_bitrate: Optional[int]) -> int:
+        """Target output video bitrate near the source (avoid unconstrained encode)."""
+        if original_bitrate and original_bitrate > 0:
+            # Keep a sane floor/ceiling so tiny/huge probes do not break encoders.
+            return max(300000, min(int(original_bitrate), 40000000))
+        return 2500000
+
     def _calculate_keep_segments(self, remove_segments: List[Tuple[float, float]], 
                                  duration: float) -> List[Tuple[float, float]]:
         """Calculate segments to keep (inverse of segments to remove)"""
@@ -534,17 +577,20 @@ class VideoCutter:
     
     def _choose_crf(self, original_bitrate: Optional[int]) -> int:
         """
-        Pick a quality-first CRF.
-        Lower CRF = higher quality. CRF 18 is near-transparent for most content.
+        Pick a size-aware CRF (higher = smaller file).
+        Tuned to stay near source size instead of near-lossless bloat.
         """
         if not original_bitrate:
-            return 18
-        # Very low-bitrate sources: avoid over-bloating while still looking clean.
-        if original_bitrate < 300000:
+            return 23
+        if original_bitrate < 500000:
+            return 23
+        if original_bitrate < 2000000:
             return 20
-        if original_bitrate < 1000000:
-            return 18
-        return 17
+        return 18
+
+    def _choose_nvenc_cq(self, original_bitrate: Optional[int]) -> int:
+        """NVENC CQ roughly aligned with the CPU CRF ladder."""
+        return self._choose_crf(original_bitrate)
 
     def _has_audio_stream(self, audio_info: Dict[str, Optional[object]]) -> bool:
         codec = audio_info.get('codec_name')
@@ -555,34 +601,45 @@ class VideoCutter:
 
     @staticmethod
     def _cpu_video_args(crf_value: int) -> List[str]:
-        """High-quality CPU fallback used only when no hardware encoder works."""
+        """CPU fallback: size-aware CRF with a fast preset (closer to pre-NVENC behavior)."""
         return [
             '-c:v', 'libx264',
             '-crf', str(crf_value),
-            '-preset', 'medium',
+            '-preset', 'veryfast',
             '-pix_fmt', 'yuv420p',
             '-threads', '0',
         ]
 
-    @staticmethod
-    def _hardware_encoder_candidates() -> List[Tuple[str, List[str]]]:
+    def _hardware_encoder_candidates(
+        self,
+        original_bitrate: Optional[int],
+    ) -> List[Tuple[str, List[str]]]:
         """
         Hardware H.264 encoders ordered by common availability.
 
-        Each candidate is validated with a real one-frame encode before use;
-        FFmpeg builds often list encoders even when matching hardware/drivers
-        are unavailable.
+        Bitrate is capped to the source so cleaned files stay near original size.
+        Each candidate is validated with a real one-frame encode before use.
         """
+        target = self._target_video_bitrate(original_bitrate)
+        maxrate = int(target * 1.3)
+        bufsize = int(target * 2)
+        cq = self._choose_nvenc_cq(original_bitrate)
+        # QSV quality numbers: higher = smaller file.
+        qsv_quality = max(18, min(cq + 2, 28))
+        vt_quality = max(50, min(75, 95 - cq))  # VideoToolbox: higher q = better
+
         return [
             (
                 'NVIDIA NVENC',
                 [
                     '-c:v', 'h264_nvenc',
-                    '-preset', 'p7',
+                    '-preset', 'p5',
                     '-tune', 'hq',
                     '-rc', 'vbr',
-                    '-cq', '18',
-                    '-b:v', '0',
+                    '-cq', str(cq),
+                    '-b:v', str(target),
+                    '-maxrate', str(maxrate),
+                    '-bufsize', str(bufsize),
                     '-profile:v', 'high',
                     '-pix_fmt', 'yuv420p',
                 ],
@@ -591,8 +648,11 @@ class VideoCutter:
                 'Intel Quick Sync',
                 [
                     '-c:v', 'h264_qsv',
-                    '-preset', 'veryslow',
-                    '-global_quality', '16',
+                    '-preset', 'medium',
+                    '-global_quality', str(qsv_quality),
+                    '-b:v', str(target),
+                    '-maxrate', str(maxrate),
+                    '-bufsize', str(bufsize),
                     '-pix_fmt', 'nv12',
                 ],
             ),
@@ -600,11 +660,11 @@ class VideoCutter:
                 'AMD AMF',
                 [
                     '-c:v', 'h264_amf',
-                    '-quality', 'quality',
-                    '-rc', 'cqp',
-                    '-qp_i', '16',
-                    '-qp_p', '18',
-                    '-qp_b', '20',
+                    '-quality', 'balanced',
+                    '-rc', 'vbr_peak',
+                    '-b:v', str(target),
+                    '-maxrate', str(maxrate),
+                    '-bufsize', str(bufsize),
                     '-pix_fmt', 'yuv420p',
                 ],
             ),
@@ -612,7 +672,10 @@ class VideoCutter:
                 'Apple VideoToolbox',
                 [
                     '-c:v', 'h264_videotoolbox',
-                    '-q:v', '80',
+                    '-b:v', str(target),
+                    '-maxrate', str(maxrate),
+                    '-bufsize', str(bufsize),
+                    '-q:v', str(vt_quality),
                     '-pix_fmt', 'yuv420p',
                 ],
             ),
@@ -644,7 +707,11 @@ class VideoCutter:
         except (OSError, subprocess.TimeoutExpired):
             return False
 
-    def _select_video_encoder(self, crf_value: int) -> Tuple[str, List[str], bool]:
+    def _select_video_encoder(
+        self,
+        crf_value: int,
+        original_bitrate: Optional[int] = None,
+    ) -> Tuple[str, List[str], bool]:
         """
         Select a working GPU encoder, with an explicit CPU-only override.
 
@@ -662,7 +729,7 @@ class VideoCutter:
         ).strip().lower()
 
         if forced != 'cpu':
-            for name, args in self._hardware_encoder_candidates():
+            for name, args in self._hardware_encoder_candidates(original_bitrate):
                 encoder_name = args[1]
                 if forced not in ('', 'auto') and forced not in (
                     encoder_name.lower(),
@@ -685,7 +752,7 @@ class VideoCutter:
     def _apply_cuts(self, input_path: Path, output_path: Path,
                     keep_segments: List[Tuple[float, float]],
                     original_bitrate: int = None) -> bool:
-        """Apply cuts with a single high-quality encode pass."""
+        """Apply cuts with a single size-aware encode pass."""
         if not keep_segments:
             return False
 
@@ -693,21 +760,21 @@ class VideoCutter:
         audio_info = self._get_audio_stream_info(input_path)
         has_audio = self._has_audio_stream(audio_info)
         audio_encode_args = self._build_audio_encode_args(audio_info) if has_audio else []
-        encoder_name, video_args, hardware_encode = self._select_video_encoder(crf_value)
+        encoder_name, video_args, hardware_encode = self._select_video_encoder(
+            crf_value,
+            original_bitrate,
+        )
+        target_bps = self._target_video_bitrate(original_bitrate)
+        source_rate = f"~{target_bps // 1000}kbps target"
         if hardware_encode:
             print(
                 f"  ✓ GPU video encoding enabled: {encoder_name} "
-                "(quality-first settings, single pass)"
+                f"(source-matched bitrate, {source_rate}, single pass)"
             )
         else:
-            source_rate = (
-                f", source ~{original_bitrate // 1000}kbps"
-                if original_bitrate
-                else ""
-            )
             print(
                 f"  No compatible GPU video encoder found — using CPU libx264 "
-                f"(CRF {crf_value}, preset medium{source_rate}, single pass)"
+                f"(CRF {crf_value}, preset veryfast, {source_rate}, single pass)"
             )
 
         try:
@@ -728,8 +795,7 @@ class VideoCutter:
                     cmd.extend(['-an'])
                 cmd.extend(['-avoid_negative_ts', 'make_zero', '-y', str(output_path)])
                 print(
-                    f"  [QUALITY] Single-segment high-quality encode via "
-                    f"{encoder_name}"
+                    f"  [SIZE-AWARE] Single-segment encode via {encoder_name}"
                 )
                 result = subprocess.run(cmd, capture_output=True, text=True)
             else:
@@ -775,7 +841,7 @@ class VideoCutter:
                 ]
                 cmd.extend(['-y', str(output_path)])
                 print(
-                    f"  [QUALITY] Multi-segment single-pass encode "
+                    f"  [SIZE-AWARE] Multi-segment single-pass encode "
                     f"({n} keep ranges, {encoder_name}, no double re-encode)"
                 )
                 result = subprocess.run(cmd, capture_output=True, text=True)

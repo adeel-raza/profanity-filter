@@ -6,11 +6,51 @@ import re
 from pathlib import Path
 from typing import List, Tuple, Optional
 
-from profanity_words import (
-    PROFANITY_WORDS,
-    get_profanity_words,
-    should_filter_word,
-)
+from profanity_words import PROFANITY_WORDS
+
+try:
+    # Newer installs expose helpers for religious/context filtering.
+    from profanity_words import get_profanity_words, should_filter_word
+except ImportError:  # Older servers may only ship the word set.
+    def get_profanity_words(include_religious: bool = False):
+        return set(PROFANITY_WORDS)
+
+    def should_filter_word(word: str, context) -> bool:
+        return True
+
+
+def read_subtitle_text(path: Path) -> str:
+    """
+    Read SRT/VTT text safely across common encodings.
+
+    Customer SRTs are often UTF-16 (BOM starts with 0xFF), while this tool
+    historically assumed UTF-8 only.
+    """
+    data = Path(path).read_bytes()
+    if not data:
+        return ''
+
+    # BOM-based detection first (most reliable).
+    if data.startswith(b'\xff\xfe') or data.startswith(b'\xfe\xff'):
+        return data.decode('utf-16')
+    if data.startswith(b'\xef\xbb\xbf'):
+        return data.decode('utf-8-sig')
+
+    # UTF-16 without BOM often has NUL bytes in the first line.
+    if b'\x00' in data[:64]:
+        for enc in ('utf-16', 'utf-16-le', 'utf-16-be'):
+            try:
+                return data.decode(enc)
+            except UnicodeDecodeError:
+                continue
+
+    for enc in ('utf-8', 'cp1252', 'latin-1'):
+        try:
+            return data.decode(enc)
+        except UnicodeDecodeError:
+            continue
+
+    return data.decode('utf-8', errors='replace')
 
 
 class SubtitleProcessor:
@@ -39,8 +79,7 @@ class SubtitleProcessor:
             True if successful, False otherwise
         """
         try:
-            with open(input_srt, 'r', encoding='utf-8') as f:
-                content = f.read()
+            content = read_subtitle_text(input_srt)
             
             # Parse SRT entries
             entries = self._parse_srt(content)
@@ -159,9 +198,8 @@ class SubtitleProcessor:
             List of (start_time, end_time, words) tuples for profanity segments
         """
         try:
-            with open(subtitle_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-            
+            content = read_subtitle_text(subtitle_path)
+
             # Parse based on file extension
             if subtitle_path.suffix.lower() == '.srt':
                 entries = self._parse_srt(content)
@@ -550,9 +588,8 @@ class SubtitleProcessor:
             True if successful, False otherwise
         """
         try:
-            with open(input_vtt, 'r', encoding='utf-8') as f:
-                content = f.read()
-            
+            content = read_subtitle_text(input_vtt)
+
             # Parse VTT entries
             entries = self._parse_vtt(content)
             

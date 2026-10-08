@@ -108,9 +108,11 @@ class VideoCutter:
         original_bitrate = self._get_video_bitrate(input_path)
         return self._apply_cuts(input_path, output_path, keep_segments, original_bitrate)
 
-    # Keep each mute pass well under Windows command-length limits.
-    # ~200 intervals ≈ a few KB of filter text; safe for subprocess/PowerShell.
-    _MUTE_CHUNK_SIZE = 200
+    # Cap each mute pass below FFmpeg's practical enable-expression limit
+    # (~100 between()/ops in one volume filter on some builds). Also keeps
+    # Windows command lines short. Values of 100-200 used to stay on the
+    # single-pass path and could fail; chunking starts above this size.
+    _MUTE_CHUNK_SIZE = 99
 
     def _mute_segments(self, input_path: Path, output_path: Path,
                        segments_to_mute: List[Tuple[float, float]]) -> bool:

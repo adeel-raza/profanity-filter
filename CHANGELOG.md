@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+- **Hugging Face / Gradio false "0 profanity"**: Resolve uploaded file paths
+  correctly (Gradio FileData basename-only `.name` broke FFmpeg and was
+  reported as a clean video). Fail loudly on empty transcripts; use `base`
+  model in the web UI; add `packages.txt` so Spaces installs FFmpeg.
+
 ### Changed
 - README: Setup and Quick Start are now the first sections after the intro.
 - README: Removed broken `sample/*.mp4` embeds (sample videos are not in the

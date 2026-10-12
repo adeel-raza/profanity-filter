@@ -373,7 +373,10 @@ class AudioProfanityDetectorFast:
             print(f"  ✗ Error during audio profanity detection: {e}")
             import traceback
             traceback.print_exc()
-            profanity_segments = []
+            # Do not pretend the video is clean — callers must see the failure.
+            raise RuntimeError(
+                f"Audio profanity detection failed: {e}"
+            ) from e
         finally:
             # Clean up temp directory
             import shutil

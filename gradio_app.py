@@ -18,6 +18,34 @@ from timestamp_merger import TimestampMerger
 from subtitle_processor import SubtitleProcessor
 
 
+def _resolve_upload_path(file_obj):
+    """
+    Gradio may pass a filepath string, a Path, or a FileData-like object.
+    Prefer an existing absolute path; never treat a bare basename as the file.
+    """
+    if file_obj is None:
+        return None
+    candidates = []
+    if isinstance(file_obj, (str, Path)):
+        candidates.append(Path(file_obj))
+    else:
+        for attr in ('path', 'name'):
+            val = getattr(file_obj, attr, None)
+            if val:
+                candidates.append(Path(val))
+    for path in candidates:
+        try:
+            if path.exists() and path.is_file():
+                return path.resolve()
+        except OSError:
+            continue
+    tried = ', '.join(str(p) for p in candidates) or repr(file_obj)
+    raise FileNotFoundError(
+        f"Uploaded file not found on disk (tried: {tried}). "
+        "This is usually a Gradio path-handling bug; please re-upload and try again."
+    )
+
+
 def clean_video(video_file, subtitle_file, progress=gr.Progress()):
     """
     Clean video using the profanity filter
@@ -39,16 +67,17 @@ def clean_video(video_file, subtitle_file, progress=gr.Progress()):
     try:
         # Create temporary directory for processing
         temp_dir = Path(tempfile.mkdtemp())
-        input_video = Path(video_file.name)
+        input_video = _resolve_upload_path(video_file)
         output_video = temp_dir / f"cleaned_{input_video.name}"
         
         log_messages.append(f"Input: {input_video.name}")
+        log_messages.append(f"Resolved path: {input_video}")
         log_messages.append(f"Output: {output_video.name}")
         
         # Handle subtitle file
         subtitle_path = None
         if subtitle_file is not None:
-            subtitle_path = Path(subtitle_file.name)
+            subtitle_path = _resolve_upload_path(subtitle_file)
             log_messages.append(f"Subtitles: {subtitle_path.name}")
         
         # Step 1: Detect profanity in audio
@@ -57,16 +86,28 @@ def clean_video(video_file, subtitle_file, progress=gr.Progress()):
         log_messages.append("\nStep 1: Detecting profanity in audio...")
         
         try:
-            # Use same settings as CLI for better detection
+            # Match CLI default model (base). tiny is too weak for HF CPU demos
+            # and previously hid upload/path failures as "0 profanity found".
             audio_detector = AudioProfanityDetectorFast(
-                model_size='tiny',  # Keep tiny for speed, but with enhancements
+                model_size='base',
                 phrase_gap=2.0,
-                dialog_enhance=True,  # Apply speech-focused filtering
-                min_wpm=40.0,  # Warn if words per minute below threshold
-                auto_upgrade=True  # Retry with next larger model once if WPM < min_wpm
+                dialog_enhance=True,
+                min_wpm=40.0,
+                auto_upgrade=True,
             )
             progress(0.2, desc="Transcribing audio with Whisper...")
             audio_segments = audio_detector.detect(input_video)
+            transcript_words = list(getattr(audio_detector, 'last_transcript_words', []) or [])
+            log_messages.append(
+                f"Transcript: {len(transcript_words)} word(s) "
+                f"on {audio_detector.device.upper()} "
+                f"({audio_detector.model_size}/{audio_detector.compute_type})"
+            )
+            if not transcript_words:
+                raise RuntimeError(
+                    "Transcription produced 0 words. Audio extraction or Whisper "
+                    "failed — not the same as a clean video. Check FFmpeg and re-upload."
+                )
             
             log_messages.append(f"Found {len(audio_segments)} profanity segment(s)")
             if audio_segments:
@@ -76,7 +117,8 @@ def clean_video(video_file, subtitle_file, progress=gr.Progress()):
                     log_messages.append(f"  ... {len(audio_segments) - 3} more")
         except Exception as e:
             log_messages.append(f"ERROR: Audio profanity detection failed: {e}")
-            audio_segments = []
+            progress(1.0, desc="Failed")
+            return None, None, "\n".join(log_messages)
         
         # Step 2: Merge segments
         progress(0.4, desc="Merging segments...")

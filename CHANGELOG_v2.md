@@ -89,7 +89,7 @@ python3 clean.py video.mp4 --subs video.srt
 1. Update code: `git pull` or download latest version
 2. Update dependencies: `pip install -r requirements.txt`
 3. Verify faster-whisper installed: `pip list | grep faster-whisper`
-4. Test: `python3 clean.py sample/original_video.mp4`
+4. Test: `python3 clean.py YourMovie.mp4 YourMovie_cleaned.mp4`
 
 ## Known Issues
 - None currently

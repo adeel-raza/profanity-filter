@@ -58,96 +58,9 @@ without a monthly subscription or streaming lock-in.
 
 ---
 
-## Support This Project
+## Setup
 
-**If you find this project helpful, please consider supporting it:** [![Support via Stripe](https://img.shields.io/badge/Support%20via%20Stripe-635BFF?style=for-the-badge&logo=stripe&logoColor=white)](https://link.elearningevolve.com/self-pay)
-
----
-
-## Table of Contents
-
-- [Why Choose This Free Profanity Filter?](#why-choose-this-free-profanity-filter)
-- [How It Works - The Technology Behind 95%+ Accuracy](#how-it-works-the-technology-behind-95-accuracy)
-- [Installation - Easy Setup Guide](#installation-easy-setup-guide)
-- [Quick Start - Simple for Non-Technical Users](#quick-start-simple-for-non-technical-users)
-- [CPU-Intensive Task Warning](#cpu-intensive-task-warning)
-- [System Requirements](#system-requirements)
-- [Usage - Simple Command Line](#usage-simple-command-line)
-- [Why faster-whisper?](#why-faster-whisper)
-- [Before/After Example](#beforeafter-example)
-- [How It Works - Technical Deep Dive](#how-it-works-technical-deep-dive)
-- [Processing Time & Resource Usage](#processing-time-resource-usage)
-- [Command Line Options](#command-line-options)
-- [Output Files](#output-files)
-- [Customize Filtered Words (CSV)](#customize-filtered-words-csv)
-- [Frequently Asked Questions](#frequently-asked-questions)
-- [Troubleshooting](#troubleshooting)
-- [Support & Community](#support-community)
-- [Credits](#credits)
-- [License](#license)
-- [Contributing](#contributing)
-
----
-
-## Why Choose This Free Profanity Filter?
-
-### Free and open source
-No subscription. Process your own files once and watch them offline as often as
-you like.
-
-### Works with your files
-- Local video files (MP4, MKV, AVI, and similar)
-- YouTube downloads (via yt-dlp)
-- DVDs and Blu-rays ripped to digital files
-- Any source you can save as a normal video file
-
-### Privacy and control
-- Everything runs on your computer
-- No cloud upload required for filtering
-- You choose the word list and how aggressively to filter
-
----
-
-## How It Works - The Technology Behind 95%+ Accuracy
-
-### 1. Dialog Enhancement (Audio Preprocessing)
-- **Vocal isolation**: High-pass (200Hz) and low-pass (3500Hz) filters remove music, effects, and noise
-- **Dynamic normalization**: Balances quiet dialogue and loud scenes for consistent transcription
-- **Result**: 4-5x more words transcribed in complex audio (music, action scenes, background noise)
-- **Example**: Original tiny model caught 0 profanities in Argo → Enhanced base model caught 38 segments
-
-### 2. AI Audio Transcription (Word-Level Precision)
-- Uses **faster-whisper base model** (74M parameters) for superior accuracy on movies
-- **Dialog-enhanced audio** helps model "hear" speech masked by soundtracks
-- Each word gets a **precise timestamp** (accurate to 0.1 seconds)
-- Example: a flagged word at 79.76s-80.08s, the next word at 80.08s-80.88s
-- Unlike subtitle-based filters that cut entire sentences, this tool can cut only the matched words.
-- **Tiny model** is available for faster processing, but is less accurate and may miss profanity, especially in movies with music or background noise.
-
-### 3. Smart Multi-Word Detection (Phrase Recognition)
-- Automatically detects **1,000+** entries from the editable word list (including common variations)
-- **Intelligent merging**: Combines split multi-word phrases into single cuts
-- **Context-aware**: Uses a short time window to catch phrases spoken together
-- **Whole-word matching**: Avoids matching clean words that only contain a partial letter pattern
-- **Quality monitoring**: WPM (words per minute) diagnostic warns if transcription incomplete
-
-### 4. Frame-Accurate Video Cutting
-- **FFmpeg-powered editing**: Industry-standard video processing tool
-- **Surgical precision**: Removes only profanity segments (typically 0.3-2 seconds each)
-- **Quality preservation**: Original video bitrate, resolution, and encoding maintained
-- **Smooth transitions**: Seamless cuts without audio glitches or visual artifacts
-
-### Result: 95%+ Profanity-Free Videos
-
-Detection covers **spoken content only** (transcription + word list). Non-verbal sounds without spoken words are not classified.
-- **38 segments detected** in Argo (129-minute movie with orchestral score)
-- **0.46 minutes removed** (99.6% of content preserved)
-- **Improvement**: Tiny model missed 100% of profanity → Enhanced base caught all instances
-- **Manual review option**: Add timestamps with `--remove-timestamps` for any missed words
-
----
-
-## Installation - Easy Setup Guide
+Follow these steps first so you can run the tool right away.
 
 ### Prerequisites (install these first)
 
@@ -433,6 +346,129 @@ python3 clean.py video.mp4 video_cleaned.mp4
 
 See [Usage](#usage---simple-command-line) and [Command Line Options](#command-line-options) for mute mode, model size, hybrid detection, and other flags.
 
+## Before/After Example
+
+See the tool in action. Sample MP4s are not stored in this repository (they are
+too large for Hugging Face Space sync), so demos are linked below.
+
+### Real-World Clip
+
+**Before** (original):
+
+<video src="https://github.com/user-attachments/assets/b8cf7c0a-8968-4c9e-9760-85b1d184de0f" controls="controls" width="600"></video>
+
+**After** (cleaned with profanity filter):
+
+<video src="https://github.com/user-attachments/assets/bf9e976a-a7c1-4b17-bf71-9a0d0cc62bb8" controls="controls" width="600"></video>
+
+### Longer Sample (Vimeo)
+
+- **Original**: [Watch on Vimeo](https://vimeo.com/1140277069)
+- **Cleaned**: [Watch on Vimeo](https://vimeo.com/1140277103)
+
+Typical result on that clip: about **19 segments / ~13.5 seconds** of profanity
+removed, with audio-video sync preserved.
+
+### Try it on your own file
+
+```bash
+# After setup (see Setup above)
+python3 clean.py YourMovie.mp4 YourMovie_cleaned.mp4
+# Faster if you have matching subtitles:
+python3 clean.py YourMovie.mp4 YourMovie_cleaned.mp4 --subs YourMovie.srt
+```
+
+---
+
+## Support This Project
+
+**If you find this project helpful, please consider supporting it:** [![Support via Stripe](https://img.shields.io/badge/Support%20via%20Stripe-635BFF?style=for-the-badge&logo=stripe&logoColor=white)](https://link.elearningevolve.com/self-pay)
+
+---
+
+## Table of Contents
+
+- [Setup](#setup)
+- [Quick Start](#quick-start---simple-for-non-technical-users)
+- [Before/After Example](#beforeafter-example)
+- [Why Choose This Free Profanity Filter?](#why-choose-this-free-profanity-filter)
+- [How It Works - The Technology Behind 95%+ Accuracy](#how-it-works-the-technology-behind-95-accuracy)
+- [CPU-Intensive Task Warning](#cpu-intensive-task-warning)
+- [System Requirements](#system-requirements)
+- [Usage - Simple Command Line](#usage---simple-command-line)
+- [Why faster-whisper?](#why-faster-whisper)
+- [How It Works - Technical Deep Dive](#how-it-works-technical-deep-dive)
+- [Processing Time & Resource Usage](#processing-time--resource-usage)
+- [Command Line Options](#command-line-options)
+- [Output Files](#output-files)
+- [Customize Filtered Words (CSV)](#customize-filtered-words-csv)
+- [Frequently Asked Questions](#frequently-asked-questions)
+- [Troubleshooting](#troubleshooting)
+- [Support & Community](#support-community)
+- [Credits](#credits)
+- [License](#license)
+- [Contributing](#contributing)
+
+---
+
+## Why Choose This Free Profanity Filter?
+
+### Free and open source
+No subscription. Process your own files once and watch them offline as often as
+you like.
+
+### Works with your files
+- Local video files (MP4, MKV, AVI, and similar)
+- YouTube downloads (via yt-dlp)
+- DVDs and Blu-rays ripped to digital files
+- Any source you can save as a normal video file
+
+### Privacy and control
+- Everything runs on your computer
+- No cloud upload required for filtering
+- You choose the word list and how aggressively to filter
+
+---
+
+## How It Works - The Technology Behind 95%+ Accuracy
+
+### 1. Dialog Enhancement (Audio Preprocessing)
+- **Vocal isolation**: High-pass (200Hz) and low-pass (3500Hz) filters remove music, effects, and noise
+- **Dynamic normalization**: Balances quiet dialogue and loud scenes for consistent transcription
+- **Result**: 4-5x more words transcribed in complex audio (music, action scenes, background noise)
+- **Example**: Original tiny model caught 0 profanities in Argo → Enhanced base model caught 38 segments
+
+### 2. AI Audio Transcription (Word-Level Precision)
+- Uses **faster-whisper base model** (74M parameters) for superior accuracy on movies
+- **Dialog-enhanced audio** helps model "hear" speech masked by soundtracks
+- Each word gets a **precise timestamp** (accurate to 0.1 seconds)
+- Example: a flagged word at 79.76s-80.08s, the next word at 80.08s-80.88s
+- Unlike subtitle-based filters that cut entire sentences, this tool can cut only the matched words.
+- **Tiny model** is available for faster processing, but is less accurate and may miss profanity, especially in movies with music or background noise.
+
+### 3. Smart Multi-Word Detection (Phrase Recognition)
+- Automatically detects **1,000+** entries from the editable word list (including common variations)
+- **Intelligent merging**: Combines split multi-word phrases into single cuts
+- **Context-aware**: Uses a short time window to catch phrases spoken together
+- **Whole-word matching**: Avoids matching clean words that only contain a partial letter pattern
+- **Quality monitoring**: WPM (words per minute) diagnostic warns if transcription incomplete
+
+### 4. Frame-Accurate Video Cutting
+- **FFmpeg-powered editing**: Industry-standard video processing tool
+- **Surgical precision**: Removes only profanity segments (typically 0.3-2 seconds each)
+- **Quality preservation**: Original video bitrate, resolution, and encoding maintained
+- **Smooth transitions**: Seamless cuts without audio glitches or visual artifacts
+
+### Result: 95%+ Profanity-Free Videos
+
+Detection covers **spoken content only** (transcription + word list). Non-verbal sounds without spoken words are not classified.
+- **38 segments detected** in Argo (129-minute movie with orchestral score)
+- **0.46 minutes removed** (99.6% of content preserved)
+- **Improvement**: Tiny model missed 100% of profanity → Enhanced base caught all instances
+- **Manual review option**: Add timestamps with `--remove-timestamps` for any missed words
+
+---
+
 ## CPU-Intensive Task Warning
 
 **Important:** Video cleaning is a **CPU-intensive task on CPU-only systems**.
@@ -577,50 +613,6 @@ This tool uses **faster-whisper** instead of standard OpenAI Whisper for signifi
 **Example performance** (3-minute video, CPU):
 - Transcription: ~15 seconds (12.3x real-time)
 - Total processing: ~1 minute 40 seconds including video cutting
-
----
-
-## Before/After Example
-
-See the tool in action on a real clip and on the bundled sample video.
-
-### Real-World Clip
-
-**Before** (original):
-
-<video src="https://github.com/user-attachments/assets/b8cf7c0a-8968-4c9e-9760-85b1d184de0f" controls="controls" width="600"></video>
-
-**After** (cleaned with profanity filter):
-
-<video src="https://github.com/user-attachments/assets/bf9e976a-a7c1-4b17-bf71-9a0d0cc62bb8" controls="controls" width="600"></video>
-
-### Sample Video Results
-- **Original Video**: 3.1 minutes, 6.3 MB
-- **Cleaned Video**: 2.9 minutes, 9.5 MB (profanity segments removed)
-- **Profanity Removed**: 19 segments totaling 13.5 seconds
-- **Processing Time**: ~2 minutes (with subtitles)
-
-The cleaned video maintains perfect audio-video sync and subtitle alignment. All profanity words were precisely detected and removed while preserving the natural flow of the content.
-
-### Original Video (Before)
-<video src="https://github.com/adeel-raza/profanity-filter/raw/main/sample/original_video.mp4" controls="controls" muted="muted" width="600"></video>
-
-**Watch on Vimeo**: [Original Video](https://vimeo.com/1140277069) | **Download**: [MP4 (6.3 MB)](https://github.com/adeel-raza/profanity-filter/raw/main/sample/original_video.mp4)
-
-### Cleaned Video (After)
-<video src="https://github.com/adeel-raza/profanity-filter/raw/main/sample/original_video_cleaned.mp4" controls="controls" muted="muted" width="600"></video>
-
-**Watch on Vimeo**: [Cleaned Video](https://vimeo.com/1140277103) | **Download**: [MP4 (9.5 MB)](https://github.com/adeel-raza/profanity-filter/raw/main/sample/original_video_cleaned.mp4)
-
-**Try it yourself**:
-```bash
-# Clone the repository
-git clone https://github.com/adeel-raza/profanity-filter.git
-cd profanity-filter
-
-# Process the sample video
-python3 clean.py sample/original_video.mp4 sample/original_video_cleaned.mp4 --subs sample/original_video.srt
-```
 
 ---
 

@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Changed
+- README: Setup and Quick Start are now the first sections after the intro.
+- README: Removed broken `sample/*.mp4` embeds (sample videos are not in the
+  repo due to Hugging Face size limits). Before/after demos use working
+  GitHub attachment clips and Vimeo links instead.
+
 ## [1.2.0] - 2026-08-25
 
 ### Fixed

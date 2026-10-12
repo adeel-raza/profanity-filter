@@ -90,12 +90,7 @@ python batch_process.py input/ output/ --whisper-model base
 python clean.py "The Matrix.mp4" "The Matrix Clean.mp4" --subs "The Matrix.srt"
 ```
 
-### Example 2: Process Sample Video
-```bash
-python clean.py sample/fyou.mp4 sample/cleaned/fyou_cleaned.mp4 --subs sample/fyou.srt
-```
-
-### Example 3: Generate and Clean
+### Example 2: Generate and Clean
 ```bash
 # Generate subtitles first
 python generate_subtitles.py movie.mp4 movie.srt

@@ -58,6 +58,41 @@ without a monthly subscription or streaming lock-in.
 
 ---
 
+## Quick Start — clean your files for profanity words
+
+Install once (see [Setup](#setup) below), then clean a video:
+
+```bash
+python3 clean.py YourMovie.mp4 YourMovie_cleaned.mp4
+```
+
+That writes a cleaned video and a cleaned `.srt` subtitle file.
+
+**Faster** (if you already have subtitles):
+
+```bash
+python3 clean.py YourMovie.mp4 YourMovie_cleaned.mp4 --subs YourMovie.srt
+```
+
+Matching `.srt` / `.vtt` files next to the video (same name) are auto-detected.
+
+**Mute instead of cut** (keeps full runtime; usually faster encode):
+
+```bash
+python3 clean.py YourMovie.mp4 YourMovie_cleaned.mp4 --mute-only
+```
+
+**YouTube download + clean:**
+
+```bash
+yt-dlp -o "video.mp4" "https://www.youtube.com/watch?v=VIDEO_ID"
+python3 clean.py video.mp4 video_cleaned.mp4
+```
+
+More flags: [Usage](#usage---simple-command-line) and [Command Line Options](#command-line-options).
+
+---
+
 ## Setup
 
 Follow these steps first so you can run the tool right away.
@@ -314,69 +349,28 @@ measured.
 
 ---
 
-## Quick Start - Simple for Non-Technical Users
-
-Tip: providing a subtitle file (or placing `movie.srt` next to `movie.mp4`) makes cleaning much faster because less audio transcription is needed.
-
-### Clean a Video
-```bash
-python3 clean.py YourMovie.mp4 YourMovie_cleaned.mp4
-# Output: YourMovie_cleaned.mp4 and YourMovie_cleaned.srt
-```
-
-### Use Subtitle Files for Faster Processing
-
-If a matching `.srt` / `.vtt` sits next to the video (same filename), it is
-auto-detected. Passing subtitles skips or reduces transcription work and is
-usually much faster than audio-only cleaning.
-
-```bash
-python3 clean.py YourMovie.mp4 YourMovie_cleaned.mp4 --subs YourMovie.srt
-```
-
-**Note:** If your subtitle file has the same name as your video (e.g. `movie.mp4` and `movie.srt`) and is in the same directory, it will be auto-detected. You do not need to specify `--subs` in this case.
-
-### Download & Clean YouTube Video
-```bash
-yt-dlp -o "video.mp4" "https://www.youtube.com/watch?v=VIDEO_ID"
-python3 clean.py video.mp4 video_cleaned.mp4
-```
-
-### More options
-
-See [Usage](#usage---simple-command-line) and [Command Line Options](#command-line-options) for mute mode, model size, hybrid detection, and other flags.
 
 ## Before/After Example
 
-See the tool in action. Sample MP4s are not stored in this repository (they are
-too large for Hugging Face Space sync), so demos are linked below.
+GitHub and Hugging Face READMEs do not play in-page video players reliably, so
+the demos are linked below (open in a new tab).
 
 ### Real-World Clip
 
-**Before** (original):
-
-<video src="https://github.com/user-attachments/assets/b8cf7c0a-8968-4c9e-9760-85b1d184de0f" controls="controls" width="600"></video>
-
-**After** (cleaned with profanity filter):
-
-<video src="https://github.com/user-attachments/assets/bf9e976a-a7c1-4b17-bf71-9a0d0cc62bb8" controls="controls" width="600"></video>
+| | Link |
+|---|---|
+| **Before** (original) | [Watch / download](https://github.com/user-attachments/assets/b8cf7c0a-8968-4c9e-9760-85b1d184de0f) |
+| **After** (cleaned) | [Watch / download](https://github.com/user-attachments/assets/bf9e976a-a7c1-4b17-bf71-9a0d0cc62bb8) |
 
 ### Longer Sample (Vimeo)
 
-- **Original**: [Watch on Vimeo](https://vimeo.com/1140277069)
-- **Cleaned**: [Watch on Vimeo](https://vimeo.com/1140277103)
+| | Link |
+|---|---|
+| **Original** | [Watch on Vimeo](https://vimeo.com/1140277069) |
+| **Cleaned** | [Watch on Vimeo](https://vimeo.com/1140277103) |
 
-Typical result on that clip: about **19 segments / ~13.5 seconds** of profanity
-removed, with audio-video sync preserved.
-
-### Try it on your own file
-
-```bash
-# After setup (see Setup above)
-python3 clean.py YourMovie.mp4 YourMovie_cleaned.mp4
-# Faster if you have matching subtitles:
-python3 clean.py YourMovie.mp4 YourMovie_cleaned.mp4 --subs YourMovie.srt
-```
+Typical result on that clip: about **19 segments / ~13.5 seconds** of
+profanity removed, with audio-video sync preserved.
 
 ---
 
@@ -388,8 +382,8 @@ python3 clean.py YourMovie.mp4 YourMovie_cleaned.mp4 --subs YourMovie.srt
 
 ## Table of Contents
 
+- [Quick Start — clean your files for profanity words](#quick-start--clean-your-files-for-profanity-words)
 - [Setup](#setup)
-- [Quick Start](#quick-start---simple-for-non-technical-users)
 - [Before/After Example](#beforeafter-example)
 - [Why Choose This Free Profanity Filter?](#why-choose-this-free-profanity-filter)
 - [How It Works - The Technology Behind 95%+ Accuracy](#how-it-works-the-technology-behind-95-accuracy)

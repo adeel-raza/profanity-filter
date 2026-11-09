@@ -48,8 +48,11 @@ cleaned subtitle file.
 - Outputs a cleaned video and a cleaned `.srt` subtitle file
 - Works much faster when you provide (or auto-detect) an existing subtitle file
   alongside the video
+- Includes a **Gradio web UI** (upload a video in the browser) as well as a CLI
 - Runs entirely on your computer—no cloud upload and no account required
-- Supports optional GPU acceleration for much faster processing
+- Supports optional GPU acceleration for Whisper: **NVIDIA CUDA** (default,
+  production-tested path) and optional **Intel Arc / iGPU via OpenVINO**
+  (**beta** — see below; install `requirements-intel.txt`)
 
 **Who it is for**
 
@@ -90,6 +93,36 @@ python3 clean.py video.mp4 video_cleaned.mp4
 ```
 
 More flags: [Usage](#usage---simple-command-line) and [Command Line Options](#command-line-options).
+
+---
+
+## Gradio web UI (GUI)
+
+Prefer a browser over the command line? The project ships a Gradio GUI. Upload a
+video, optionally add subtitles, pick a Whisper model (`tiny` → `large`), and
+click **Clean Video**.
+
+![Gradio UI — upload video, choose Whisper model, clean](docs/images/gradio-ui.png)
+
+**Try online (no install):** use the [Hugging Face Spaces demo](https://huggingface.co/spaces/adeel-raza/video-profanity-filter).
+
+**Run locally after Setup:**
+
+```bash
+python3 app.py
+# then open http://127.0.0.1:7860
+```
+
+**Or with Docker:**
+
+```bash
+docker compose up --build web
+# open http://localhost:7860
+```
+
+NVIDIA GPU Docker UI: `docker compose --profile gpu up --build web-gpu` (needs
+NVIDIA Container Toolkit). Default Whisper model in the UI is **base**; choose
+**large** for fewer missed swear words (slower, more RAM).
 
 ---
 
@@ -204,14 +237,15 @@ docker run --rm --gpus all \
  /app/clean.py /data/input.mp4 /data/output.mp4
 ```
 
-**Optional Gradio web UI** (http://localhost:7860):
+**Gradio web UI** (see [Gradio web UI (GUI)](#gradio-web-ui-gui) for screenshot and
+Whisper model picker):
 
 ```bash
 # CPU
 docker run --rm -p 7860:7860 -v "$PWD":/data -v profanity-hf-cache:/cache \
  profanity-filter:cpu /app/app.py
 
-# GPU
+# GPU (NVIDIA)
 docker run --rm --gpus all -p 7860:7860 -v "$PWD":/data -v profanity-hf-cache:/cache \
  profanity-filter:gpu /app/app.py
 ```
@@ -220,7 +254,7 @@ Or with Compose:
 
 ```bash
 docker compose up --build web # CPU UI
-docker compose --profile gpu up --build web-gpu # GPU UI
+docker compose --profile gpu up --build web-gpu # NVIDIA GPU UI
 ```
 
 Notes:
@@ -235,13 +269,49 @@ Notes:
 The app automatically accelerates both major processing stages when compatible
 hardware is available:
 
-- **AI transcription:** NVIDIA CUDA through CTranslate2
+- **AI transcription (default):** NVIDIA CUDA through faster-whisper / CTranslate2
+- **AI transcription (optional Intel):** OpenVINO GenAI on Intel Arc / iGPU
 - **Video encoding:** NVIDIA NVENC, Intel Quick Sync, AMD AMF, or Apple
  VideoToolbox through FFmpeg
 - If a compatible device, driver, runtime, or encoder is unavailable, that
  stage safely falls back to CPU
 - Pascal GPUs such as the Quadro P2000 use `int8` (then `float32`) rather than
  unsupported/slow `float16`
+
+#### Intel Arc / iGPU Whisper (optional, **beta**)
+
+> **Beta / untested on real Arc hardware:** This path was added from OpenVINO
+> GenAI docs and public Arc/OpenVINO Whisper examples. It has **not** been
+> validated end-to-end on an Intel Arc card (for example B580) in this project
+> yet. Treat it as experimental: if it fails, the app should fall back to CPU
+> faster-whisper, or you can force `PROFANITY_FILTER_DEVICE=cpu`. Bug reports
+> from Arc users are welcome.
+
+faster-whisper cannot use Intel GPUs. For Arc (for example B580) or Intel iGPU
+transcription, install the optional extras **only on Intel GPU machines**:
+
+```bash
+python3 -m pip install -r requirements-intel.txt
+```
+
+Behavior:
+
+1. Cheap hardware probe (PCI / sysfs / Windows video controller) looks for Intel GPU
+2. **Only then** OpenVINO packages are imported
+3. If OpenVINO sees a `GPU` device, Whisper runs there; otherwise CPU faster-whisper
+4. Machines without an Intel GPU never import OpenVINO
+
+Overrides:
+
+```bash
+PROFANITY_FILTER_DEVICE=openvino   # force OpenVINO attempt (beta)
+PROFANITY_FILTER_DEVICE=cpu        # force CPU
+PROFANITY_FILTER_DEVICE=cuda       # force NVIDIA path
+```
+
+Auto order: CUDA → OpenVINO (Intel hint only, beta) → CPU. First OpenVINO run
+downloads a converted Whisper model from Hugging Face into the cache. In Docker,
+the container also needs access to the Intel device (typically `/dev/dri`).
 
 **Recommendation:** Prefer a GPU machine when available. In our controlled
 side-by-side tests, GPU was better for:
@@ -270,6 +340,7 @@ CPU processing with:
 
 ```bash
 PROFANITY_FILTER_DEVICE=cpu python3 clean.py input.mp4 output.mp4
+PROFANITY_FILTER_DEVICE=openvino python3 clean.py input.mp4 output.mp4
 PROFANITY_FILTER_VIDEO_ENCODER=cpu python3 clean.py input.mp4 output.mp4
 ```
 
@@ -383,6 +454,7 @@ profanity removed, with audio-video sync preserved.
 ## Table of Contents
 
 - [Quick Start — clean your files for profanity words](#quick-start--clean-your-files-for-profanity-words)
+- [Gradio web UI (GUI)](#gradio-web-ui-gui)
 - [Setup](#setup)
 - [Before/After Example](#beforeafter-example)
 - [Why Choose This Free Profanity Filter?](#why-choose-this-free-profanity-filter)

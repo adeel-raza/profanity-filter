@@ -17,6 +17,20 @@ from video_cutter import VideoCutter
 from timestamp_merger import TimestampMerger
 from subtitle_processor import SubtitleProcessor
 
+WHISPER_MODELS = ('tiny', 'base', 'small', 'medium', 'large')
+DEFAULT_WHISPER_MODEL = 'base'
+
+
+def _normalize_whisper_model(whisper_model):
+    """Accept a UI value; fall back to the CLI/GUI default."""
+    if whisper_model is None:
+        return DEFAULT_WHISPER_MODEL
+    value = str(whisper_model).strip().lower()
+    for name in WHISPER_MODELS:
+        if value == name or value.startswith(name + ' '):
+            return name
+    return DEFAULT_WHISPER_MODEL
+
 
 def _resolve_upload_path(file_obj):
     """
@@ -46,14 +60,14 @@ def _resolve_upload_path(file_obj):
     )
 
 
-def clean_video(video_file, subtitle_file, progress=gr.Progress()):
+def clean_video(video_file, subtitle_file, whisper_model=DEFAULT_WHISPER_MODEL, progress=gr.Progress()):
     """
     Clean video using the profanity filter
     
     Args:
         video_file: Uploaded video file (Gradio file object)
         subtitle_file: Optional subtitle file (Gradio file object)
-        whisper_model: Whisper model size
+        whisper_model: Whisper model size (tiny, base, small, medium, large)
         progress: Gradio progress tracker
         
     Returns:
@@ -86,22 +100,24 @@ def clean_video(video_file, subtitle_file, progress=gr.Progress()):
         log_messages.append("\nStep 1: Detecting profanity in audio...")
         
         try:
-            # Match CLI default model (base). tiny is too weak for HF CPU demos
-            # and previously hid upload/path failures as "0 profanity found".
+            model_size = _normalize_whisper_model(whisper_model)
+            log_messages.append(f"Whisper model: {model_size}")
             audio_detector = AudioProfanityDetectorFast(
-                model_size='base',
+                model_size=model_size,
                 phrase_gap=2.0,
                 dialog_enhance=True,
                 min_wpm=40.0,
-                auto_upgrade=True,
+                # Honor the UI choice; do not silently bump tiny/base upward.
+                auto_upgrade=False,
             )
             progress(0.2, desc="Transcribing audio with Whisper...")
             audio_segments = audio_detector.detect(input_video)
             transcript_words = list(getattr(audio_detector, 'last_transcript_words', []) or [])
             log_messages.append(
                 f"Transcript: {len(transcript_words)} word(s) "
-                f"on {audio_detector.device.upper()} "
-                f"({audio_detector.model_size}/{audio_detector.compute_type})"
+                f"on {audio_detector.device} "
+                f"(backend={getattr(audio_detector, 'backend', 'faster-whisper')}, "
+                f"{audio_detector.model_size}/{audio_detector.compute_type})"
             )
             if not transcript_words:
                 raise RuntimeError(
@@ -251,6 +267,17 @@ def create_interface():
                     file_types=[".srt", ".vtt"],
                     type="filepath"
                 )
+
+                whisper_model_input = gr.Radio(
+                    label="Whisper model",
+                    choices=list(WHISPER_MODELS),
+                    value=DEFAULT_WHISPER_MODEL,
+                    info=(
+                        "Larger models catch more profanity (especially F-words) but are slower "
+                        "and use more RAM. Default is base. Use large on a local or NVIDIA GPU machine; "
+                        "it is often too heavy for the public Hugging Face CPU demo."
+                    ),
+                )
                 
                 process_btn = gr.Button("Clean Video", variant="primary", size="lg")
             
@@ -299,7 +326,7 @@ Unlike VidAngel and ClearPlay that only work with specific streaming services, t
 
 ## How It Works
 
-- AI Audio Transcription (Word-Level Precision): Uses the base model by default for best accuracy. Each word gets a precise timestamp (+/-0.1s). Only the bad words are cut, not whole sentences.
+- AI Audio Transcription (Word-Level Precision): Uses the base model by default. Pick small/medium/large in the UI for more accuracy (slower). Each word gets a precise timestamp (+/-0.1s). Only the bad words are cut, not whole sentences.
 - Smart Multi-Word Detection: Detects 1,192+ profanity words and intelligently merges phrases like "fuck you" or "bull shit". Whole-word matching prevents false positives.
 - Frame-Accurate Video Cutting: FFmpeg-powered, removes only profanity segments (0.3-2s each), preserves original quality, and ensures smooth transitions.
 
@@ -376,7 +403,7 @@ Want faster processing? Download and run on your own computer - completely FREE!
         # Connect the interface
         process_btn.click(
             fn=clean_video,
-            inputs=[video_input, subtitle_input],
+            inputs=[video_input, subtitle_input, whisper_model_input],
             outputs=[video_output, subtitle_output, log_output]
         )
         
@@ -384,9 +411,10 @@ Want faster processing? Download and run on your own computer - completely FREE!
         ### How to Use (Simple 3-Step Process)
         
         1. **Upload** your video file (MP4, MKV, etc.)
-        2. **Optional**: Upload subtitle file for faster processing (SRT/VTT)
-        3. **Click** "Clean Video" and wait for processing to complete
-        4. **Download** your family-friendly clean video!
+        2. **Optional**: Upload subtitle file (SRT/VTT)
+        3. **Choose** a Whisper model if you want more accuracy (`large`) or more speed (`tiny`). Default is `base`.
+        4. **Click** "Clean Video" and wait for processing to complete
+        5. **Download** your family-friendly clean video!
         
         The AI automatically transcribes audio, detects 1,132+ profanity words, removes offensive segments, and generates clean subtitles.
         

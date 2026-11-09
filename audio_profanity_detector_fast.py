@@ -58,6 +58,8 @@ class AudioProfanityDetectorFast:
         self.auto_upgrade = auto_upgrade
         self._upgraded_once = False
         self.whisper_model = None
+        self.openvino_transcriber = None
+        self.backend = 'faster-whisper'
         self.device = 'cpu'
         self.compute_type = None
         # Word-level transcript from the last detect() call (original video timeline).
@@ -80,11 +82,11 @@ class AudioProfanityDetectorFast:
     @staticmethod
     def _forced_device() -> Optional[str]:
         """
-        Optional override: PROFANITY_FILTER_DEVICE=cpu|cuda
-        Useful for debugging; invalid values are ignored.
+        Optional override: PROFANITY_FILTER_DEVICE=cpu|cuda|openvino|auto
+        Useful for debugging; invalid values are ignored (treated as auto).
         """
         forced = os.environ.get('PROFANITY_FILTER_DEVICE', '').strip().lower()
-        if forced in ('cpu', 'cuda'):
+        if forced in ('cpu', 'cuda', 'openvino'):
             return forced
         return None
 
@@ -95,9 +97,37 @@ class AudioProfanityDetectorFast:
         if forced == 'cuda':
             # Still fall back to CPU if forced CUDA load fails.
             return ['cuda', 'cpu']
+        if forced == 'openvino':
+            # OpenVINO is handled before faster-whisper; keep CPU as ultimate fallback.
+            return ['cpu']
         if self._cuda_available():
             return ['cuda', 'cpu']
         return ['cpu']
+
+    def _should_try_openvino(self) -> bool:
+        """
+        Only consider OpenVINO when:
+        - user forced openvino, or
+        - auto mode, no CUDA, and a cheap Intel GPU hardware hint is true.
+
+        OpenVINO packages are imported only inside the OpenVINO backend helper,
+        after this gate passes.
+        """
+        forced = self._forced_device()
+        if forced == 'openvino':
+            return True
+        if forced in ('cpu', 'cuda'):
+            return False
+        if self._cuda_available():
+            return False
+        try:
+            from intel_gpu_probe import describe_intel_gpu_hint, intel_gpu_hardware_hint
+        except Exception:
+            return False
+        if not intel_gpu_hardware_hint():
+            return False
+        print(f"  ✓ Intel GPU hardware hint ({describe_intel_gpu_hint()}) — trying OpenVINO")
+        return True
 
     @classmethod
     def _compute_types_for(cls, device: str) -> Tuple[str, ...]:
@@ -125,7 +155,44 @@ class AudioProfanityDetectorFast:
         return None, None
 
     def _init_whisper(self):
-        """Initialize faster-whisper on GPU when available, otherwise CPU."""
+        """
+        Prefer NVIDIA CUDA (faster-whisper), else optional Intel OpenVINO GPU,
+        else CPU faster-whisper.
+
+        OpenVINO is never imported unless `_should_try_openvino()` passes.
+        """
+        forced = self._forced_device()
+        if forced:
+            print(f"  Device override via PROFANITY_FILTER_DEVICE={forced}")
+
+        self.whisper_model = None
+        self.openvino_transcriber = None
+        self.backend = 'faster-whisper'
+        self.compute_type = None
+
+        if self._should_try_openvino():
+            try:
+                from openvino_whisper_backend import try_create_openvino_whisper
+            except Exception as exc:
+                print(f"  ⚠ OpenVINO backend unavailable: {exc}")
+                try_create_openvino_whisper = None
+            if try_create_openvino_whisper is not None:
+                prefer_gpu = forced != 'cpu'
+                ov = try_create_openvino_whisper(
+                    self.model_size,
+                    prefer_gpu=prefer_gpu,
+                )
+                if ov is not None:
+                    self.openvino_transcriber = ov
+                    self.backend = 'openvino'
+                    self.device = f'openvino:{ov.ov_device}'
+                    self.compute_type = 'openvino'
+                    # Keep a truthy sentinel so existing `if not self.whisper_model` checks pass.
+                    self.whisper_model = ov
+                    return
+                if forced == 'openvino':
+                    print("  ⚠ Forced OpenVINO failed — falling back to faster-whisper CPU")
+
         try:
             from faster_whisper import WhisperModel
         except ImportError:
@@ -135,18 +202,11 @@ class AudioProfanityDetectorFast:
 
         print(f"  Loading faster-whisper model: {self.model_size}...")
 
-        forced = self._forced_device()
-        if forced:
-            print(f"  Device override via PROFANITY_FILTER_DEVICE={forced}")
-
         devices = self._devices_to_try()
         if devices[0] == 'cuda':
             print("  ✓ CUDA GPU detected — preferring GPU")
         else:
-            print("  No CUDA GPU available — using CPU")
-
-        self.whisper_model = None
-        self.compute_type = None
+            print("  No CUDA GPU available — using CPU faster-whisper")
 
         for device in devices:
             if device == 'cpu' and 'cuda' in devices:
@@ -155,6 +215,7 @@ class AudioProfanityDetectorFast:
             model, compute_type = self._try_load_model(WhisperModel, device)
             if model is not None:
                 self.whisper_model = model
+                self.backend = 'faster-whisper'
                 self.device = device
                 self.compute_type = compute_type
                 print(
@@ -166,6 +227,35 @@ class AudioProfanityDetectorFast:
         raise RuntimeError(
             "Could not initialize faster-whisper on CUDA or CPU with any supported compute type"
         )
+
+    def _transcribe_to_words(self, audio_path: Path):
+        """
+        Run the active backend and return (words, duration_or_none).
+
+        Words duck-type faster-whisper word objects (`.word`, `.start`, `.end`).
+        """
+        if self.backend == 'openvino' and self.openvino_transcriber is not None:
+            print(
+                f"  Transcribing audio with OpenVINO "
+                f"({self.model_size} on {self.device})..."
+            )
+            words, duration = self.openvino_transcriber.transcribe_words(audio_path)
+            return words, duration
+
+        print(
+            f"  Transcribing audio with faster-whisper "
+            f"({self.model_size} on {self.device.upper()}, compute_type={self.compute_type})..."
+        )
+        segments, info = self.whisper_model.transcribe(
+            str(audio_path),
+            **self._transcribe_kwargs(word_timestamps=True),
+        )
+        words = []
+        for segment in segments:
+            for word in segment.words:
+                words.append(word)
+        duration = getattr(info, 'duration', None)
+        return words, duration
     
     def detect(self, video_path: Path) -> List[Tuple[float, float, str]]:
         """
@@ -221,38 +311,35 @@ class AudioProfanityDetectorFast:
             subprocess.run(cmd, capture_output=True, check=True)
             print(f"  ✓ Audio extracted")
             
-            # Transcribe with faster-whisper
-            print(
-                f"  Transcribing audio with faster-whisper "
-                f"({self.model_size} on {self.device.upper()}, compute_type={self.compute_type})..."
-            )
             if duration:
                 # Rough real-time factors: GPU is typically much faster than CPU.
-                realtime_factor = 30.0 if self.device == 'cuda' else 10.0
+                if self.backend == 'openvino' or self.device == 'cuda':
+                    realtime_factor = 30.0
+                else:
+                    realtime_factor = 10.0
                 est_time = duration / realtime_factor
                 print(f"  ⏳ Estimated time: ~{est_time:.1f} seconds for {duration/60:.1f} min video")
             
             import time
             start_time = time.time()
-            
-            segments, info = self.whisper_model.transcribe(
-                str(audio_path),
-                **self._transcribe_kwargs(word_timestamps=True),
-            )
-            
-            # Convert generator to list and get all words
-            all_words = []
-            for segment in segments:
-                for word in segment.words:
-                    all_words.append(word)
+            all_words, transcript_duration = self._transcribe_to_words(audio_path)
             self.last_transcript_words = all_words
+            if transcript_duration and not duration:
+                duration = transcript_duration
             
             elapsed = time.time() - start_time
-            print(f"  ✓ Transcription complete in {elapsed:.1f}s ({info.duration/elapsed:.1f}x real-time)")
+            effective_duration = duration or transcript_duration
+            if effective_duration and elapsed > 0:
+                print(
+                    f"  ✓ Transcription complete in {elapsed:.1f}s "
+                    f"({effective_duration/elapsed:.1f}x real-time, backend={self.backend})"
+                )
+            else:
+                print(f"  ✓ Transcription complete in {elapsed:.1f}s (backend={self.backend})")
 
             # Words per minute diagnostic
-            if info.duration and info.duration > 0:
-                wpm = len(all_words) / (info.duration / 60.0)
+            if effective_duration and effective_duration > 0:
+                wpm = len(all_words) / (effective_duration / 60.0)
                 print(f"  Transcript stats: {len(all_words)} words, {wpm:.1f} WPM")
                 if wpm < self.min_wpm:
                     print(f"  ⚠ Low WPM (<{self.min_wpm:.0f}) indicates under-transcription; audio may be complex or model too small.")
@@ -459,18 +546,21 @@ class AudioProfanityDetectorFast:
         try:
             print(f"  ▶ Re-transcribing with upgraded model '{self.model_size}'...")
             start_time = time.time()
-            segments, info = self.whisper_model.transcribe(
-                str(audio_path),
-                **self._transcribe_kwargs(word_timestamps=True),
-            )
-            all_words = []
-            for segment in segments:
-                for word in segment.words:
-                    all_words.append(word)
+            all_words, transcript_duration = self._transcribe_to_words(audio_path)
             self.last_transcript_words = all_words
             elapsed = time.time() - start_time
-            print(f"  ✓ Upgrade transcription complete in {elapsed:.1f}s ({info.duration/elapsed:.1f}x real-time)")
-            wpm = len(all_words) / (info.duration / 60.0) if info.duration else 0
+            if transcript_duration and elapsed > 0:
+                print(
+                    f"  ✓ Upgrade transcription complete in {elapsed:.1f}s "
+                    f"({transcript_duration/elapsed:.1f}x real-time, backend={self.backend})"
+                )
+                wpm = len(all_words) / (transcript_duration / 60.0)
+            else:
+                print(
+                    f"  ✓ Upgrade transcription complete in {elapsed:.1f}s "
+                    f"(backend={self.backend})"
+                )
+                wpm = 0
             print(f"  Transcript stats (upgraded): {len(all_words)} words, {wpm:.1f} WPM")
             if self.dump_transcript_path:
                 try:

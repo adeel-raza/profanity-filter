@@ -1,0 +1,20 @@
+# Optional Intel GPU (Arc / iGPU) Whisper acceleration via OpenVINO GenAI.
+#
+# BETA: Not validated yet on a real Intel Arc card in this project. Install only
+# if you want to experiment; CPU/NVIDIA paths remain the supported defaults.
+#
+# Not installed by default. The app only imports these after a cheap Intel GPU
+# hardware hint (or PROFANITY_FILTER_DEVICE=openvino).
+#
+# Install on Intel GPU machines:
+#   python3 -m pip install -r requirements-intel.txt
+#
+# Force / disable:
+#   PROFANITY_FILTER_DEVICE=openvino
+#   PROFANITY_FILTER_DEVICE=cpu
+
+openvino>=2025.2.0
+openvino-genai>=2025.2.0
+openvino-tokenizers>=2025.2.0
+huggingface_hub>=0.20.0
+numpy>=1.24.0

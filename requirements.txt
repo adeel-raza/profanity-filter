@@ -9,5 +9,6 @@ yt-dlp>=2024.0.0  # For YouTube video downloads
 # Install with: sudo apt install ffmpeg (Linux) or brew install ffmpeg (macOS)
 #
 # CUDA / cuDNN are OPTIONAL and only needed for NVIDIA GPU acceleration.
-# Do not add them as hard Python requirements (breaks CPU-only installs).
-# See README "Optional GPU Acceleration (Windows / NVIDIA)" for setup.
+# Intel Arc / iGPU Whisper is OPTIONAL via requirements-intel.txt (OpenVINO).
+# Do not add either as hard Python requirements (keeps CPU-only installs light).
+# See README "Optional GPU acceleration" for setup.
